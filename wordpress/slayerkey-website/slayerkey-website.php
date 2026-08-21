@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.6
+ * Version: 0.1.7
  * Author: Slayerkey
  */
 
@@ -10,10 +10,146 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.6' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.7' );
 define( 'SLAYERKEY_POSTHOG_TOKEN', 'phc_m92yxHMa2BTnSu7KmebGKu8sEitMki4oPhdLTKZzcpMc' );
 define( 'SLAYERKEY_POSTHOG_HOST', 'https://edge.slayerkey.com' );
 define( 'SLAYERKEY_POSTHOG_UI_HOST', 'https://us.posthog.com' );
+
+function slayerkey_website_preview_map() {
+    return array(
+        'dojo-v3' => array(
+            'title' => 'Training Dojo v3',
+            'file'  => 'previews/dojo-v3/index.html',
+        ),
+        'system-v3' => array(
+            'title' => 'Improvement System v3',
+            'file'  => 'previews/system-v3/index.html',
+        ),
+        'coaching-v3' => array(
+            'title' => 'Coaching v3',
+            'file'  => 'previews/coaching-v3/index.html',
+        ),
+    );
+}
+
+function slayerkey_website_preview_slug_from_request() {
+    static $resolved = false;
+    static $slug = null;
+
+    if ( $resolved ) {
+        return $slug;
+    }
+
+    $resolved = true;
+
+    if ( empty( $_SERVER['REQUEST_URI'] ) ) {
+        return null;
+    }
+
+    $path = wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH );
+
+    if ( ! is_string( $path ) ) {
+        return null;
+    }
+
+    if ( preg_match( '#^/preview/([a-z0-9-]+)/?$#', $path, $matches ) ) {
+        $candidate = sanitize_key( $matches[1] );
+        $previews = slayerkey_website_preview_map();
+
+        if ( isset( $previews[ $candidate ] ) ) {
+            $slug = $candidate;
+        }
+    }
+
+    return $slug;
+}
+
+function slayerkey_website_is_private_preview_request() {
+    return null !== slayerkey_website_preview_slug_from_request();
+}
+
+function slayerkey_website_render_404() {
+    global $wp_query;
+
+    if ( $wp_query instanceof WP_Query ) {
+        $wp_query->set_404();
+    }
+
+    status_header( 404 );
+    nocache_headers();
+
+    $template = get_404_template();
+
+    if ( $template ) {
+        include $template;
+        exit;
+    }
+
+    wp_die( esc_html__( 'Not Found', 'slayerkey-website' ), esc_html__( 'Not Found', 'slayerkey-website' ), array( 'response' => 404 ) );
+}
+
+function slayerkey_website_render_private_preview() {
+    $slug = slayerkey_website_preview_slug_from_request();
+
+    if ( null === $slug ) {
+        return;
+    }
+
+    if ( ! is_user_logged_in() || ! current_user_can( 'manage_options' ) ) {
+        slayerkey_website_render_404();
+    }
+
+    $previews = slayerkey_website_preview_map();
+    $preview = $previews[ $slug ];
+    $preview_file = plugin_dir_path( __FILE__ ) . $preview['file'];
+
+    if ( ! is_readable( $preview_file ) ) {
+        slayerkey_website_render_404();
+    }
+
+    $html = file_get_contents( $preview_file );
+
+    if ( false === $html ) {
+        slayerkey_website_render_404();
+    }
+
+    global $wp_query;
+
+    if ( $wp_query instanceof WP_Query ) {
+        $wp_query->is_404 = false;
+    }
+
+    show_admin_bar( false );
+    status_header( 200 );
+    nocache_headers();
+    header( 'Content-Type: text/html; charset=' . get_option( 'blog_charset' ) );
+    header( 'X-Robots-Tag: noindex, nofollow, noarchive', true );
+
+    $asset_base = plugin_dir_url( __FILE__ ) . 'previews/' . rawurlencode( $slug ) . '/assets/';
+    $shared_base = plugin_dir_url( __FILE__ ) . 'previews/shared/';
+
+    $html = str_replace(
+        array( 'src="assets/', "src='assets/", 'href="assets/', "href='assets/" ),
+        array( 'src="' . esc_url( $asset_base ), "src='" . esc_url( $asset_base ), 'href="' . esc_url( $asset_base ), "href='" . esc_url( $asset_base ) ),
+        $html
+    );
+    $html = str_replace( '__SLAYERKEY_PREVIEW_SHARED__', esc_url( $shared_base ), $html );
+
+    // Keep accidental checkout clicks from preview pages out of production campaign attribution.
+    $html = str_replace( 'utm_source=slayerkey_site', 'utm_source=private_preview', $html );
+
+    $preview_meta = '<meta name="robots" content="noindex,nofollow,noarchive"><meta name="slayerkey-preview" content="' . esc_attr( $slug ) . '">';
+
+    if ( false !== stripos( $html, '</head>' ) ) {
+        $html = preg_replace( '/<\/head>/i', $preview_meta . '</head>', $html, 1 );
+    } else {
+        $html = $preview_meta . $html;
+    }
+
+    echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    exit;
+}
+add_action( 'template_redirect', 'slayerkey_website_render_private_preview', 0 );
 
 function slayerkey_website_version_marker() {
     if ( is_admin() ) {
@@ -32,10 +168,12 @@ function slayerkey_website_health_response() {
             'posthog_host' => SLAYERKEY_POSTHOG_HOST,
             'posthog_ui_host' => SLAYERKEY_POSTHOG_UI_HOST,
             'tracking_asset' => plugin_dir_url( __FILE__ ) . 'assets/js/tracking.js',
+            'private_previews_enabled' => true,
             'hooks' => array(
                 'version_marker_registered' => false !== has_action( 'wp_head', 'slayerkey_website_version_marker' ),
                 'posthog_snippet_registered' => false !== has_action( 'wp_head', 'slayerkey_website_posthog_snippet' ),
                 'tracking_enqueue_registered' => false !== has_action( 'wp_enqueue_scripts', 'slayerkey_website_enqueue_tracking' ),
+                'private_preview_registered' => false !== has_action( 'template_redirect', 'slayerkey_website_render_private_preview' ),
             ),
         )
     );
@@ -55,7 +193,7 @@ function slayerkey_website_register_health_route() {
 add_action( 'rest_api_init', 'slayerkey_website_register_health_route' );
 
 function slayerkey_website_posthog_snippet() {
-    if ( is_admin() ) {
+    if ( is_admin() || slayerkey_website_is_private_preview_request() ) {
         return;
     }
     ?>
@@ -74,7 +212,7 @@ function slayerkey_website_posthog_snippet() {
 add_action( 'wp_head', 'slayerkey_website_posthog_snippet', 1 );
 
 function slayerkey_website_enqueue_tracking() {
-    if ( is_admin() ) {
+    if ( is_admin() || slayerkey_website_is_private_preview_request() ) {
         return;
     }
 
