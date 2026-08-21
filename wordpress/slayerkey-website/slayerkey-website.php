@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.1
+ * Version: 0.1.2
  * Author: Slayerkey
  */
 
@@ -10,9 +10,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.1' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.2' );
 define( 'SLAYERKEY_POSTHOG_TOKEN', 'phc_m92yxHMa2BTnSu7KmebGKu8sEitMki4oPhdLTKZzcpMc' );
 define( 'SLAYERKEY_POSTHOG_HOST', 'https://us.i.posthog.com' );
+define( 'SLAYERKEY_POSTHOG_SMOKE_OPTION', 'slayerkey_posthog_server_smoke_012' );
 
 function slayerkey_website_diagnostic_marker() {
     if ( is_admin() ) {
@@ -23,6 +24,100 @@ function slayerkey_website_diagnostic_marker() {
 }
 add_action( 'wp_head', 'slayerkey_website_diagnostic_marker', 0 );
 
+function slayerkey_website_run_server_smoke_test() {
+    if ( get_option( SLAYERKEY_POSTHOG_SMOKE_OPTION ) ) {
+        return;
+    }
+
+    $payload = array(
+        'api_key' => SLAYERKEY_POSTHOG_TOKEN,
+        'distinct_id' => 'slayerkey-wordpress-server-smoke',
+        'event' => 'integration smoke test',
+        'properties' => array(
+            'source' => 'slayerkey-wordpress-plugin',
+            'plugin_version' => SLAYERKEY_WEBSITE_VERSION,
+            '$process_person_profile' => false,
+        ),
+    );
+
+    $response = wp_remote_post(
+        SLAYERKEY_POSTHOG_HOST . '/i/v0/e/',
+        array(
+            'timeout' => 5,
+            'headers' => array(
+                'Content-Type' => 'application/json',
+            ),
+            'body' => wp_json_encode( $payload ),
+        )
+    );
+
+    if ( is_wp_error( $response ) ) {
+        update_option(
+            SLAYERKEY_POSTHOG_SMOKE_OPTION,
+            array(
+                'ok' => false,
+                'error' => sanitize_text_field( $response->get_error_message() ),
+                'tested_at' => time(),
+            ),
+            false
+        );
+        return;
+    }
+
+    $status = (int) wp_remote_retrieve_response_code( $response );
+
+    update_option(
+        SLAYERKEY_POSTHOG_SMOKE_OPTION,
+        array(
+            'ok' => $status >= 200 && $status < 300,
+            'status' => $status,
+            'tested_at' => time(),
+        ),
+        false
+    );
+}
+add_action( 'init', 'slayerkey_website_run_server_smoke_test', 20 );
+
+function slayerkey_website_probe_homepage() {
+    $probe_url = add_query_arg( 'slayerkey_health_probe', (string) time(), home_url( '/' ) );
+    $response = wp_remote_get(
+        $probe_url,
+        array(
+            'timeout' => 7,
+            'redirection' => 3,
+            'headers' => array(
+                'Cache-Control' => 'no-cache',
+            ),
+        )
+    );
+
+    if ( is_wp_error( $response ) ) {
+        return array(
+            'ok' => false,
+            'error' => sanitize_text_field( $response->get_error_message() ),
+        );
+    }
+
+    $body = (string) wp_remote_retrieve_body( $response );
+    $headers = wp_remote_retrieve_headers( $response );
+    $csp = '';
+
+    if ( isset( $headers['content-security-policy'] ) ) {
+        $csp = (string) $headers['content-security-policy'];
+    }
+
+    return array(
+        'ok' => true,
+        'status' => (int) wp_remote_retrieve_response_code( $response ),
+        'plugin_marker_present' => false !== strpos( $body, 'Slayerkey Website ' . SLAYERKEY_WEBSITE_VERSION . ' active' ),
+        'posthog_init_present' => false !== strpos( $body, 'posthog.init(' ),
+        'posthog_asset_host_present' => false !== strpos( $body, 'us-assets.i.posthog.com' ) || false !== strpos( $body, 'replace(".i.posthog.com","-assets.i.posthog.com")' ),
+        'tracking_asset_present' => false !== strpos( $body, 'slayerkey-website/assets/js/tracking.js' ),
+        'csp_present' => '' !== $csp,
+        'csp' => '' !== $csp ? sanitize_text_field( $csp ) : null,
+    );
+}
+
 function slayerkey_website_health_response() {
     return rest_ensure_response(
         array(
@@ -30,6 +125,8 @@ function slayerkey_website_health_response() {
             'version' => SLAYERKEY_WEBSITE_VERSION,
             'posthog_host' => SLAYERKEY_POSTHOG_HOST,
             'tracking_asset' => plugin_dir_url( __FILE__ ) . 'assets/js/tracking.js',
+            'server_smoke' => get_option( SLAYERKEY_POSTHOG_SMOKE_OPTION, null ),
+            'homepage_probe' => slayerkey_website_probe_homepage(),
         )
     );
 }
@@ -57,7 +154,14 @@ function slayerkey_website_posthog_snippet() {
 
         posthog.init('<?php echo esc_js( SLAYERKEY_POSTHOG_TOKEN ); ?>', {
             api_host: '<?php echo esc_js( SLAYERKEY_POSTHOG_HOST ); ?>',
-            defaults: '2026-05-30'
+            defaults: '2026-05-30',
+            loaded: function (ph) {
+                window.__slayerkeyPostHogLoaded = true;
+                ph.capture('browser integration smoke test', {
+                    source: 'slayerkey-wordpress-plugin',
+                    plugin_version: '<?php echo esc_js( SLAYERKEY_WEBSITE_VERSION ); ?>'
+                });
+            }
         });
     </script>
     <?php
