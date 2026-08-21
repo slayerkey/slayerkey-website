@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.0
+ * Version: 0.1.1
  * Author: Slayerkey
  */
 
@@ -10,9 +10,42 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.0' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.1' );
 define( 'SLAYERKEY_POSTHOG_TOKEN', 'phc_m92yxHMa2BTnSu7KmebGKu8sEitMki4oPhdLTKZzcpMc' );
 define( 'SLAYERKEY_POSTHOG_HOST', 'https://us.i.posthog.com' );
+
+function slayerkey_website_diagnostic_marker() {
+    if ( is_admin() ) {
+        return;
+    }
+
+    echo "\n<!-- Slayerkey Website " . esc_html( SLAYERKEY_WEBSITE_VERSION ) . " active -->\n";
+}
+add_action( 'wp_head', 'slayerkey_website_diagnostic_marker', 0 );
+
+function slayerkey_website_health_response() {
+    return rest_ensure_response(
+        array(
+            'plugin_active' => true,
+            'version' => SLAYERKEY_WEBSITE_VERSION,
+            'posthog_host' => SLAYERKEY_POSTHOG_HOST,
+            'tracking_asset' => plugin_dir_url( __FILE__ ) . 'assets/js/tracking.js',
+        )
+    );
+}
+
+function slayerkey_website_register_health_route() {
+    register_rest_route(
+        'slayerkey/v1',
+        '/health',
+        array(
+            'methods' => 'GET',
+            'callback' => 'slayerkey_website_health_response',
+            'permission_callback' => '__return_true',
+        )
+    );
+}
+add_action( 'rest_api_init', 'slayerkey_website_register_health_route' );
 
 function slayerkey_website_posthog_snippet() {
     if ( is_admin() ) {
