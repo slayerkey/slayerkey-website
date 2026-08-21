@@ -1,10 +1,15 @@
-name: Deploy to EasyWP
+name: EasyWP Connection Test
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/deploy.yml'
 
 jobs:
-  deploy:
+  test-connection:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,7 +31,7 @@ jobs:
           test -n "$SFTP_PASSWORD" || (echo "Missing EASYWP_PASSWORD" && exit 1)
           test -n "$SFTP_PORT" || (echo "Missing EASYWP_PORT" && exit 1)
 
-      - name: Check EasyWP plugin directory
+      - name: Test EasyWP SFTP connection
         env:
           SFTP_HOST: ${{ secrets.EASYWP_HOST }}
           SFTP_USER: ${{ secrets.EASYWP_USER }}
@@ -35,21 +40,7 @@ jobs:
         run: |
           lftp -u "$SFTP_USER","$SFTP_PASSWORD" -p "$SFTP_PORT" "sftp://$SFTP_HOST" <<'EOF'
           set sftp:auto-confirm yes
-          cls -1 /wptbox/wp-content/plugins
-          bye
-          EOF
-
-      - name: Deploy Slayerkey website plugin
-        if: ${{ hashFiles('wordpress/slayerkey-website/**') != '' }}
-        env:
-          SFTP_HOST: ${{ secrets.EASYWP_HOST }}
-          SFTP_USER: ${{ secrets.EASYWP_USER }}
-          SFTP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
-          SFTP_PORT: ${{ secrets.EASYWP_PORT }}
-        run: |
-          lftp -u "$SFTP_USER","$SFTP_PASSWORD" -p "$SFTP_PORT" "sftp://$SFTP_HOST" <<'EOF'
-          set sftp:auto-confirm yes
-          mkdir -p /wptbox/wp-content/plugins/slayerkey-website
-          mirror -R --delete --verbose wordpress/slayerkey-website/ /wptbox/wp-content/plugins/slayerkey-website/
+          pwd
+          cls -1
           bye
           EOF
