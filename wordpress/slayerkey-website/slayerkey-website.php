@@ -126,11 +126,14 @@ function slayerkey_website_render_private_preview() {
     header( 'X-Robots-Tag: noindex, nofollow, noarchive', true );
 
     $asset_base = plugin_dir_url( __FILE__ ) . 'previews/' . rawurlencode( $slug ) . '/assets/';
+    $shared_base = plugin_dir_url( __FILE__ ) . 'previews/shared/';
+
     $html = str_replace(
         array( 'src="assets/', "src='assets/", 'href="assets/', "href='assets/" ),
         array( 'src="' . esc_url( $asset_base ), "src='" . esc_url( $asset_base ), 'href="' . esc_url( $asset_base ), "href='" . esc_url( $asset_base ) ),
         $html
     );
+    $html = str_replace( '__SLAYERKEY_PREVIEW_SHARED__', esc_url( $shared_base ), $html );
 
     // Keep accidental checkout clicks from preview pages out of production campaign attribution.
     $html = str_replace( 'utm_source=slayerkey_site', 'utm_source=private_preview', $html );
