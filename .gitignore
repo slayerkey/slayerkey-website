@@ -1,0 +1,23 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*service-account*.json
+*credentials*.json
+
+# Private analytics exports and local agent settings
+**/evidence/raw-private/
+**/.claude/settings.local.json
+
+# Local browser and dependency installs
+**/tools/.playwright/
+node_modules/
+vendor/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
