@@ -1,0 +1,55 @@
+name: Deploy to EasyWP
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install SFTP client
+        run: sudo apt-get update && sudo apt-get install -y lftp
+
+      - name: Verify required secrets
+        env:
+          SFTP_HOST: ${{ secrets.EASYWP_HOST }}
+          SFTP_USER: ${{ secrets.EASYWP_USER }}
+          SFTP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
+          SFTP_PORT: ${{ secrets.EASYWP_PORT }}
+        run: |
+          test -n "$SFTP_HOST" || (echo "Missing EASYWP_HOST" && exit 1)
+          test -n "$SFTP_USER" || (echo "Missing EASYWP_USER" && exit 1)
+          test -n "$SFTP_PASSWORD" || (echo "Missing EASYWP_PASSWORD" && exit 1)
+          test -n "$SFTP_PORT" || (echo "Missing EASYWP_PORT" && exit 1)
+
+      - name: Check EasyWP plugin directory
+        env:
+          SFTP_HOST: ${{ secrets.EASYWP_HOST }}
+          SFTP_USER: ${{ secrets.EASYWP_USER }}
+          SFTP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
+          SFTP_PORT: ${{ secrets.EASYWP_PORT }}
+        run: |
+          lftp -u "$SFTP_USER","$SFTP_PASSWORD" -p "$SFTP_PORT" "sftp://$SFTP_HOST" <<'EOF'
+          set sftp:auto-confirm yes
+          cls -1 /wptbox/wp-content/plugins
+          bye
+          EOF
+
+      - name: Deploy Slayerkey website plugin
+        if: ${{ hashFiles('wordpress/slayerkey-website/**') != '' }}
+        env:
+          SFTP_HOST: ${{ secrets.EASYWP_HOST }}
+          SFTP_USER: ${{ secrets.EASYWP_USER }}
+          SFTP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
+          SFTP_PORT: ${{ secrets.EASYWP_PORT }}
+        run: |
+          lftp -u "$SFTP_USER","$SFTP_PASSWORD" -p "$SFTP_PORT" "sftp://$SFTP_HOST" <<'EOF'
+          set sftp:auto-confirm yes
+          mkdir -p /wptbox/wp-content/plugins/slayerkey-website
+          mirror -R --delete --verbose wordpress/slayerkey-website/ /wptbox/wp-content/plugins/slayerkey-website/
+          bye
+          EOF
