@@ -1,4 +1,4 @@
-name: EasyWP Connection Test
+name: Deploy Slayerkey Website to EasyWP
 
 on:
   workflow_dispatch:
@@ -6,15 +6,16 @@ on:
     branches:
       - main
     paths:
+      - 'wordpress/slayerkey-website/**'
       - '.github/workflows/deploy.yml'
 
 jobs:
-  test-connection:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install SFTP client
         run: sudo apt-get update && sudo apt-get install -y lftp
@@ -30,17 +31,49 @@ jobs:
           test -n "$SFTP_USER" || (echo "Missing EASYWP_USER" && exit 1)
           test -n "$SFTP_PASSWORD" || (echo "Missing EASYWP_PASSWORD" && exit 1)
           test -n "$SFTP_PORT" || (echo "Missing EASYWP_PORT" && exit 1)
+          test -f "wordpress/slayerkey-website/slayerkey-website.php" || (echo "Plugin source is missing" && exit 1)
 
-      - name: Test EasyWP SFTP connection
+      - name: Find EasyWP plugin directory
         env:
           SFTP_HOST: ${{ secrets.EASYWP_HOST }}
           SFTP_USER: ${{ secrets.EASYWP_USER }}
           SFTP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
           SFTP_PORT: ${{ secrets.EASYWP_PORT }}
         run: |
-          lftp -u "$SFTP_USER","$SFTP_PASSWORD" -p "$SFTP_PORT" "sftp://$SFTP_HOST" <<'EOF'
+          check_remote_path() {
+            lftp -u "$SFTP_USER","$SFTP_PASSWORD" -p "$SFTP_PORT" "sftp://$SFTP_HOST" -e "set sftp:auto-confirm yes; cls -d '$1'; bye" >/dev/null 2>&1
+          }
+
+          if check_remote_path "/wptbox/wp-content/plugins"; then
+            echo "REMOTE_PLUGIN_ROOT=/wptbox/wp-content/plugins" >> "$GITHUB_ENV"
+          elif check_remote_path "wp-content/plugins"; then
+            echo "REMOTE_PLUGIN_ROOT=wp-content/plugins" >> "$GITHUB_ENV"
+          else
+            echo "Could not find the EasyWP WordPress plugin directory."
+            exit 1
+          fi
+
+      - name: Deploy plugin
+        env:
+          SFTP_HOST: ${{ secrets.EASYWP_HOST }}
+          SFTP_USER: ${{ secrets.EASYWP_USER }}
+          SFTP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
+          SFTP_PORT: ${{ secrets.EASYWP_PORT }}
+        run: |
+          lftp -u "$SFTP_USER","$SFTP_PASSWORD" -p "$SFTP_PORT" "sftp://$SFTP_HOST" <<EOF
           set sftp:auto-confirm yes
-          pwd
-          cls -1
+          set net:max-retries 2
+          set net:timeout 20
+          lcd "$GITHUB_WORKSPACE"
+          mirror --reverse --delete --verbose wordpress/slayerkey-website "$REMOTE_PLUGIN_ROOT/slayerkey-website"
           bye
           EOF
+
+      - name: Verify deployed plugin
+        env:
+          SFTP_HOST: ${{ secrets.EASYWP_HOST }}
+          SFTP_USER: ${{ secrets.EASYWP_USER }}
+          SFTP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
+          SFTP_PORT: ${{ secrets.EASYWP_PORT }}
+        run: |
+          lftp -u "$SFTP_USER","$SFTP_PASSWORD" -p "$SFTP_PORT" "sftp://$SFTP_HOST" -e "set sftp:auto-confirm yes; cls -l '$REMOTE_PLUGIN_ROOT/slayerkey-website/slayerkey-website.php'; bye"
