@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.4
+ * Version: 0.1.5
  * Author: Slayerkey
  */
 
@@ -10,11 +10,11 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.4' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.5' );
 define( 'SLAYERKEY_POSTHOG_TOKEN', 'phc_m92yxHMa2BTnSu7KmebGKu8sEitMki4oPhdLTKZzcpMc' );
 define( 'SLAYERKEY_POSTHOG_HOST', 'https://edge.slayerkey.com' );
 define( 'SLAYERKEY_POSTHOG_UI_HOST', 'https://us.posthog.com' );
-define( 'SLAYERKEY_POSTHOG_BROWSER_DIAG_OPTION', 'slayerkey_posthog_browser_diag_014' );
+define( 'SLAYERKEY_POSTHOG_BROWSER_DIAG_OPTION', 'slayerkey_posthog_browser_diag_015' );
 
 function slayerkey_website_diagnostic_marker() {
     if ( is_admin() ) {
@@ -31,24 +31,48 @@ function slayerkey_website_browser_diagnostic_callback( WP_REST_Request $request
 
     $allowed_states = array(
         'snippet_executed',
-        'sdk_loaded',
         'posthog_loaded',
-        'sdk_error',
+        'runtime_loaded',
+        'runtime_not_loaded',
+        'direct_capture_complete',
+        'direct_capture_error',
     );
 
     if ( ! in_array( $state, $allowed_states, true ) ) {
         return new WP_Error( 'invalid_state', 'Invalid diagnostic state.', array( 'status' => 400 ) );
     }
 
-    update_option(
+    $diagnostic = get_option(
         SLAYERKEY_POSTHOG_BROWSER_DIAG_OPTION,
         array(
-            'state' => $state,
             'plugin_version' => SLAYERKEY_WEBSITE_VERSION,
-            'tested_at' => time(),
-        ),
-        false
+            'states' => array(),
+        )
     );
+
+    if ( ! is_array( $diagnostic ) ) {
+        $diagnostic = array();
+    }
+
+    if ( ! isset( $diagnostic['states'] ) || ! is_array( $diagnostic['states'] ) ) {
+        $diagnostic['states'] = array();
+    }
+
+    $entry = array(
+        'tested_at' => time(),
+    );
+
+    if ( isset( $params['status'] ) ) {
+        $status = absint( $params['status'] );
+        if ( $status <= 599 ) {
+            $entry['status'] = $status;
+        }
+    }
+
+    $diagnostic['plugin_version'] = SLAYERKEY_WEBSITE_VERSION;
+    $diagnostic['states'][ $state ] = $entry;
+
+    update_option( SLAYERKEY_POSTHOG_BROWSER_DIAG_OPTION, $diagnostic, false );
 
     return rest_ensure_response( array( 'ok' => true ) );
 }
@@ -103,23 +127,29 @@ function slayerkey_website_posthog_snippet() {
     ?>
     <script>
         (function () {
-            function skBrowserDiagnostic(state) {
+            function skBrowserDiagnostic(state, status) {
+                var payload = { state: state };
+
+                if (typeof status === 'number') {
+                    payload.status = status;
+                }
+
                 try {
                     fetch('<?php echo esc_url( $diagnostic_url ); ?>', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ state: state }),
+                        body: JSON.stringify(payload),
                         keepalive: true,
                         credentials: 'same-origin'
                     }).catch(function () {});
                 } catch (e) {}
             }
 
-            skBrowserDiagnostic('snippet_executed');
             window.__slayerkeyBrowserDiagnostic = skBrowserDiagnostic;
+            skBrowserDiagnostic('snippet_executed');
         })();
 
-        !function(t,e){var o,n,p,r;e.__SV||(window.posthog&&window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(/\/$/,"")+"/static/array.js",p.onload=function(){window.__slayerkeyBrowserDiagnostic&&window.__slayerkeyBrowserDiagnostic('sdk_loaded')},p.onerror=function(){window.__slayerkeyBrowserDiagnostic&&window.__slayerkeyBrowserDiagnostic('sdk_error');p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+        !function(t,e){var o,n,p,r;e.__SV||(window.posthog&&window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
 
         posthog.init('<?php echo esc_js( SLAYERKEY_POSTHOG_TOKEN ); ?>', {
             api_host: '<?php echo esc_js( SLAYERKEY_POSTHOG_HOST ); ?>',
@@ -127,15 +157,46 @@ function slayerkey_website_posthog_snippet() {
             defaults: '2026-05-30',
             strict_script_versioning: true,
             loaded: function (ph) {
-                window.__slayerkeyPostHogLoaded = true;
                 window.__slayerkeyBrowserDiagnostic && window.__slayerkeyBrowserDiagnostic('posthog_loaded');
-                ph.capture('browser integration smoke test', {
-                    source: 'slayerkey-wordpress-plugin',
-                    plugin_version: '<?php echo esc_js( SLAYERKEY_WEBSITE_VERSION ); ?>',
-                    transport: 'managed-reverse-proxy'
-                });
+
+                if (new URLSearchParams(window.location.search).get('skdiag') === '015') {
+                    ph.capture('browser integration smoke test 015', {
+                        source: 'slayerkey-wordpress-plugin',
+                        plugin_version: '<?php echo esc_js( SLAYERKEY_WEBSITE_VERSION ); ?>',
+                        transport: 'managed-reverse-proxy'
+                    });
+
+                    fetch('<?php echo esc_url( SLAYERKEY_POSTHOG_HOST . '/i/v0/e/' ); ?>', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'omit',
+                        cache: 'no-store',
+                        body: JSON.stringify({
+                            api_key: '<?php echo esc_js( SLAYERKEY_POSTHOG_TOKEN ); ?>',
+                            distinct_id: 'slayerkey-browser-direct-smoke-015',
+                            event: 'managed proxy direct smoke test 015',
+                            properties: {
+                                source: 'slayerkey-wordpress-plugin',
+                                plugin_version: '<?php echo esc_js( SLAYERKEY_WEBSITE_VERSION ); ?>',
+                                '$process_person_profile': false
+                            }
+                        })
+                    }).then(function (response) {
+                        window.__slayerkeyBrowserDiagnostic && window.__slayerkeyBrowserDiagnostic('direct_capture_complete', response.status);
+                    }).catch(function () {
+                        window.__slayerkeyBrowserDiagnostic && window.__slayerkeyBrowserDiagnostic('direct_capture_error', 0);
+                    });
+                }
             }
         });
+
+        window.setTimeout(function () {
+            if (window.posthog && window.posthog.__loaded) {
+                window.__slayerkeyBrowserDiagnostic && window.__slayerkeyBrowserDiagnostic('runtime_loaded');
+            } else {
+                window.__slayerkeyBrowserDiagnostic && window.__slayerkeyBrowserDiagnostic('runtime_not_loaded');
+            }
+        }, 3000);
     </script>
     <?php
 }
