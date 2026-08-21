@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.7
+ * Version: 0.1.8
  * Author: Slayerkey
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.7' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.8' );
 define( 'SLAYERKEY_POSTHOG_TOKEN', 'phc_m92yxHMa2BTnSu7KmebGKu8sEitMki4oPhdLTKZzcpMc' );
 define( 'SLAYERKEY_POSTHOG_HOST', 'https://edge.slayerkey.com' );
 define( 'SLAYERKEY_POSTHOG_UI_HOST', 'https://us.posthog.com' );
@@ -18,8 +18,11 @@ define( 'SLAYERKEY_POSTHOG_UI_HOST', 'https://us.posthog.com' );
 function slayerkey_website_preview_map() {
     return array(
         'dojo-v3' => array(
-            'title' => 'Training Dojo v3',
-            'file'  => 'previews/dojo-v3/index.html',
+            'title'       => 'Training Dojo v3',
+            'file'        => 'previews/dojo-v3/index.html',
+            'theme_shell' => true,
+            'style'       => 'previews/dojo-v3/dojo.css',
+            'script'      => 'previews/dojo-v3/dojo.js',
         ),
         'system-v3' => array(
             'title' => 'Improvement System v3',
@@ -88,6 +91,21 @@ function slayerkey_website_render_404() {
     wp_die( esc_html__( 'Not Found', 'slayerkey-website' ), esc_html__( 'Not Found', 'slayerkey-website' ), array( 'response' => 404 ) );
 }
 
+function slayerkey_website_prepare_preview_html( $html, $slug ) {
+    $asset_base = plugin_dir_url( __FILE__ ) . 'previews/' . rawurlencode( $slug ) . '/assets/';
+    $shared_base = plugin_dir_url( __FILE__ ) . 'previews/shared/';
+
+    $html = str_replace(
+        array( 'src="assets/', "src='assets/", 'href="assets/', "href='assets/" ),
+        array( 'src="' . esc_url( $asset_base ), "src='" . esc_url( $asset_base ), 'href="' . esc_url( $asset_base ), "href='" . esc_url( $asset_base ) ),
+        $html
+    );
+    $html = str_replace( '__SLAYERKEY_PREVIEW_SHARED__', esc_url( $shared_base ), $html );
+
+    // Keep accidental checkout clicks from preview pages out of production campaign attribution.
+    return str_replace( 'utm_source=slayerkey_site', 'utm_source=private_preview', $html );
+}
+
 function slayerkey_website_render_private_preview() {
     $slug = slayerkey_website_preview_slug_from_request();
 
@@ -113,31 +131,53 @@ function slayerkey_website_render_private_preview() {
         slayerkey_website_render_404();
     }
 
+    $html = slayerkey_website_prepare_preview_html( $html, $slug );
+
     global $wp_query;
 
     if ( $wp_query instanceof WP_Query ) {
         $wp_query->is_404 = false;
+        $wp_query->is_page = true;
     }
 
     show_admin_bar( false );
     status_header( 200 );
     nocache_headers();
-    header( 'Content-Type: text/html; charset=' . get_option( 'blog_charset' ) );
     header( 'X-Robots-Tag: noindex, nofollow, noarchive', true );
 
-    $asset_base = plugin_dir_url( __FILE__ ) . 'previews/' . rawurlencode( $slug ) . '/assets/';
-    $shared_base = plugin_dir_url( __FILE__ ) . 'previews/shared/';
+    // The Dojo preview deliberately runs through the real theme lifecycle so the same
+    // header, body-open snippets, footer snippets, fonts, global CSS and sitewide tools
+    // used on the production site are present while reviewing the redesign.
+    if ( ! empty( $preview['theme_shell'] ) ) {
+        if ( ! empty( $preview['style'] ) ) {
+            wp_enqueue_style(
+                'slayerkey-private-preview-' . $slug,
+                plugin_dir_url( __FILE__ ) . $preview['style'],
+                array(),
+                SLAYERKEY_WEBSITE_VERSION
+            );
+        }
 
-    $html = str_replace(
-        array( 'src="assets/', "src='assets/", 'href="assets/', "href='assets/" ),
-        array( 'src="' . esc_url( $asset_base ), "src='" . esc_url( $asset_base ), 'href="' . esc_url( $asset_base ), "href='" . esc_url( $asset_base ) ),
-        $html
-    );
-    $html = str_replace( '__SLAYERKEY_PREVIEW_SHARED__', esc_url( $shared_base ), $html );
+        if ( ! empty( $preview['script'] ) ) {
+            wp_enqueue_script(
+                'slayerkey-private-preview-' . $slug,
+                plugin_dir_url( __FILE__ ) . $preview['script'],
+                array(),
+                SLAYERKEY_WEBSITE_VERSION,
+                true
+            );
+        }
 
-    // Keep accidental checkout clicks from preview pages out of production campaign attribution.
-    $html = str_replace( 'utm_source=slayerkey_site', 'utm_source=private_preview', $html );
+        get_header();
+        echo "\n<!-- Slayerkey private preview: " . esc_html( $slug ) . " -->\n";
+        echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        get_footer();
+        exit;
+    }
 
+    // Legacy standalone preview renderer retained for the System and Coaching drafts
+    // until they receive the same site-shell conversion after visual review.
+    header( 'Content-Type: text/html; charset=' . get_option( 'blog_charset' ) );
     $preview_meta = '<meta name="robots" content="noindex,nofollow,noarchive"><meta name="slayerkey-preview" content="' . esc_attr( $slug ) . '">';
 
     if ( false !== stripos( $html, '</head>' ) ) {
