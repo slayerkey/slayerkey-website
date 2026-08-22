@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.9
+ * Version: 0.1.10
  * Author: Slayerkey
  */
 
@@ -10,13 +10,17 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.9' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.10' );
 define( 'SLAYERKEY_POSTHOG_TOKEN', 'phc_m92yxHMa2BTnSu7KmebGKu8sEitMki4oPhdLTKZzcpMc' );
 define( 'SLAYERKEY_POSTHOG_HOST', 'https://edge.slayerkey.com' );
 define( 'SLAYERKEY_POSTHOG_UI_HOST', 'https://us.posthog.com' );
 
 function slayerkey_website_preview_map() {
     return array(
+        'work-v2' => array(
+            'title' => 'Work Portfolio v2',
+            'file'  => 'previews/work-v2/index.html',
+        ),
         'work-v1' => array(
             'title'       => 'Work Portfolio v1',
             'file'        => 'previews/work-v1/index.html',
@@ -180,8 +184,9 @@ function slayerkey_website_render_private_preview() {
         exit;
     }
 
-    // Legacy standalone preview renderer retained for the System and Coaching drafts
-    // until they receive the same site-shell conversion after visual review.
+    // Standalone previews intentionally bypass the public site shell. This is useful for
+    // portfolio and product surfaces that should not inherit coaching-specific navigation,
+    // popups, fonts, or conversion UI while they are being reviewed.
     header( 'Content-Type: text/html; charset=' . get_option( 'blog_charset' ) );
     $preview_meta = '<meta name="robots" content="noindex,nofollow,noarchive"><meta name="slayerkey-preview" content="' . esc_attr( $slug ) . '">';
 
