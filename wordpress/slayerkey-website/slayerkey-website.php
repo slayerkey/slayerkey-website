@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.8
+ * Version: 0.1.9
  * Author: Slayerkey
  */
 
@@ -10,13 +10,19 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.8' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.9' );
 define( 'SLAYERKEY_POSTHOG_TOKEN', 'phc_m92yxHMa2BTnSu7KmebGKu8sEitMki4oPhdLTKZzcpMc' );
 define( 'SLAYERKEY_POSTHOG_HOST', 'https://edge.slayerkey.com' );
 define( 'SLAYERKEY_POSTHOG_UI_HOST', 'https://us.posthog.com' );
 
 function slayerkey_website_preview_map() {
     return array(
+        'work-v1' => array(
+            'title'       => 'Work Portfolio v1',
+            'file'        => 'previews/work-v1/index.html',
+            'theme_shell' => true,
+            'style'       => 'previews/work-v1/work.css',
+        ),
         'dojo-v3' => array(
             'title'       => 'Training Dojo v3',
             'file'        => 'previews/dojo-v3/index.html',
@@ -145,9 +151,8 @@ function slayerkey_website_render_private_preview() {
     nocache_headers();
     header( 'X-Robots-Tag: noindex, nofollow, noarchive', true );
 
-    // The Dojo preview deliberately runs through the real theme lifecycle so the same
-    // header, body-open snippets, footer snippets, fonts, global CSS and sitewide tools
-    // used on the production site are present while reviewing the redesign.
+    // Theme-shell previews deliberately run through the real theme lifecycle so the same
+    // header, footer, fonts, global CSS, and sitewide tools are present during review.
     if ( ! empty( $preview['theme_shell'] ) ) {
         if ( ! empty( $preview['style'] ) ) {
             wp_enqueue_style(
