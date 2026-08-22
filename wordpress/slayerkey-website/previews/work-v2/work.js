@@ -18,6 +18,14 @@ var brandNames=['Whatnot','TikTok','Metafy','ProGuides','ZOWIE','MrBeast','VALOR
 document.querySelectorAll('.logo-set').forEach(function(set){Array.prototype.slice.call(set.children).forEach(function(logo,index){var name=brandNames[index]||'Brand';logo.dataset.brand=name;if(name==='TikTok'){logo.className='logo logo-tiktok';logo.innerHTML=lockup(tiktokPath,'TikTok');return}if(name==='ZOWIE'){logo.className='logo logo-text logo-zowie-word';logo.textContent='ZOWIE';return}if(name==='VALORANT'){logo.className='logo logo-text logo-valorant-word';logo.innerHTML=lockup(valorantPath,'VALORANT')}})});
 document.querySelectorAll('.logo img').forEach(function(img){function fallback(){var parent=img.closest('.logo');if(!parent)return;var name=parent.dataset.brand||img.alt||'';if(name==='MrBeast'){img.remove();return}if(name){parent.className='logo logo-text';parent.textContent=name.toUpperCase()}}img.addEventListener('error',fallback,{once:true});if(img.complete&&img.naturalWidth===0)fallback()});
 
+var packratVisuals=[
+  {src:'https://raw.githubusercontent.com/slayerkey/packrat-site/main/assets/featured/market-command-center.webp',alt:'Packrat Market Command Center product artwork'},
+  {src:'https://raw.githubusercontent.com/slayerkey/packrat-site/main/assets/featured/performance-grapher.webp',alt:'Packrat Performance Grapher product artwork'},
+  {src:'https://raw.githubusercontent.com/slayerkey/packrat-site/main/assets/featured/icon-pack.webp',alt:'Packrat icon pack product artwork'}
+];
+var packratCells=document.querySelectorAll('.product-proof-grid>div');
+packratVisuals.forEach(function(item,index){var cell=packratCells[index];if(!cell)return;var img=document.createElement('img');img.src=item.src;img.alt=item.alt;img.loading='lazy';img.style.cssText='display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;margin-bottom:10px;background:#050607';img.addEventListener('error',function(){img.remove()},{once:true});cell.insertBefore(img,cell.firstChild)});
+
 document.querySelectorAll('.evidence-link').forEach(function(link){link.addEventListener('click',function(){safeCapture('portfolio_evidence_click',{project:link.dataset.project||'unknown',destination:link.href})})});
 
 var modal=document.createElement('div');
