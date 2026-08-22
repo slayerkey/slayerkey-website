@@ -54,9 +54,9 @@
             });
         }
 
-        /* Use the real site's header CTA, but keep preview clicks isolated in attribution. */
+        /* Use the real site's header CTA, with preview-specific attribution. */
         Array.prototype.slice.call(document.querySelectorAll('.sk-cta-btn,.sk-mobile-cta')).forEach(function (link) {
-            link.href = 'https://whop.com/checkout/plan_TOSvOOLdpQXzi/?utm_source=private_preview&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=global_header_start_improving';
+            link.href = 'https://whop.com/checkout/plan_eVop6pXsIhHlf/?utm_source=private_preview&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=global_header_start_improving';
             link.target = '_blank';
             link.rel = 'noopener';
             if (link.textContent && link.textContent.trim()) link.textContent = 'Start Improving';
@@ -79,7 +79,8 @@
                 trigger.addEventListener('click', function () {
                     if (!lightboxImage) return;
                     lightboxImage.src = trigger.getAttribute('data-proof-src');
-                    lightboxImage.alt = trigger.querySelector('img') ? trigger.querySelector('img').alt : 'Expanded proof';
+                    var childImage = trigger.querySelector('img');
+                    lightboxImage.alt = childImage ? childImage.alt : 'Expanded community proof';
                     lightbox.classList.add('open');
                     lightbox.setAttribute('aria-hidden', 'false');
                     document.body.style.overflow = 'hidden';

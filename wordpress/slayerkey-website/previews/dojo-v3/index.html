@@ -7,49 +7,102 @@
   margin-right:calc(50% - 50vw);
   overflow-x:clip;
 }
-#sk-std h1,#sk-std h2,#sk-std h3{
-  font-weight:400!important;
-}
+#sk-std h1,#sk-std h2,#sk-std h3{font-weight:400!important;}
+#sk-std .dj-mid-cta{text-align:center;margin-top:28px;}
+
+/* Community proof uses one original Dojo collage, cropped visually into cards. */
 #sk-std .dj-community-grid{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:18px;
   max-width:1120px;
   margin:0 auto;
-  align-items:start;
 }
-#sk-std .dj-community-proof{
+#sk-std .dj-win-card{
   appearance:none;
+  display:block;
   width:100%;
-  padding:8px;
+  padding:0;
+  overflow:hidden;
   border:1px solid rgba(255,255,255,.11);
   background:#090f14;
+  text-align:left;
   cursor:zoom-in;
   box-shadow:0 18px 45px rgba(0,0,0,.22);
   transition:transform .25s var(--dj-ease),border-color .25s ease,box-shadow .25s ease;
 }
-#sk-std .dj-community-proof:hover{
+#sk-std .dj-win-card:hover{
   transform:translateY(-3px);
   border-color:rgba(40,223,203,.36);
-  box-shadow:0 24px 58px rgba(0,0,0,.3);
+  box-shadow:0 24px 58px rgba(0,0,0,.30);
 }
-#sk-std .dj-community-proof img{
-  display:block;
+#sk-std .dj-win-thumb{
   width:100%;
-  height:auto;
-  object-fit:contain;
+  aspect-ratio:1.48/1;
+  background-image:url('https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp');
+  background-repeat:no-repeat;
+  background-size:300% 200%;
+  background-color:#0a1117;
 }
-#sk-std .dj-mid-cta{
-  text-align:center;
-  margin-top:28px;
+#sk-std .dj-win-thumb.is-zus{background-position:0 0;}
+#sk-std .dj-win-thumb.is-morien{background-position:50% 0;}
+#sk-std .dj-win-thumb.is-ikkai{background-position:0 100%;}
+#sk-std .dj-win-thumb.is-jagi{background-position:50% 100%;}
+#sk-std .dj-win-copy{padding:16px 18px 17px;}
+#sk-std .dj-win-copy small{
+  display:block;
+  margin-bottom:4px;
+  color:var(--dj-teal);
+  font-size:.65rem;
+  font-weight:900;
+  letter-spacing:.11em;
+  text-transform:uppercase;
+}
+#sk-std .dj-win-copy strong{display:block;color:#fff;font-size:1rem;line-height:1.25;}
+#sk-std .dj-win-copy span{display:block;margin-top:5px;color:var(--dj-muted);font-size:.78rem;line-height:1.45;}
+
+/* Force a visible continuous horizontal review rail even if global animation CSS changes. */
+#sk-std .dj-review-track{
+  animation:skDojoReviewRail 38s linear infinite!important;
+  animation-play-state:running!important;
+}
+#sk-std .dj-review-rail:hover .dj-review-track{animation-play-state:running!important;}
+@keyframes skDojoReviewRail{
+  from{transform:translate3d(calc(-50% - 7px),0,0)}
+  to{transform:translate3d(0,0,0)}
+}
+
+/* Monthly + annual plan choice. */
+#sk-std .dj-value-box{grid-template-columns:minmax(0,.82fr) minmax(520px,1.18fr);}
+#sk-std .dj-plan-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;}
+#sk-std .dj-plan-options .dj-price-card{height:100%;display:flex;flex-direction:column;justify-content:center;}
+#sk-std .dj-plan-options .btn{margin-top:auto;}
+#sk-std .dj-plan-save{
+  display:inline-flex;
+  align-self:center;
+  margin:10px auto 0;
+  padding:5px 9px;
+  border:1px solid rgba(40,223,203,.26);
+  background:rgba(40,223,203,.07);
+  color:var(--dj-teal);
+  font-size:.63rem;
+  font-weight:900;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+}
+#sk-std .dj-plan-note{min-height:54px;}
+
+@media(max-width:900px){
+  #sk-std .dj-value-box{grid-template-columns:1fr;}
 }
 @media(max-width:700px){
-  #sk-std{width:100%;margin-left:0;margin-right:0}
-  #sk-std .dj-community-grid{grid-template-columns:1fr;gap:14px}
+  #sk-std{width:100%;margin-left:0;margin-right:0;}
+  #sk-std .dj-community-grid,#sk-std .dj-plan-options{grid-template-columns:1fr;gap:14px;}
+  #sk-std .dj-win-thumb{aspect-ratio:1.35/1;}
 }
 </style>
 
-<main id="sk-std" class="sk-dojo-preview" data-page-variant="dojo_conversion_v5">
+<main id="sk-std" class="sk-dojo-preview" data-page-variant="dojo_conversion_v6">
   <section class="dj-hero" id="top">
     <div class="container dj-hero-grid">
       <div class="dj-hero-copy reveal">
@@ -61,7 +114,7 @@
         </h1>
         <p class="lead">Stop guessing what to improve. Get structured training, real feedback, and a place to actually apply it until better decisions become ranked habits.</p>
         <div class="dj-actions">
-          <a class="btn" href="https://whop.com/checkout/plan_TOSvOOLdpQXzi/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=hero_start_improving" data-sk-cta="dojo-hero-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="hero">Start Improving</a>
+          <a class="btn" href="https://whop.com/checkout/plan_eVop6pXsIhHlf/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=hero_start_improving" data-sk-cta="dojo-hero-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="hero">Start Improving</a>
         </div>
         <div class="dj-proofline" aria-label="Dojo highlights">
           <span>100+ lessons</span>
@@ -92,7 +145,7 @@
         <button class="dj-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2025/05/aidn-site.png" aria-label="Expand player transformation"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2025/05/aidn-site.png" alt="Documented Valorant player rank transformation"></button>
         <button class="dj-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2025/05/dark-site.png" aria-label="Expand player transformation"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2025/05/dark-site.png" alt="Documented Valorant player rank transformation"></button>
       </div>
-      <div class="dj-center reveal d2"><a class="btn" href="https://whop.com/checkout/plan_TOSvOOLdpQXzi/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=proof_start_improving" data-sk-cta="dojo-proof-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="proof">Start Improving</a></div>
+      <div class="dj-center reveal d2"><a class="btn" href="https://whop.com/checkout/plan_eVop6pXsIhHlf/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=proof_start_improving" data-sk-cta="dojo-proof-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="proof">Start Improving</a></div>
     </div>
   </section>
 
@@ -124,7 +177,7 @@
         <article class="dj-loop-card reveal d2"><span>03</span><h3>Ask when stuck</h3><p>Daily coaching gives you a place to get an answer instead of guessing.</p></article>
         <article class="dj-loop-card reveal d3"><span>04</span><h3>Practice with intent</h3><p>Teams and accountability give the advice somewhere to become a habit.</p></article>
       </div>
-      <div class="dj-mid-cta reveal d2"><a class="btn" href="https://whop.com/checkout/plan_TOSvOOLdpQXzi/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=loop_start_improving" data-sk-cta="dojo-loop-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="feedback_loop">Start Improving</a></div>
+      <div class="dj-mid-cta reveal d2"><a class="btn" href="https://whop.com/checkout/plan_eVop6pXsIhHlf/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=loop_start_improving" data-sk-cta="dojo-loop-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="feedback_loop">Start Improving</a></div>
     </div>
   </section>
 
@@ -140,7 +193,7 @@
         <div><small>Practice</small><strong>Private teams that care about improving</strong><p>Competitive practice around players who want the same thing.</p></div>
         <div><small>Consistency</small><strong>Accountability and a growing archive</strong><p>Keep showing up instead of restarting your improvement every few weeks.</p></div>
       </div>
-      <div class="dj-mid-cta reveal d2"><a class="btn" href="https://whop.com/checkout/plan_TOSvOOLdpQXzi/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=inside_start_improving" data-sk-cta="dojo-inside-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="inside_dojo">Start Improving</a></div>
+      <div class="dj-mid-cta reveal d2"><a class="btn" href="https://whop.com/checkout/plan_eVop6pXsIhHlf/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=inside_start_improving" data-sk-cta="dojo-inside-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="inside_dojo">Start Improving</a></div>
     </div>
   </section>
 
@@ -149,15 +202,27 @@
       <div class="dj-section-head centered reveal">
         <div class="eyebrow">Inside the Community</div>
         <h2>This Is What <span class="gradient-text">Improvement</span> Looks Like.</h2>
-        <p>Real messages, real games, and the work showing up in ranked.</p>
+        <p>Rank ups, win streaks, huge games, and the work actually showing up in ranked.</p>
       </div>
       <div class="dj-community-grid">
-        <button class="dj-community-proof reveal" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community/zus.webp" aria-label="Expand Zus community result"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community/zus.webp" alt="Zus posting a first-time Diamond rank up and related Valorant wins"></button>
-        <button class="dj-community-proof reveal d1" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community/morien.webp" aria-label="Expand Morien community result"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community/morien.webp" alt="Morien posting a strong Valorant match result"></button>
-        <button class="dj-community-proof reveal d2" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community/ikkai.webp" aria-label="Expand Ikkai community result"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community/ikkai.webp" alt="Ikkai posting a ten-game win streak in Valorant"></button>
-        <button class="dj-community-proof reveal d3" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community/jagi.webp" aria-label="Expand Jagi community result"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community/jagi.webp" alt="Jagi posting that Slayerkey's teaching was helping in rank-up games"></button>
+        <button class="dj-win-card reveal" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp" aria-label="Expand first time Diamond community proof">
+          <div class="dj-win-thumb is-zus" aria-hidden="true"></div>
+          <div class="dj-win-copy"><small>Rank Up</small><strong>First time Diamond</strong><span>The climb showing up in the rank screen and match history.</span></div>
+        </button>
+        <button class="dj-win-card reveal d1" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp" aria-label="Expand huge game community proof">
+          <div class="dj-win-thumb is-morien" aria-hidden="true"></div>
+          <div class="dj-win-copy"><small>Huge Game</small><strong>Big scoreboard performance</strong><span>A strong game posted directly inside the community.</span></div>
+        </button>
+        <button class="dj-win-card reveal d2" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp" aria-label="Expand ten game win streak community proof">
+          <div class="dj-win-thumb is-ikkai" aria-hidden="true"></div>
+          <div class="dj-win-copy"><small>Consistency</small><strong>10 game win streak</strong><span>Ten straight wins while figuring out which game was even worth reviewing next.</span></div>
+        </button>
+        <button class="dj-win-card reveal d3" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp" aria-label="Expand rank up game community proof">
+          <div class="dj-win-thumb is-jagi" aria-hidden="true"></div>
+          <div class="dj-win-copy"><small>Rank Up Games</small><strong>60% headshot rate</strong><span>“Your teachings turning me into Thanos for the rank up games.”</span></div>
+        </button>
       </div>
-      <div class="dj-center reveal d2"><a class="btn" href="https://whop.com/checkout/plan_TOSvOOLdpQXzi/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=community_start_improving" data-sk-cta="dojo-community-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="community">Start Improving</a></div>
+      <div class="dj-center reveal d2"><a class="btn" href="https://whop.com/checkout/plan_eVop6pXsIhHlf/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=community_start_improving" data-sk-cta="dojo-community-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="community">Start Improving</a></div>
     </div>
   </section>
 
@@ -192,18 +257,27 @@
     <div class="container dj-value-box reveal">
       <div>
         <div class="eyebrow">Training Dojo Membership</div>
-        <h2>A Complete Improvement Environment for <span class="gradient-text">$19.99 a Month.</span></h2>
-        <p class="dj-body-copy">The course library gives you answers. Reviews, coaching, teams, and accountability keep those answers useful every week.</p>
+        <h2>Choose Monthly or <span class="gradient-text">Save With Annual.</span></h2>
+        <p class="dj-body-copy">Same complete Dojo access either way: the training library, reviews, coaching, teams, accountability, and member resources.</p>
         <div class="dj-checks">
           <span>100+ video lessons</span><span>Weekly VOD reviews</span><span>Daily coaching</span><span>Private teams</span><span>Seminar archive</span><span>Mechanics Masterclass</span><span>Agent and map guides</span><span>Member rewards</span>
         </div>
       </div>
-      <aside class="dj-price-card">
-        <div class="dj-price">$19.99</div>
-        <div class="dj-per">per month</div>
-        <p>Gain 400 RR in 90 days or your money back.</p>
-        <a class="btn" href="https://whop.com/checkout/plan_TOSvOOLdpQXzi/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=pricing_start_improving" data-sk-cta="dojo-pricing-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="pricing">Start Improving</a>
-      </aside>
+      <div class="dj-plan-options">
+        <aside class="dj-price-card">
+          <div class="dj-price">$19.99</div>
+          <div class="dj-per">per month</div>
+          <p class="dj-plan-note">Full Dojo access with simple month-to-month billing.</p>
+          <a class="btn" href="https://whop.com/checkout/plan_eVop6pXsIhHlf/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=pricing_monthly" data-sk-cta="dojo-pricing-monthly" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="pricing_monthly">Start Monthly</a>
+        </aside>
+        <aside class="dj-price-card">
+          <div class="dj-price">$199.99</div>
+          <div class="dj-per">per year</div>
+          <div class="dj-plan-save">Save $39.89 · about 2 months free</div>
+          <p class="dj-plan-note">One year of full Dojo access at the lower effective monthly cost.</p>
+          <a class="btn" href="https://whop.com/checkout/plan_kaaoYadRlBi4n/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=pricing_annual" data-sk-cta="dojo-pricing-annual" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="pricing_annual">Start Annual</a>
+        </aside>
+      </div>
     </div>
   </section>
 
@@ -214,7 +288,7 @@
         <details><summary>Is this for my rank?</summary><p>Yes. The process is built around finding the next problem in your games, regardless of where you are starting.</p></details>
         <details><summary>Is this just another Discord server?</summary><p>No. Discord is where the coaching and community live. The product is the improvement loop around lessons, reviews, questions, practice, and accountability.</p></details>
         <details><summary>Will I actually get help from Slayerkey?</summary><p>Yes. I run the VOD reviews, answer questions inside the community, and help members figure out what they should be working on next.</p></details>
-        <details><summary>Can I cancel?</summary><p>Yes. The membership is $19.99 per month.</p></details>
+        <details><summary>What are the plan options?</summary><p>Monthly is $19.99. Annual is $199.99, which saves $39.89 compared with paying monthly for 12 months.</p></details>
       </div>
     </div>
   </section>
@@ -224,7 +298,7 @@
       <div class="eyebrow">Your Next 90 Days</div>
       <h2>You Can Keep Guessing. Or Finally <span class="gradient-text">Know What to Improve.</span></h2>
       <p>The Dojo puts training, feedback, practice, and accountability in one place.</p>
-      <a class="btn" href="https://whop.com/checkout/plan_TOSvOOLdpQXzi/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=final_start_improving" data-sk-cta="dojo-final-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="final">Start Improving</a>
+      <a class="btn" href="https://whop.com/checkout/plan_eVop6pXsIhHlf/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=final_start_improving" data-sk-cta="dojo-final-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="final">Start Improving</a>
     </div>
   </section>
 
