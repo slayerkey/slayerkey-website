@@ -1,46 +1,80 @@
+.experience{display:none!important}
+
 .brand-strip{
-  background:linear-gradient(180deg,#050607 0%,#07090a 48%,#050607 100%);
-  padding-top:28px;
-  padding-bottom:30px;
+  background:#050607;
+  padding:30px 0 34px;
 }
 .brand-strip-head{text-align:center}
-.brand-strip-head p{margin-bottom:20px}
+.brand-strip-head p{margin-bottom:24px}
 .logo-marquee{
-  width:min(1180px,100%);
+  width:min(1180px,calc(100% - 48px));
   margin:0 auto;
-  padding:0 26px;
+  padding:0;
+  overflow:hidden;
+  mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent);
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent);
 }
 .logo-track{
-  animation:logoDrift 28s ease-in-out infinite alternate;
+  display:flex;
+  width:max-content;
+  animation:logoDrift 16s ease-in-out infinite alternate;
   will-change:transform;
 }
 .logo-marquee:hover .logo-track{animation-play-state:paused}
 .logo-set{
-  gap:54px;
-  padding-right:54px;
+  width:min(1180px,calc(100vw - 48px));
+  flex:0 0 min(1180px,calc(100vw - 48px));
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:22px;
+  padding:0 18px;
 }
 .logo{
-  min-width:136px;
-  height:48px;
+  min-width:0;
+  width:126px;
+  flex:0 0 126px;
+  height:50px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  color:#fff;
+  opacity:.86;
 }
 .logo img{
-  max-width:142px;
-  max-height:35px;
+  display:block;
+  max-width:128px;
+  max-height:32px;
+  object-fit:contain;
+  filter:grayscale(1) brightness(0) invert(1);
+  opacity:.96;
 }
-.logo-zowie{overflow:hidden}
-.logo-zowie img{
-  max-width:132px;
-  max-height:48px;
-  transform:scale(1.55);
+.logo-text,
+.logo-zowie-word,
+.logo-valorant-word{
+  color:#f2f4f5;
+  font-size:.94rem;
+  font-weight:800;
+  letter-spacing:.04em;
+  white-space:nowrap;
 }
-.logo-beast img{
-  max-width:112px;
-  max-height:48px;
-  transform:scale(1.12);
+.logo-zowie-word{letter-spacing:.12em}
+.logo-valorant-word{letter-spacing:.08em;font-size:.9rem}
+.logo-beast{width:150px;flex-basis:150px}
+.logo-beast img{max-width:42px;max-height:42px}
+.logo-beast::after{
+  content:'MRBEAST';
+  color:#f2f4f5;
+  font-size:.82rem;
+  font-weight:800;
+  letter-spacing:.045em;
+  white-space:nowrap;
 }
+.logo:hover{opacity:1}
 @keyframes logoDrift{
-  from{transform:translate3d(2.5%,0,0)}
-  to{transform:translate3d(-47.5%,0,0)}
+  from{transform:translate3d(0,0,0)}
+  to{transform:translate3d(-50%,0,0)}
 }
 
 .tools{
@@ -76,16 +110,16 @@
   flex:0 0 38px;
   display:grid;
   place-items:center;
-  border:1px solid rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.085);
   border-radius:10px;
   background:#0b0e10;
   overflow:hidden;
 }
 .tool-icon>span{
-  color:#6d777d;
-  font-size:.58rem;
+  color:#e4e9eb;
+  font-size:.6rem;
   font-weight:800;
-  letter-spacing:.06em;
+  letter-spacing:.055em;
 }
 .tool-icon img{
   position:absolute;
@@ -115,14 +149,16 @@
 }
 @media (max-width:980px){
   .tools-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .logo-set{gap:42px;padding-right:42px}
-  .logo{min-width:124px}
+  .logo-set{gap:16px;padding:0 12px}
+  .logo{width:112px;flex-basis:112px}
+  .logo-beast{width:132px;flex-basis:132px}
 }
 @media (max-width:680px){
   .brand-strip-head{text-align:left}
-  .logo-marquee{padding:0 14px}
-  .logo-set{gap:30px;padding-right:30px}
-  .logo{min-width:112px}
+  .logo-marquee{width:100%;padding:0 14px}
+  .logo-set{width:760px;flex-basis:760px;gap:22px;padding:0 16px}
+  .logo{width:96px;flex-basis:96px}
+  .logo-beast{width:120px;flex-basis:120px}
   .tools{padding:76px 0}
   .tools-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .tool-card{min-height:82px;padding:14px 13px;gap:11px}
