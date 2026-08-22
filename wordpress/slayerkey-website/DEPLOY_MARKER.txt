@@ -1,4 +1,5 @@
-Portfolio production deploy marker
+Portfolio audit deploy marker
 2026-08-22
-Final complete state after d6046b96a9454a8c812a5d12537339a48fd039b3.
-Includes public /work route, real Packrat and YouTube visuals, private workflow evidence, mobile polish, static metrics, metadata, contact privacy, and portfolio analytics.
+Final cleanup state after 2ee40acd23c75e9487a5a356a83a7895cd8df677.
+Removed stale ValoCut, YouTube Research, and Training Dojo public case studies.
+Removed unverified portfolio metrics, simplified selected work, refreshed current tools, added real tool logos with fallbacks, added noindex while public visibility is under review, and bumped portfolio asset cache keys.
