@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.11
+ * Version: 0.1.12
  * Author: Slayerkey
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.11' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.12' );
 define( 'SLAYERKEY_POSTHOG_TOKEN', 'phc_m92yxHMa2BTnSu7KmebGKu8sEitMki4oPhdLTKZzcpMc' );
 define( 'SLAYERKEY_POSTHOG_HOST', 'https://edge.slayerkey.com' );
 define( 'SLAYERKEY_POSTHOG_UI_HOST', 'https://us.posthog.com' );
@@ -169,8 +169,6 @@ function slayerkey_website_render_private_preview() {
     nocache_headers();
     header( 'X-Robots-Tag: noindex, nofollow, noarchive', true );
 
-    // Theme-shell previews deliberately run through the real theme lifecycle so the same
-    // header, footer, fonts, global CSS, and sitewide tools are present during review.
     if ( ! empty( $preview['theme_shell'] ) ) {
         if ( ! empty( $preview['style'] ) ) {
             wp_enqueue_style(
@@ -198,9 +196,6 @@ function slayerkey_website_render_private_preview() {
         exit;
     }
 
-    // Standalone previews intentionally bypass the public site shell. This is useful for
-    // portfolio and product surfaces that should not inherit coaching-specific navigation,
-    // popups, fonts, or conversion UI while they are being reviewed.
     header( 'Content-Type: text/html; charset=' . get_option( 'blog_charset' ) );
     $preview_meta = '<meta name="robots" content="noindex,nofollow,noarchive"><meta name="slayerkey-preview" content="' . esc_attr( $slug ) . '">';
 
@@ -244,6 +239,7 @@ function slayerkey_website_render_public_work() {
     header( 'Content-Type: text/html; charset=' . get_option( 'blog_charset' ) );
     header( 'Cache-Control: public, max-age=300, stale-while-revalidate=86400' );
     header( 'X-Content-Type-Options: nosniff' );
+    header( 'X-Robots-Tag: noindex, nofollow, noarchive', true );
 
     echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     exit;
@@ -269,6 +265,7 @@ function slayerkey_website_health_response() {
             'tracking_asset' => plugin_dir_url( __FILE__ ) . 'assets/js/tracking.js',
             'private_previews_enabled' => true,
             'public_work_enabled' => true,
+            'public_work_indexing' => false,
             'hooks' => array(
                 'version_marker_registered' => false !== has_action( 'wp_head', 'slayerkey_website_version_marker' ),
                 'posthog_snippet_registered' => false !== has_action( 'wp_head', 'slayerkey_website_posthog_snippet' ),
