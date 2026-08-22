@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.10
+ * Version: 0.1.11
  * Author: Slayerkey
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.10' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.11' );
 define( 'SLAYERKEY_POSTHOG_TOKEN', 'phc_m92yxHMa2BTnSu7KmebGKu8sEitMki4oPhdLTKZzcpMc' );
 define( 'SLAYERKEY_POSTHOG_HOST', 'https://edge.slayerkey.com' );
 define( 'SLAYERKEY_POSTHOG_UI_HOST', 'https://us.posthog.com' );
@@ -79,6 +79,20 @@ function slayerkey_website_preview_slug_from_request() {
 
 function slayerkey_website_is_private_preview_request() {
     return null !== slayerkey_website_preview_slug_from_request();
+}
+
+function slayerkey_website_is_public_work_request() {
+    if ( empty( $_SERVER['REQUEST_URI'] ) ) {
+        return false;
+    }
+
+    $path = wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH );
+
+    if ( ! is_string( $path ) ) {
+        return false;
+    }
+
+    return '/work' === untrailingslashit( $path );
 }
 
 function slayerkey_website_render_404() {
@@ -201,6 +215,41 @@ function slayerkey_website_render_private_preview() {
 }
 add_action( 'template_redirect', 'slayerkey_website_render_private_preview', 0 );
 
+function slayerkey_website_render_public_work() {
+    if ( ! slayerkey_website_is_public_work_request() ) {
+        return;
+    }
+
+    $work_file = plugin_dir_path( __FILE__ ) . 'previews/work-v2/index.html';
+
+    if ( ! is_readable( $work_file ) ) {
+        slayerkey_website_render_404();
+    }
+
+    $html = file_get_contents( $work_file );
+
+    if ( false === $html ) {
+        slayerkey_website_render_404();
+    }
+
+    global $wp_query;
+
+    if ( $wp_query instanceof WP_Query ) {
+        $wp_query->is_404 = false;
+        $wp_query->is_page = true;
+    }
+
+    show_admin_bar( false );
+    status_header( 200 );
+    header( 'Content-Type: text/html; charset=' . get_option( 'blog_charset' ) );
+    header( 'Cache-Control: public, max-age=300, stale-while-revalidate=86400' );
+    header( 'X-Content-Type-Options: nosniff' );
+
+    echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    exit;
+}
+add_action( 'template_redirect', 'slayerkey_website_render_public_work', 1 );
+
 function slayerkey_website_version_marker() {
     if ( is_admin() ) {
         return;
@@ -219,11 +268,13 @@ function slayerkey_website_health_response() {
             'posthog_ui_host' => SLAYERKEY_POSTHOG_UI_HOST,
             'tracking_asset' => plugin_dir_url( __FILE__ ) . 'assets/js/tracking.js',
             'private_previews_enabled' => true,
+            'public_work_enabled' => true,
             'hooks' => array(
                 'version_marker_registered' => false !== has_action( 'wp_head', 'slayerkey_website_version_marker' ),
                 'posthog_snippet_registered' => false !== has_action( 'wp_head', 'slayerkey_website_posthog_snippet' ),
                 'tracking_enqueue_registered' => false !== has_action( 'wp_enqueue_scripts', 'slayerkey_website_enqueue_tracking' ),
                 'private_preview_registered' => false !== has_action( 'template_redirect', 'slayerkey_website_render_private_preview' ),
+                'public_work_registered' => false !== has_action( 'template_redirect', 'slayerkey_website_render_public_work' ),
             ),
         )
     );
@@ -243,7 +294,7 @@ function slayerkey_website_register_health_route() {
 add_action( 'rest_api_init', 'slayerkey_website_register_health_route' );
 
 function slayerkey_website_posthog_snippet() {
-    if ( is_admin() || slayerkey_website_is_private_preview_request() ) {
+    if ( is_admin() || slayerkey_website_is_private_preview_request() || slayerkey_website_is_public_work_request() ) {
         return;
     }
     ?>
@@ -262,7 +313,7 @@ function slayerkey_website_posthog_snippet() {
 add_action( 'wp_head', 'slayerkey_website_posthog_snippet', 1 );
 
 function slayerkey_website_enqueue_tracking() {
-    if ( is_admin() || slayerkey_website_is_private_preview_request() ) {
+    if ( is_admin() || slayerkey_website_is_private_preview_request() || slayerkey_website_is_public_work_request() ) {
         return;
     }
 
