@@ -1,6 +1,6 @@
 Portfolio audit deploy marker
 2026-08-22
-Final audited state after d43641583c113eda1d9d46bb459793f54365b98d.
+Final audited state after 631aedde2ad0388e519c0744474a3180d12fb37a.
 Removed stale ValoCut, YouTube Research, and Training Dojo public case studies.
-Removed unverified portfolio metrics and the unverified brand-logo marquee.
-Simplified selected work, refreshed the current tool stack, added real tool logos with fallbacks, added noindex while public visibility is under review, and bumped portfolio asset cache keys.
+Removed unverified portfolio metrics and the unverified brand logo marquee.
+Simplified selected work, refreshed the current tool stack, added real tool logos with fallbacks, added page and response level noindex while public visibility is under review, and bumped portfolio asset cache keys.
