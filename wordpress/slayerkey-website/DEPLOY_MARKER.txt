@@ -1,4 +1,4 @@
 Portfolio production deploy marker
 2026-08-22
 Final complete state after d6046b96a9454a8c812a5d12537339a48fd039b3.
-Includes public /work route, real evidence visuals, mobile polish, static metrics, metadata, contact privacy, and portfolio analytics.
+Includes public /work route, real Packrat and YouTube visuals, private workflow evidence, mobile polish, static metrics, metadata, contact privacy, and portfolio analytics.
