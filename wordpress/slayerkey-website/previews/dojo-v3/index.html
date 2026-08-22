@@ -1,4 +1,55 @@
-<main id="sk-std" class="sk-dojo-preview" data-page-variant="dojo_conversion_v4">
+<style>
+/* Near-final preview polish. Keep the working WordPress/theme shell intact. */
+#sk-std{
+  width:100vw;
+  max-width:none;
+  margin-left:calc(50% - 50vw);
+  margin-right:calc(50% - 50vw);
+  overflow-x:clip;
+}
+#sk-std h1,#sk-std h2,#sk-std h3{
+  font-weight:400!important;
+}
+#sk-std .dj-community-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px;
+  max-width:1120px;
+  margin:0 auto;
+  align-items:start;
+}
+#sk-std .dj-community-proof{
+  appearance:none;
+  width:100%;
+  padding:8px;
+  border:1px solid rgba(255,255,255,.11);
+  background:#090f14;
+  cursor:zoom-in;
+  box-shadow:0 18px 45px rgba(0,0,0,.22);
+  transition:transform .25s var(--dj-ease),border-color .25s ease,box-shadow .25s ease;
+}
+#sk-std .dj-community-proof:hover{
+  transform:translateY(-3px);
+  border-color:rgba(40,223,203,.36);
+  box-shadow:0 24px 58px rgba(0,0,0,.3);
+}
+#sk-std .dj-community-proof img{
+  display:block;
+  width:100%;
+  height:auto;
+  object-fit:contain;
+}
+#sk-std .dj-mid-cta{
+  text-align:center;
+  margin-top:28px;
+}
+@media(max-width:700px){
+  #sk-std{width:100%;margin-left:0;margin-right:0}
+  #sk-std .dj-community-grid{grid-template-columns:1fr;gap:14px}
+}
+</style>
+
+<main id="sk-std" class="sk-dojo-preview" data-page-variant="dojo_conversion_v5">
   <section class="dj-hero" id="top">
     <div class="container dj-hero-grid">
       <div class="dj-hero-copy reveal">
@@ -73,6 +124,7 @@
         <article class="dj-loop-card reveal d2"><span>03</span><h3>Ask when stuck</h3><p>Daily coaching gives you a place to get an answer instead of guessing.</p></article>
         <article class="dj-loop-card reveal d3"><span>04</span><h3>Practice with intent</h3><p>Teams and accountability give the advice somewhere to become a habit.</p></article>
       </div>
+      <div class="dj-mid-cta reveal d2"><a class="btn" href="https://whop.com/checkout/plan_TOSvOOLdpQXzi/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=loop_start_improving" data-sk-cta="dojo-loop-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="feedback_loop">Start Improving</a></div>
     </div>
   </section>
 
@@ -88,6 +140,7 @@
         <div><small>Practice</small><strong>Private teams that care about improving</strong><p>Competitive practice around players who want the same thing.</p></div>
         <div><small>Consistency</small><strong>Accountability and a growing archive</strong><p>Keep showing up instead of restarting your improvement every few weeks.</p></div>
       </div>
+      <div class="dj-mid-cta reveal d2"><a class="btn" href="https://whop.com/checkout/plan_TOSvOOLdpQXzi/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=inside_start_improving" data-sk-cta="dojo-inside-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="inside_dojo">Start Improving</a></div>
     </div>
   </section>
 
@@ -96,29 +149,13 @@
       <div class="dj-section-head centered reveal">
         <div class="eyebrow">Inside the Community</div>
         <h2>This Is What <span class="gradient-text">Improvement</span> Looks Like.</h2>
-        <p>Not polished testimonials. These are the kinds of messages that show up when the work starts transferring into ranked.</p>
+        <p>Real messages, real games, and the work showing up in ranked.</p>
       </div>
       <div class="dj-community-grid">
-        <article class="dj-discord-card reveal">
-          <div class="dj-discord-user"><span>Z</span><strong>Zus</strong></div>
-          <p>“W duo with Qaphi, first time diamond and the act triangle lowkey looking like some smurf shit.”</p>
-          <div class="dj-result-tag">First time Diamond</div>
-        </article>
-        <article class="dj-discord-card reveal d1">
-          <div class="dj-discord-user"><span>I</span><strong>Ikkai</strong></div>
-          <p>“Cements a 10 game win streak so far.”</p>
-          <div class="dj-result-tag">10 game win streak</div>
-        </article>
-        <article class="dj-discord-card reveal d2">
-          <div class="dj-discord-user"><span>46</span><strong>Community win</strong></div>
-          <p>Dropped a 46 kill game after putting the work into ranked.</p>
-          <div class="dj-result-tag">46 kills</div>
-        </article>
-        <article class="dj-discord-card reveal d3">
-          <div class="dj-discord-user"><span>E</span><strong>Eternity</strong></div>
-          <p>Another rank up with the work showing up in real matches.</p>
-          <div class="dj-result-tag">Ascendant +20 RR</div>
-        </article>
+        <button class="dj-community-proof reveal" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community/zus.webp" aria-label="Expand Zus community result"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community/zus.webp" alt="Zus posting a first-time Diamond rank up and related Valorant wins"></button>
+        <button class="dj-community-proof reveal d1" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community/morien.webp" aria-label="Expand Morien community result"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community/morien.webp" alt="Morien posting a strong Valorant match result"></button>
+        <button class="dj-community-proof reveal d2" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community/ikkai.webp" aria-label="Expand Ikkai community result"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community/ikkai.webp" alt="Ikkai posting a ten-game win streak in Valorant"></button>
+        <button class="dj-community-proof reveal d3" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community/jagi.webp" aria-label="Expand Jagi community result"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community/jagi.webp" alt="Jagi posting that Slayerkey's teaching was helping in rank-up games"></button>
       </div>
       <div class="dj-center reveal d2"><a class="btn" href="https://whop.com/checkout/plan_TOSvOOLdpQXzi/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=community_start_improving" data-sk-cta="dojo-community-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="community">Start Improving</a></div>
     </div>
