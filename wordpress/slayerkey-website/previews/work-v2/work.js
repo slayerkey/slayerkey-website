@@ -18,19 +18,13 @@ var brandNames=['Whatnot','TikTok','Metafy','ProGuides','ZOWIE','MrBeast','VALOR
 document.querySelectorAll('.logo-set').forEach(function(set){Array.prototype.slice.call(set.children).forEach(function(logo,index){var name=brandNames[index]||'Brand';logo.dataset.brand=name;if(name==='TikTok'){logo.className='logo logo-tiktok';logo.innerHTML=lockup(tiktokPath,'TikTok');return}if(name==='ZOWIE'){logo.className='logo logo-text logo-zowie-word';logo.textContent='ZOWIE';return}if(name==='VALORANT'){logo.className='logo logo-text logo-valorant-word';logo.innerHTML=lockup(valorantPath,'VALORANT')}})});
 document.querySelectorAll('.logo img').forEach(function(img){function fallback(){var parent=img.closest('.logo');if(!parent)return;var name=parent.dataset.brand||img.alt||'';if(name==='MrBeast'){img.remove();return}if(name){parent.className='logo logo-text';parent.textContent=name.toUpperCase()}}img.addEventListener('error',fallback,{once:true});if(img.complete&&img.naturalWidth===0)fallback()});
 
-var packratVisuals=[
-  {src:'https://raw.githubusercontent.com/slayerkey/packrat-site/main/assets/featured/market-command-center.webp',alt:'Packrat Market Command Center product artwork'},
-  {src:'https://raw.githubusercontent.com/slayerkey/packrat-site/main/assets/featured/performance-grapher.webp',alt:'Packrat Performance Grapher product artwork'},
-  {src:'https://raw.githubusercontent.com/slayerkey/packrat-site/main/assets/featured/icon-pack.webp',alt:'Packrat icon pack product artwork'}
-];
-var packratCells=document.querySelectorAll('.product-proof-grid>div');
-packratVisuals.forEach(function(item,index){var cell=packratCells[index];if(!cell)return;var img=document.createElement('img');img.src=item.src;img.alt=item.alt;img.loading='lazy';img.style.cssText='display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;margin-bottom:10px;background:#050607';img.addEventListener('error',function(){img.remove()},{once:true});cell.insertBefore(img,cell.firstChild)});
+document.querySelectorAll('.tool-icon img').forEach(function(img){var fallback=img.nextElementSibling;function fail(){img.remove();if(fallback)fallback.style.opacity='1'}img.addEventListener('error',fail,{once:true});if(img.complete&&img.naturalWidth===0)fail()});
 
 document.querySelectorAll('.evidence-link').forEach(function(link){link.addEventListener('click',function(){safeCapture('portfolio_evidence_click',{project:link.dataset.project||'unknown',destination:link.href})})});
 
 var modal=document.createElement('div');
 modal.className='contact-modal';modal.setAttribute('aria-hidden','true');
-modal.innerHTML='<button class="contact-close" type="button" aria-label="Close">×</button><div class="contact-card" role="dialog" aria-modal="true" aria-labelledby="contact-title"><h3 id="contact-title">Start a conversation</h3><p>If you are reaching out about product, AI workflows, creator systems, content, community, or something adjacent, email is the easiest way to reach me.</p><div class="modal-actions"><button class="button primary" id="open-email" type="button">Open email</button><button class="button secondary" id="close-email" type="button">Cancel</button></div></div>';
+modal.innerHTML='<button class="contact-close" type="button" aria-label="Close">×</button><div class="contact-card" role="dialog" aria-modal="true" aria-labelledby="contact-title"><h3 id="contact-title">Start a conversation</h3><p>If you are reaching out about product, automation, creator systems, content, community, or something adjacent, email is the easiest way to reach me.</p><div class="modal-actions"><button class="button primary" id="open-email" type="button">Open email</button><button class="button secondary" id="close-email" type="button">Cancel</button></div></div>';
 document.body.appendChild(modal);
 var lastFocus=null;
 function show(){lastFocus=document.activeElement;modal.classList.add('open');modal.setAttribute('aria-hidden','false');safeCapture('portfolio_contact_open');setTimeout(function(){modal.querySelector('#open-email').focus()},0)}
