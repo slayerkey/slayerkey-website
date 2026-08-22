@@ -17,7 +17,7 @@
 .logo-track{
   display:flex;
   width:max-content;
-  animation:logoDrift 16s ease-in-out infinite alternate;
+  animation:logoDrift 20s linear infinite;
   will-change:transform;
 }
 .logo-marquee:hover .logo-track{animation-play-state:paused}
@@ -32,28 +32,28 @@
 }
 .logo{
   min-width:0;
-  width:126px;
-  flex:0 0 126px;
-  height:50px;
+  width:132px;
+  flex:0 0 132px;
+  height:52px;
   display:flex;
   align-items:center;
   justify-content:center;
   gap:9px;
-  color:#fff;
-  opacity:.86;
+  color:#f4f6f7;
+  opacity:.94;
 }
 .logo img{
   display:block;
-  max-width:128px;
-  max-height:32px;
+  max-width:132px;
+  max-height:34px;
   object-fit:contain;
-  filter:grayscale(1) brightness(0) invert(1);
-  opacity:.96;
+  filter:grayscale(1) brightness(0) invert(1) contrast(1.5);
+  opacity:1;
 }
 .logo-text,
 .logo-zowie-word,
 .logo-valorant-word{
-  color:#f2f4f5;
+  color:#f4f6f7;
   font-size:.94rem;
   font-weight:800;
   letter-spacing:.04em;
@@ -61,20 +61,43 @@
 }
 .logo-zowie-word{letter-spacing:.12em}
 .logo-valorant-word{letter-spacing:.08em;font-size:.9rem}
-.logo-beast{width:150px;flex-basis:150px}
-.logo-beast img{max-width:42px;max-height:42px}
+.logo-beast{width:158px;flex-basis:158px}
+.logo-beast img{max-width:43px;max-height:43px}
 .logo-beast::after{
   content:'MRBEAST';
-  color:#f2f4f5;
-  font-size:.82rem;
-  font-weight:800;
-  letter-spacing:.045em;
+  color:#f4f6f7;
+  font-size:.84rem;
+  font-weight:850;
+  font-style:italic;
+  letter-spacing:.035em;
   white-space:nowrap;
 }
+.logo-brand-lockup{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  color:#f4f6f7;
+  white-space:nowrap;
+}
+.logo-brand-lockup svg{
+  width:25px;
+  height:25px;
+  flex:0 0 25px;
+  fill:currentColor;
+}
+.logo-brand-lockup strong{
+  font-size:.96rem;
+  font-weight:800;
+  letter-spacing:-.02em;
+}
+.logo-tiktok .logo-brand-lockup svg{width:24px;height:24px}
+.logo-valorant-word .logo-brand-lockup svg{width:30px;height:30px}
+.logo-valorant-word .logo-brand-lockup strong{font-size:.88rem;letter-spacing:.065em}
 .logo:hover{opacity:1}
 @keyframes logoDrift{
-  from{transform:translate3d(0,0,0)}
-  to{transform:translate3d(-50%,0,0)}
+  from{transform:translate3d(-50%,0,0)}
+  to{transform:translate3d(0,0,0)}
 }
 
 .tools{
@@ -150,15 +173,15 @@
 @media (max-width:980px){
   .tools-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
   .logo-set{gap:16px;padding:0 12px}
-  .logo{width:112px;flex-basis:112px}
-  .logo-beast{width:132px;flex-basis:132px}
+  .logo{width:116px;flex-basis:116px}
+  .logo-beast{width:140px;flex-basis:140px}
 }
 @media (max-width:680px){
   .brand-strip-head{text-align:left}
   .logo-marquee{width:100%;padding:0 14px}
-  .logo-set{width:760px;flex-basis:760px;gap:22px;padding:0 16px}
-  .logo{width:96px;flex-basis:96px}
-  .logo-beast{width:120px;flex-basis:120px}
+  .logo-set{width:820px;flex-basis:820px;gap:22px;padding:0 16px}
+  .logo{width:106px;flex-basis:106px}
+  .logo-beast{width:132px;flex-basis:132px}
   .tools{padding:76px 0}
   .tools-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .tool-card{min-height:82px;padding:14px 13px;gap:11px}
