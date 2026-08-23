@@ -13,16 +13,26 @@
         var root = document.getElementById('sk-std');
         if (!root) return;
 
-        /* Blend the real theme wrapper into the Dojo background instead of leaving a black strip. */
-        document.documentElement.style.backgroundColor = '#07111a';
-        document.body.style.backgroundColor = '#07111a';
-        var shellNode = root.parentElement;
-        while (shellNode && shellNode !== document.body) {
-            shellNode.style.backgroundColor = '#07111a';
-            shellNode = shellNode.parentElement;
+        /* Pull the Dojo background up to the real header instead of painting a flat shell strip. */
+        function alignDojoToHeader() {
+            var header = document.querySelector('.sk-header') || document.querySelector('header');
+            if (!header) return;
+
+            root.style.removeProperty('margin-top');
+            root.style.removeProperty('padding-top');
+
+            var rootTop = root.getBoundingClientRect().top;
+            var headerBottom = header.getBoundingClientRect().bottom;
+            var gap = Math.round(rootTop - headerBottom);
+
+            if (gap > 0 && gap < 120) {
+                root.style.setProperty('margin-top', (-gap) + 'px', 'important');
+                root.style.setProperty('padding-top', gap + 'px', 'important');
+            }
         }
-        root.style.marginTop = '0';
-        root.style.paddingTop = '0';
+
+        alignDojoToHeader();
+        window.addEventListener('resize', alignDojoToHeader, { passive: true });
 
         /* Guarantee the Framer-style reveal even if the global site reveal script changes. */
         var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -73,7 +83,7 @@
             if (link.textContent && link.textContent.trim()) link.textContent = 'Start Improving';
         });
 
-        /* Render the known-good original Dojo wins collage as real image elements, not CSS backgrounds. */
+        /* Temporary collage crops until the original full-resolution community screenshots are supplied. */
         var winsAsset = '/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/wins.webp?v=20260823-imgfix';
         var winPositions = {
             'is-zus': { left: '0', top: '0' },
@@ -117,7 +127,7 @@
             card.setAttribute('data-proof-src', winsAsset);
         });
 
-        /* Keep pricing deliberately simple: Monthly, Annual, and the annual bonus. */
+        /* Make annual feel like the premium value choice without adding more sales copy. */
         var planCards = root.querySelectorAll('#pricing .dj-price-card');
         if (planCards.length >= 2) {
             var monthly = planCards[0];
@@ -129,6 +139,8 @@
             var annualLabel = annual.querySelector('.dj-per');
             var annualSave = annual.querySelector('.dj-plan-save');
             var annualNote = annual.querySelector('.dj-plan-note');
+            var monthlyButton = monthly.querySelector('.btn');
+            var annualButton = annual.querySelector('.btn');
 
             if (monthlyLabel && monthlyPrice) {
                 monthlyLabel.textContent = 'Monthly';
@@ -145,6 +157,24 @@
                 annual.insertBefore(annualSave, annualPrice);
             }
             if (annualNote) annualNote.remove();
+
+            if (monthlyButton) monthlyButton.textContent = 'Start Improving';
+            if (annualButton) annualButton.textContent = 'Start Improving';
+
+            annual.classList.add('dj-price-card-premium');
+
+            if (!document.getElementById('dojoPremiumPlanStyles')) {
+                var premiumStyles = document.createElement('style');
+                premiumStyles.id = 'dojoPremiumPlanStyles';
+                premiumStyles.textContent = [
+                    '#sk-std .dj-price-card-premium{position:relative;transform:translateY(-6px);border-color:rgba(40,223,203,.72)!important;background:linear-gradient(180deg,rgba(15,35,43,.98),rgba(7,20,29,.98))!important;box-shadow:0 26px 72px rgba(0,0,0,.36),0 0 0 1px rgba(40,223,203,.10),0 0 42px rgba(40,223,203,.09)!important;}',
+                    '#sk-std .dj-price-card-premium:before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,transparent,var(--dj-teal),transparent);}',
+                    '#sk-std .dj-price-card-premium .dj-price{font-size:3.9rem;}',
+                    '#sk-std .dj-price-card-premium .dj-plan-save{border-color:rgba(40,223,203,.5);background:rgba(40,223,203,.12);box-shadow:0 8px 26px rgba(40,223,203,.08);}',
+                    '@media(max-width:900px){#sk-std .dj-price-card-premium{transform:none;}}'
+                ].join('');
+                document.head.appendChild(premiumStyles);
+            }
         }
 
         /* Move review cards left-to-right with JS so theme/global CSS cannot cancel the motion. */
