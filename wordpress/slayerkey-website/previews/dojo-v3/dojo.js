@@ -13,9 +13,16 @@
         var root = document.getElementById('sk-std');
         if (!root) return;
 
-        /* Fill the small theme-shell gap below the header without moving hero content. */
-        root.style.marginTop = '-31px';
-        root.style.paddingTop = '31px';
+        /* Blend the real theme wrapper into the Dojo background instead of leaving a black strip. */
+        document.documentElement.style.backgroundColor = '#07111a';
+        document.body.style.backgroundColor = '#07111a';
+        var shellNode = root.parentElement;
+        while (shellNode && shellNode !== document.body) {
+            shellNode.style.backgroundColor = '#07111a';
+            shellNode = shellNode.parentElement;
+        }
+        root.style.marginTop = '0';
+        root.style.paddingTop = '0';
 
         /* Guarantee the Framer-style reveal even if the global site reveal script changes. */
         var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -66,11 +73,46 @@
             if (link.textContent && link.textContent.trim()) link.textContent = 'Start Improving';
         });
 
-        /* The newer community-wins binary was corrupt. Use the known-good original Dojo collage. */
-        var winsAsset = '/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/wins.webp?v=20260822-final';
+        /* Render the known-good original Dojo wins collage as real image elements, not CSS backgrounds. */
+        var winsAsset = '/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/wins.webp?v=20260823-imgfix';
+        var winPositions = {
+            'is-zus': { left: '0', top: '0' },
+            'is-morien': { left: '-100%', top: '0' },
+            'is-ikkai': { left: '0', top: '-100%' },
+            'is-jagi': { left: '-100%', top: '-100%' }
+        };
+
         Array.prototype.slice.call(root.querySelectorAll('.dj-win-thumb')).forEach(function (thumb) {
-            thumb.style.backgroundImage = 'url("' + winsAsset + '")';
+            var position = { left: '0', top: '0' };
+            Object.keys(winPositions).some(function (className) {
+                if (!thumb.classList.contains(className)) return false;
+                position = winPositions[className];
+                return true;
+            });
+
+            thumb.style.position = 'relative';
+            thumb.style.overflow = 'hidden';
+            thumb.style.backgroundImage = 'none';
+            thumb.style.backgroundColor = '#0a1117';
+            thumb.innerHTML = '';
+
+            var image = document.createElement('img');
+            image.src = winsAsset;
+            image.alt = '';
+            image.setAttribute('aria-hidden', 'true');
+            image.loading = 'eager';
+            image.decoding = 'async';
+            image.style.position = 'absolute';
+            image.style.width = '300%';
+            image.style.maxWidth = 'none';
+            image.style.height = 'auto';
+            image.style.left = position.left;
+            image.style.top = position.top;
+            image.style.display = 'block';
+            image.style.pointerEvents = 'none';
+            thumb.appendChild(image);
         });
+
         Array.prototype.slice.call(root.querySelectorAll('.dj-win-card[data-proof-src]')).forEach(function (card) {
             card.setAttribute('data-proof-src', winsAsset);
         });
