@@ -1,5 +1,12 @@
 <style>
 /* Near-final preview polish. Keep the working WordPress/theme shell intact. */
+html,body,.site,.site-content,#content,.content-area,.site-main{
+  background:#07111a!important;
+}
+.site-content,#content,.content-area,.site-main{
+  margin-top:0!important;
+  padding-top:0!important;
+}
 #sk-std{
   width:100vw;
   max-width:none;
@@ -10,7 +17,7 @@
 #sk-std h1,#sk-std h2,#sk-std h3{font-weight:400!important;}
 #sk-std .dj-mid-cta{text-align:center;margin-top:28px;}
 
-/* Community proof uses one original Dojo collage, cropped visually into cards. */
+/* Community proof uses the verified original Dojo collage. */
 #sk-std .dj-community-grid{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
@@ -39,7 +46,7 @@
 #sk-std .dj-win-thumb{
   width:100%;
   aspect-ratio:1.48/1;
-  background-image:url('https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp');
+  background-image:url('https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp?v=20260823-static');
   background-repeat:no-repeat;
   background-size:300% 200%;
   background-color:#0a1117;
@@ -61,9 +68,13 @@
 #sk-std .dj-win-copy strong{display:block;color:#fff;font-size:1rem;line-height:1.25;}
 #sk-std .dj-win-copy span{display:block;margin-top:5px;color:var(--dj-muted);font-size:.78rem;line-height:1.45;}
 
-/* Force a visible continuous horizontal review rail even if global animation CSS changes. */
+/* Continuous left-to-right review rail. Kept in page CSS so it does not depend on preview JS. */
 #sk-std .dj-review-track{
-  animation:skDojoReviewRail 38s linear infinite!important;
+  display:flex!important;
+  gap:14px!important;
+  width:max-content!important;
+  will-change:transform;
+  animation:skDojoReviewRail 22s linear infinite!important;
   animation-play-state:running!important;
 }
 #sk-std .dj-review-rail:hover .dj-review-track{animation-play-state:running!important;}
@@ -72,7 +83,7 @@
   to{transform:translate3d(0,0,0)}
 }
 
-/* Monthly + annual plan choice. */
+/* Monthly + annual plan choice. Text is native HTML, not JavaScript-injected. */
 #sk-std .dj-value-box{grid-template-columns:minmax(0,.82fr) minmax(520px,1.18fr);}
 #sk-std .dj-plan-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;}
 #sk-std .dj-plan-options .dj-price-card{height:100%;display:flex;flex-direction:column;justify-content:center;}
@@ -80,7 +91,7 @@
 #sk-std .dj-plan-save{
   display:inline-flex;
   align-self:center;
-  margin:10px auto 0;
+  margin:8px auto 12px;
   padding:5px 9px;
   border:1px solid rgba(40,223,203,.26);
   background:rgba(40,223,203,.07);
@@ -90,7 +101,14 @@
   letter-spacing:.07em;
   text-transform:uppercase;
 }
-#sk-std .dj-plan-note{min-height:54px;}
+#sk-std .dj-plan-options .dj-per{
+  margin:0 0 12px;
+  color:#cbd6dc;
+  font-size:.72rem;
+  font-weight:900;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+}
 
 @media(max-width:900px){
   #sk-std .dj-value-box{grid-template-columns:1fr;}
@@ -102,7 +120,7 @@
 }
 </style>
 
-<main id="sk-std" class="sk-dojo-preview" data-page-variant="dojo_conversion_v6">
+<main id="sk-std" class="sk-dojo-preview" data-page-variant="dojo_conversion_v7">
   <section class="dj-hero" id="top">
     <div class="container dj-hero-grid">
       <div class="dj-hero-copy reveal">
@@ -205,19 +223,19 @@
         <p>Rank ups, win streaks, huge games, and the work actually showing up in ranked.</p>
       </div>
       <div class="dj-community-grid">
-        <button class="dj-win-card reveal" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp" aria-label="Expand first time Diamond community proof">
+        <button class="dj-win-card reveal" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp?v=20260823-static" aria-label="Expand first time Diamond community proof">
           <div class="dj-win-thumb is-zus" aria-hidden="true"></div>
           <div class="dj-win-copy"><small>Rank Up</small><strong>First time Diamond</strong><span>The climb showing up in the rank screen and match history.</span></div>
         </button>
-        <button class="dj-win-card reveal d1" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp" aria-label="Expand huge game community proof">
+        <button class="dj-win-card reveal d1" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp?v=20260823-static" aria-label="Expand huge game community proof">
           <div class="dj-win-thumb is-morien" aria-hidden="true"></div>
           <div class="dj-win-copy"><small>Huge Game</small><strong>Big scoreboard performance</strong><span>A strong game posted directly inside the community.</span></div>
         </button>
-        <button class="dj-win-card reveal d2" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp" aria-label="Expand ten game win streak community proof">
+        <button class="dj-win-card reveal d2" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp?v=20260823-static" aria-label="Expand ten game win streak community proof">
           <div class="dj-win-thumb is-ikkai" aria-hidden="true"></div>
           <div class="dj-win-copy"><small>Consistency</small><strong>10 game win streak</strong><span>Ten straight wins while figuring out which game was even worth reviewing next.</span></div>
         </button>
-        <button class="dj-win-card reveal d3" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp" aria-label="Expand rank up game community proof">
+        <button class="dj-win-card reveal d3" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp?v=20260823-static" aria-label="Expand rank up game community proof">
           <div class="dj-win-thumb is-jagi" aria-hidden="true"></div>
           <div class="dj-win-copy"><small>Rank Up Games</small><strong>60% headshot rate</strong><span>“Your teachings turning me into Thanos for the rank up games.”</span></div>
         </button>
@@ -265,16 +283,14 @@
       </div>
       <div class="dj-plan-options">
         <aside class="dj-price-card">
+          <div class="dj-per">Monthly</div>
           <div class="dj-price">$19.99</div>
-          <div class="dj-per">per month</div>
-          <p class="dj-plan-note">Full Dojo access with simple month-to-month billing.</p>
           <a class="btn" href="https://whop.com/checkout/plan_eVop6pXsIhHlf/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=pricing_monthly" data-sk-cta="dojo-pricing-monthly" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="pricing_monthly">Start Monthly</a>
         </aside>
         <aside class="dj-price-card">
+          <div class="dj-per">Annual</div>
+          <div class="dj-plan-save">Two months free</div>
           <div class="dj-price">$199.99</div>
-          <div class="dj-per">per year</div>
-          <div class="dj-plan-save">Save $39.89 · about 2 months free</div>
-          <p class="dj-plan-note">One year of full Dojo access at the lower effective monthly cost.</p>
           <a class="btn" href="https://whop.com/checkout/plan_kaaoYadRlBi4n/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=pricing_annual" data-sk-cta="dojo-pricing-annual" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="pricing_annual">Start Annual</a>
         </aside>
       </div>
@@ -288,7 +304,7 @@
         <details><summary>Is this for my rank?</summary><p>Yes. The process is built around finding the next problem in your games, regardless of where you are starting.</p></details>
         <details><summary>Is this just another Discord server?</summary><p>No. Discord is where the coaching and community live. The product is the improvement loop around lessons, reviews, questions, practice, and accountability.</p></details>
         <details><summary>Will I actually get help from Slayerkey?</summary><p>Yes. I run the VOD reviews, answer questions inside the community, and help members figure out what they should be working on next.</p></details>
-        <details><summary>What are the plan options?</summary><p>Monthly is $19.99. Annual is $199.99, which saves $39.89 compared with paying monthly for 12 months.</p></details>
+        <details><summary>What are the plan options?</summary><p>Monthly is $19.99. Annual is $199.99 and gives you two months free compared with monthly.</p></details>
       </div>
     </div>
   </section>
