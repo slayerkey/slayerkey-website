@@ -1,6 +1,41 @@
 (function () {
     'use strict';
 
+    function updateLegacyDojoPrice() {
+        var path = window.location.pathname.replace(/\/+$/, '') || '/';
+
+        if (path !== '/' && path !== '/std') {
+            return;
+        }
+
+        var root = document.querySelector('main') || document.body;
+
+        if (!root) {
+            return;
+        }
+
+        var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        var node;
+
+        while ((node = walker.nextNode())) {
+            var parent = node.parentElement;
+
+            if (parent && /^(SCRIPT|STYLE|NOSCRIPT|TEXTAREA)$/.test(parent.tagName)) {
+                continue;
+            }
+
+            if (node.nodeValue && node.nodeValue.indexOf('$15') !== -1) {
+                node.nodeValue = node.nodeValue.replace(/\$15/g, '$20');
+            }
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updateLegacyDojoPrice);
+    } else {
+        updateLegacyDojoPrice();
+    }
+
     document.addEventListener('click', function (event) {
         if (!(event.target instanceof Element)) {
             return;
