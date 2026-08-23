@@ -1,6 +1,7 @@
-Portfolio audit deploy marker
+Portfolio archived
 2026-08-22
-Formatting repair state after e6f7594886a83147514154eb054ed6705cb1d942.
-Moved critical project proof and capability card styling into the actively versioned audit stylesheet so stale polish CSS cannot collapse those sections.
-Added local SVG assets for ChatGPT, Codex, Visual Studio Code, and Photoshop to eliminate the observed broken remote icon requests.
-Bumped stylesheet cache keys and kept the public work route noindex while visibility is under review.
+The work portfolio project has been discontinued.
+The source remains archived under previews/work-v2 with ARCHIVED.md.
+Both portfolio preview routes were removed from the active preview map.
+The public /work route now returns a real 404.
+Plugin version bumped to 0.1.13.
