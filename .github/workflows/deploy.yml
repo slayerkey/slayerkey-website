@@ -69,11 +69,33 @@ jobs:
           bye
           EOF
 
-      - name: Verify deployed plugin
+      - name: Verify deployed files match GitHub
         env:
           SFTP_HOST: ${{ secrets.EASYWP_HOST }}
           SFTP_USER: ${{ secrets.EASYWP_USER }}
           SFTP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
           SFTP_PORT: ${{ secrets.EASYWP_PORT }}
         run: |
-          lftp -u "$SFTP_USER","$SFTP_PASSWORD" -p "$SFTP_PORT" "sftp://$SFTP_HOST" -e "set sftp:auto-confirm yes; cls -l '$REMOTE_PLUGIN_ROOT/slayerkey-website/slayerkey-website.php'; bye"
+          set -euo pipefail
+          rm -rf /tmp/slayerkey-remote
+          mkdir -p /tmp/slayerkey-remote/previews/dojo-v3
+
+          lftp -u "$SFTP_USER","$SFTP_PASSWORD" -p "$SFTP_PORT" "sftp://$SFTP_HOST" <<EOF
+          set sftp:auto-confirm yes
+          set net:max-retries 2
+          set net:timeout 20
+          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/slayerkey-website.php" -o /tmp/slayerkey-remote/slayerkey-website.php
+          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/index.html" -o /tmp/slayerkey-remote/previews/dojo-v3/index.html
+          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/dojo.js" -o /tmp/slayerkey-remote/previews/dojo-v3/dojo.js
+          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/dojo.css" -o /tmp/slayerkey-remote/previews/dojo-v3/dojo.css
+          bye
+          EOF
+
+          cmp wordpress/slayerkey-website/slayerkey-website.php /tmp/slayerkey-remote/slayerkey-website.php
+          cmp wordpress/slayerkey-website/previews/dojo-v3/index.html /tmp/slayerkey-remote/previews/dojo-v3/index.html
+          cmp wordpress/slayerkey-website/previews/dojo-v3/dojo.js /tmp/slayerkey-remote/previews/dojo-v3/dojo.js
+          cmp wordpress/slayerkey-website/previews/dojo-v3/dojo.css /tmp/slayerkey-remote/previews/dojo-v3/dojo.css
+
+          echo "Verified: EasyWP files exactly match GitHub."
+          echo "Local plugin SHA256:  $(sha256sum wordpress/slayerkey-website/slayerkey-website.php | cut -d' ' -f1)"
+          echo "Remote plugin SHA256: $(sha256sum /tmp/slayerkey-remote/slayerkey-website.php | cut -d' ' -f1)"
