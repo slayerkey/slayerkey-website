@@ -24,9 +24,14 @@
                 continue;
             }
 
-            if (node.nodeValue && node.nodeValue.indexOf('$15') !== -1) {
-                node.nodeValue = node.nodeValue.replace(/\$15/g, '$20');
+            if (!node.nodeValue) {
+                continue;
             }
+
+            node.nodeValue = node.nodeValue
+                .replace(/\$15/g, '$20')
+                .replace(/Fifteen dollars/g, 'Twenty dollars')
+                .replace(/fifteen dollars/g, 'twenty dollars');
         }
     }
 
@@ -35,6 +40,8 @@
     } else {
         updateLegacyDojoPrice();
     }
+
+    window.setTimeout(updateLegacyDojoPrice, 750);
 
     document.addEventListener('click', function (event) {
         if (!(event.target instanceof Element)) {
