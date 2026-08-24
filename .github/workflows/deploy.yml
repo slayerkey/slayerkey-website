@@ -5,9 +5,10 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'wordpress/slayerkey-website/**'
-      - '.github/workflows/deploy.yml'
+
+permissions:
+  contents: read
+  statuses: write
 
 concurrency:
   group: slayerkey-easywp-production
@@ -19,6 +20,20 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: Mark deployment pending
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: 'pending',
+              context: 'easywp/deploy',
+              description: 'Deploying and verifying EasyWP',
+              target_url: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
+            });
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -32,6 +47,7 @@ jobs:
           SFTP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
           SFTP_PORT: ${{ secrets.EASYWP_PORT }}
         run: |
+          set -euo pipefail
           test -n "$SFTP_HOST"
           test -n "$SFTP_USER"
           test -n "$SFTP_PASSWORD"
@@ -46,6 +62,7 @@ jobs:
         env:
           DEPLOY_SHA: ${{ github.sha }}
         run: |
+          set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
           import os
@@ -76,6 +93,7 @@ jobs:
           PY
 
           grep "SLAYERKEY_WEBSITE_VERSION" wordpress/slayerkey-website/slayerkey-website.php | head -1
+          sha256sum wordpress/slayerkey-website/previews/dojo-v3/dojo.js
 
       - name: Find EasyWP plugin directory
         env:
@@ -84,6 +102,7 @@ jobs:
           SFTP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
           SFTP_PORT: ${{ secrets.EASYWP_PORT }}
         run: |
+          set -euo pipefail
           check_remote_path() {
             lftp -u "$SFTP_USER","$SFTP_PASSWORD" -p "$SFTP_PORT" "sftp://$SFTP_HOST" -e "set sftp:auto-confirm yes; cls -d '$1'; bye" >/dev/null 2>&1
           }
@@ -104,6 +123,7 @@ jobs:
           SFTP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
           SFTP_PORT: ${{ secrets.EASYWP_PORT }}
         run: |
+          set -euo pipefail
           lftp -u "$SFTP_USER","$SFTP_PASSWORD" -p "$SFTP_PORT" "sftp://$SFTP_HOST" <<EOF
           set sftp:auto-confirm yes
           set net:max-retries 2
@@ -118,7 +138,7 @@ jobs:
           bye
           EOF
 
-      - name: Verify exact deployed files
+      - name: Verify exact files over SFTP
         env:
           SFTP_HOST: ${{ secrets.EASYWP_HOST }}
           SFTP_USER: ${{ secrets.EASYWP_USER }}
@@ -146,5 +166,95 @@ jobs:
           cmp wordpress/slayerkey-website/previews/dojo-v3/dojo.css /tmp/slayerkey-remote/previews/dojo-v3/dojo.css
           ! grep -q 'std-derekvictory.png' /tmp/slayerkey-remote/previews/dojo-v3/index.html
 
-          echo "Verified EasyWP deployment: $GITHUB_SHA"
-          cat /tmp/slayerkey-remote/DEPLOYED_COMMIT.txt
+      - name: Verify public HTTP sees the exact deployment
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          BASE_URL="https://slayerkey.com/wp-content/plugins/slayerkey-website"
+          HEALTH_URL="https://slayerkey.com/wp-json/slayerkey/v1/health?cb=$DEPLOY_SHA"
+          MARKER_URL="$BASE_URL/DEPLOYED_COMMIT.txt?cb=$DEPLOY_SHA"
+          JS_URL="$BASE_URL/previews/dojo-v3/dojo.js?cb=$DEPLOY_SHA"
+          EXPECTED_JS_SHA="$(sha256sum wordpress/slayerkey-website/previews/dojo-v3/dojo.js | awk '{print $1}')"
+
+          marker=""
+          for attempt in $(seq 1 12); do
+            marker="$(curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$MARKER_URL" 2>/dev/null | tr -d '\r\n' || true)"
+            if [ "$marker" = "$DEPLOY_SHA" ]; then
+              break
+            fi
+            echo "Public marker not current yet (attempt $attempt/12): ${marker:-missing}"
+            sleep 5
+          done
+          test "$marker" = "$DEPLOY_SHA"
+
+          curl -fsSL --connect-timeout 10 --max-time 30 -H 'Cache-Control: no-cache' "$JS_URL" -o /tmp/public-dojo.js
+          PUBLIC_JS_SHA="$(sha256sum /tmp/public-dojo.js | awk '{print $1}')"
+          test "$PUBLIC_JS_SHA" = "$EXPECTED_JS_SHA"
+
+          health_ok=0
+          for attempt in $(seq 1 12); do
+            if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$HEALTH_URL" -o /tmp/slayerkey-health.json; then
+              if python3 - "$DEPLOY_SHA" "$EXPECTED_JS_SHA" <<'PY'
+          import json
+          import sys
+
+          expected_commit = sys.argv[1]
+          expected_js = sys.argv[2]
+          with open('/tmp/slayerkey-health.json', 'r', encoding='utf-8') as fh:
+              data = json.load(fh)
+
+          actual_commit = data.get('deployed_commit')
+          actual_js = (data.get('dojo_assets') or {}).get('js_sha256')
+          contains_derek = (data.get('dojo_assets') or {}).get('contains_derek')
+
+          if actual_commit != expected_commit:
+              raise SystemExit(f'health deployed_commit mismatch: {actual_commit!r}')
+          if actual_js != expected_js:
+              raise SystemExit(f'health dojo.js hash mismatch: {actual_js!r}')
+          if contains_derek is not False:
+              raise SystemExit(f'health contains_derek was not false: {contains_derek!r}')
+
+          print('Public health endpoint matches exact deployed commit and dojo.js hash.')
+          PY
+              then
+                health_ok=1
+                break
+              fi
+            fi
+            echo "Public health not current yet (attempt $attempt/12)."
+            sleep 5
+          done
+          test "$health_ok" = "1"
+
+          echo "Verified public EasyWP deployment: $DEPLOY_SHA"
+          echo "dojo.js sha256: $EXPECTED_JS_SHA"
+
+      - name: Mark deployment successful
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: 'success',
+              context: 'easywp/deploy',
+              description: 'EasyWP and public HTTP verified',
+              target_url: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
+            });
+
+      - name: Mark deployment failed
+        if: ${{ failure() }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: 'failure',
+              context: 'easywp/deploy',
+              description: 'EasyWP deployment or verification failed',
+              target_url: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
+            });
