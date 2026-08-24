@@ -1,6 +1,32 @@
 (function () {
     'use strict';
 
+    var pendingPlanTrigger = null;
+
+    function isDirectPlanLink(link) {
+        if (!link) return false;
+        if (link.getAttribute('data-sk-plan-direct') === 'true') return true;
+        var location = link.getAttribute('data-sk-location') || '';
+        return location === 'pricing_monthly' || location === 'pricing_annual';
+    }
+
+    /* Intercept generic Start Improving clicks in capture phase so no other handler or
+       checkout href can win before the chooser is ready. */
+    document.addEventListener('click', function (event) {
+        if (!event.target || !event.target.closest) return;
+        var link = event.target.closest('.sk-cta-btn,.sk-mobile-cta,[data-sk-checkout="true"]');
+        if (!link || isDirectPlanLink(link)) return;
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        if (typeof window.SK_openDojoPlanChooser === 'function') {
+            window.SK_openDojoPlanChooser(link);
+        } else {
+            pendingPlanTrigger = link;
+        }
+    }, true);
+
     function ready(fn) {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', fn, { once: true });
@@ -60,18 +86,27 @@
             });
         }
 
-        /* Use the real site's header CTA with preview attribution. */
+        /* Header and generic page CTAs get a safe non-checkout fallback. The capture handler opens
+           the chooser; if JS were interrupted, the fallback only moves to pricing instead of silently
+           selecting Monthly. */
         Array.prototype.slice.call(document.querySelectorAll('.sk-cta-btn,.sk-mobile-cta')).forEach(function (link) {
             var mobile = link.classList.contains('sk-mobile-cta');
             var location = mobile ? 'global_header_mobile' : 'global_header_desktop';
-            link.href = 'https://whop.com/checkout/plan_eVop6pXsIhHlf/?utm_source=private_preview&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=' + location + '_start_improving';
-            link.target = '_blank';
-            link.rel = 'noopener';
+            link.href = '#pricing';
+            link.removeAttribute('target');
+            link.removeAttribute('rel');
             link.setAttribute('data-sk-cta', 'dojo-' + location + '-start');
             link.setAttribute('data-sk-checkout', 'true');
             link.setAttribute('data-sk-offer', 'dojo');
             link.setAttribute('data-sk-location', location);
             if (link.textContent && link.textContent.trim()) link.textContent = 'Start Improving';
+        });
+
+        Array.prototype.slice.call(root.querySelectorAll('[data-sk-checkout="true"]')).forEach(function (link) {
+            if (isDirectPlanLink(link)) return;
+            link.href = '#pricing';
+            link.removeAttribute('target');
+            link.removeAttribute('rel');
         });
 
         /* Plan chooser. Generic Start Improving CTAs open this instead of silently choosing Monthly. */
@@ -84,17 +119,15 @@
                 styles.id = 'dojoPlanChooserStyles';
                 styles.textContent = '' +
                     '.sk-plan-modal{position:fixed;inset:0;z-index:100020;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(0,5,9,.82);backdrop-filter:blur(14px)}' +
-                    '.sk-plan-modal.open{display:flex}.sk-plan-shell{position:relative;width:min(900px,100%);max-height:min(780px,calc(100vh - 36px));overflow:auto;padding:30px;background:linear-gradient(180deg,#0d1c28,#08131c);border:1px solid rgba(255,255,255,.13);box-shadow:0 34px 120px rgba(0,0,0,.66);color:#f7fbff}' +
+                    '.sk-plan-modal.open{display:flex}.sk-plan-shell{position:relative;width:min(900px,100%);max-height:min(780px,calc(100vh - 36px));overflow:auto;padding:31px 30px 30px;background:linear-gradient(180deg,#0d1c28,#08131c);border:1px solid rgba(255,255,255,.13);box-shadow:0 34px 120px rgba(0,0,0,.66);color:#f7fbff}' +
                     '.sk-plan-close{position:absolute;right:13px;top:13px;display:grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid rgba(255,255,255,.13);border-radius:999px;background:#07121b;color:#9fb0bb;font-size:1.05rem;line-height:1;cursor:pointer}.sk-plan-close:hover{color:#fff;border-color:rgba(255,255,255,.3)}' +
-                    '.sk-plan-head{text-align:center;max-width:650px;margin:0 auto 24px}.sk-plan-kicker{color:#2ce0cc;font-size:.66rem;font-weight:900;letter-spacing:.16em;text-transform:uppercase}.sk-plan-head h3{margin:8px 0 0;color:#fff;font-family:var(--font-display,Arial Black,Impact,sans-serif);font-size:clamp(1.9rem,4vw,3rem);font-weight:900;line-height:.96;text-transform:uppercase}.sk-plan-head p{margin:10px auto 0;color:#9fb0bb;font-size:.9rem;line-height:1.5}' +
-                    '.sk-plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch}.sk-plan-card{position:relative;display:flex;flex-direction:column;align-items:center;min-height:450px;padding:25px;border:1px solid rgba(255,255,255,.13);background:#08141d;text-align:center}.sk-plan-card.annual{transform:translateY(-7px);border-color:rgba(44,224,204,.72);background:linear-gradient(180deg,rgba(15,35,43,.99),rgba(7,20,29,.99));box-shadow:0 25px 70px rgba(0,0,0,.35),0 0 36px rgba(44,224,204,.08)}.sk-plan-card.annual:before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,transparent,#2ce0cc,transparent)}' +
-                    '.sk-plan-badge{align-self:center;min-height:26px;padding:6px 9px;border:1px solid rgba(255,255,255,.12);color:#c7d3da;font-size:.62rem;font-weight:900;letter-spacing:.11em;text-transform:uppercase}.sk-plan-card.annual .sk-plan-badge{border-color:rgba(44,224,204,.32);background:rgba(44,224,204,.08);color:#2ce0cc}' +
-                    '.sk-plan-name{margin-top:16px;color:#fff;font-size:.77rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}.sk-plan-price{margin-top:7px;color:#fff;font-family:var(--font-display,Arial Black,Impact,sans-serif);font-size:3rem;font-weight:900;line-height:1}.sk-plan-price span{font-family:var(--font-body,Inter,Arial,sans-serif);font-size:.78rem;font-weight:800;color:#9fb0bb}.sk-plan-save{margin-top:8px;color:#2ce0cc;font-size:.76rem;font-weight:900}' +
-                    '.sk-plan-list{display:grid;gap:9px;width:min(100%,310px);margin:21px auto 0;padding:0;list-style:none;color:#cbd6dc;font-size:.81rem;line-height:1.42;text-align:left}.sk-plan-list li:before{content:"✓";margin-right:8px;color:#2ce0cc;font-weight:900}.sk-plan-personal{width:100%;margin-top:18px;padding:15px;border:1px solid rgba(44,224,204,.24);background:rgba(44,224,204,.055);text-align:center}.sk-plan-personal strong{display:block;color:#fff;font-size:.88rem;line-height:1.3}.sk-plan-personal span{display:block;margin-top:6px;color:#b9c8d0;font-size:.78rem;line-height:1.45}' +
+                    '.sk-plan-head{text-align:center;max-width:680px;margin:0 auto 24px;padding:0 36px}.sk-plan-head h3{margin:0;color:#fff;font-family:var(--font-display,Arial Black,Impact,sans-serif);font-size:clamp(1.9rem,4vw,3rem);font-weight:900;line-height:.96;text-transform:uppercase}.sk-plan-head p{margin:12px auto 0;color:#9fb0bb;font-size:.9rem;line-height:1.45}' +
+                    '.sk-plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch}.sk-plan-card{position:relative;display:flex;flex-direction:column;align-items:center;min-height:470px;padding:25px;border:1px solid rgba(255,255,255,.13);background:#08141d;text-align:center}.sk-plan-card.annual{transform:translateY(-6px);border-color:rgba(44,224,204,.72);background:linear-gradient(180deg,rgba(15,35,43,.99),rgba(7,20,29,.99));box-shadow:0 25px 70px rgba(0,0,0,.35),0 0 36px rgba(44,224,204,.08)}.sk-plan-card.annual:before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,transparent,#2ce0cc,transparent)}' +
+                    '.sk-plan-badge{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:6px 10px;border:1px solid rgba(44,224,204,.32);background:rgba(44,224,204,.08);color:#2ce0cc;font-size:.62rem;font-weight:900;letter-spacing:.11em;text-transform:uppercase}' +
+                    '.sk-plan-name{margin-top:16px;color:#fff;font-size:.8rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}.sk-plan-card.monthly .sk-plan-name{margin-top:2px}.sk-plan-price{margin-top:8px;color:#fff;font-family:var(--font-display,Arial Black,Impact,sans-serif);font-size:3rem;font-weight:900;line-height:1}.sk-plan-price span{font-family:var(--font-body,Inter,Arial,sans-serif);font-size:.78rem;font-weight:800;color:#9fb0bb}.sk-plan-save{margin-top:9px;color:#2ce0cc;font-size:.78rem;font-weight:900}' +
+                    '.sk-plan-list{display:grid;align-content:start;justify-items:center;gap:10px;width:100%;margin:24px auto 24px;padding:0;list-style:none;color:#cbd6dc;font-size:.8rem;line-height:1.4;text-align:center}.sk-plan-list li{display:flex;align-items:flex-start;justify-content:center;gap:8px;width:min(100%,330px)}.sk-plan-list li:before{content:"✓";flex:0 0 auto;color:#2ce0cc;font-weight:900}.sk-plan-list strong{color:#fff}' +
                     '.sk-plan-action{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;margin-top:auto;padding:0 17px;border:1px solid rgba(255,255,255,.13);background:linear-gradient(135deg,#ff596c,#ff4655);color:#fff!important;font-size:.77rem;font-weight:900;letter-spacing:.05em;text-align:center;text-decoration:none;text-transform:uppercase;box-shadow:0 14px 34px rgba(255,70,85,.18);transition:transform .18s ease,filter .18s ease}.sk-plan-action:hover{transform:translateY(-2px);filter:brightness(1.05)}.sk-plan-card.annual .sk-plan-action{background:linear-gradient(135deg,#23cdbb,#2ce0cc);color:#041014!important;box-shadow:0 14px 34px rgba(44,224,204,.14)}' +
-                    '.sk-plan-foot{margin:16px 0 0;text-align:center;color:#738895;font-size:.72rem}' +
-                    '#sk-std .dj-annual-bonus{margin:2px 0 14px;padding:12px 13px;border:1px solid rgba(44,224,204,.22);background:rgba(44,224,204,.055);text-align:center}#sk-std .dj-annual-bonus strong{display:block;color:#fff;font-size:.78rem;line-height:1.3}#sk-std .dj-annual-bonus span{display:block;margin-top:4px;color:#aebfc9;font-size:.69rem;line-height:1.42}' +
-                    '@media(max-width:700px){.sk-plan-modal{align-items:flex-start;padding:8px}.sk-plan-shell{width:100%;max-height:calc(100dvh - 16px);padding:48px 14px 16px}.sk-plan-grid{grid-template-columns:1fr}.sk-plan-card{min-height:0;padding:20px 18px}.sk-plan-card.annual{order:-1;transform:none}.sk-plan-head{padding:0 8px;margin-bottom:18px}.sk-plan-head h3{font-size:clamp(1.8rem,10vw,2.45rem)}.sk-plan-head p{font-size:.82rem}.sk-plan-price{font-size:2.7rem}.sk-plan-list{width:min(100%,290px);margin-top:17px}.sk-plan-personal{margin-top:15px}.sk-plan-action{margin-top:22px}.sk-plan-foot{margin-top:12px}.sk-plan-close{right:10px;top:10px}}';
+                    '@media(max-width:700px){.sk-plan-modal{align-items:flex-start;padding:8px}.sk-plan-shell{width:100%;max-height:calc(100dvh - 16px);padding:48px 14px 16px}.sk-plan-grid{grid-template-columns:1fr}.sk-plan-card{min-height:0;padding:22px 18px}.sk-plan-card.annual{order:-1;transform:none}.sk-plan-head{padding:0 8px;margin-bottom:18px}.sk-plan-head h3{font-size:clamp(1.8rem,10vw,2.45rem)}.sk-plan-head p{font-size:.82rem}.sk-plan-price{font-size:2.7rem}.sk-plan-list{margin:20px auto 22px}.sk-plan-action{margin-top:8px}.sk-plan-close{right:10px;top:10px}}';
                 document.head.appendChild(styles);
             }
 
@@ -106,16 +139,14 @@
                 '<div class="sk-plan-shell" role="dialog" aria-modal="true" aria-labelledby="sk-plan-title">' +
                 '<button class="sk-plan-close" type="button" aria-label="Close plan chooser">✕</button>' +
                 '<div class="sk-plan-head">' +
-                '<div class="sk-plan-kicker">Choose Your Plan</div>' +
                 '<h3 id="sk-plan-title">How Do You Want To Start?</h3>' +
-                '<p>Both plans include complete Training Dojo access. Annual saves two months and adds your personal review and improvement plan.</p>' +
+                '<p>Monthly gives you the full Dojo. Annual saves two months and adds your personal review.</p>' +
                 '</div>' +
                 '<div class="sk-plan-grid">' +
                 '<article class="sk-plan-card monthly">' +
-                '<div class="sk-plan-badge">Flexible</div>' +
                 '<div class="sk-plan-name">Monthly</div>' +
                 '<div class="sk-plan-price">$19.99 <span>/ month</span></div>' +
-                '<ul class="sk-plan-list"><li>Complete Training Dojo access</li><li>100+ lessons and training library</li><li>Weekly VOD reviews</li><li>Daily coaching + private teams</li><li>7 Day Improvement Routine</li><li>Improve alongside players serious about getting better</li></ul>' +
+                '<ul class="sk-plan-list"><li>100+ lessons + training library</li><li>Aim routines</li><li>Tracker reviews</li><li>Weekly VOD reviews</li><li>Daily coaching + private teams</li><li>7 Day Improvement Routine</li><li>Serious improvement focused community</li></ul>' +
                 '<a class="sk-plan-action" href="' + monthlyCheckout + '" target="_blank" rel="noopener" data-sk-cta="dojo-plan-monthly" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="plan_chooser_monthly" data-sk-plan-direct="true">Join The Dojo</a>' +
                 '</article>' +
                 '<article class="sk-plan-card annual">' +
@@ -123,12 +154,10 @@
                 '<div class="sk-plan-name">Annual</div>' +
                 '<div class="sk-plan-price">$199.99 <span>/ year</span></div>' +
                 '<div class="sk-plan-save">2 months free</div>' +
-                '<ul class="sk-plan-list"><li>Everything included in Monthly</li><li>Your gameplay + mechanics personally reviewed by Slayerkey</li></ul>' +
-                '<div class="sk-plan-personal"><strong>Your Personalized Improvement Plan</strong><span>Custom training routine + clear improvement priorities built from your personal review.</span></div>' +
+                '<ul class="sk-plan-list"><li>Everything in Monthly</li><li>Your gameplay + mechanics personally reviewed by Slayerkey</li><li><strong>Personalized Improvement Plan</strong> + custom training routine</li><li>Clear improvement priorities</li></ul>' +
                 '<a class="sk-plan-action" href="' + annualCheckout + '" target="_blank" rel="noopener" data-sk-cta="dojo-plan-annual" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="plan_chooser_annual" data-sk-plan-direct="true">Get My Improvement Plan</a>' +
                 '</article>' +
                 '</div>' +
-                '<p class="sk-plan-foot">Choose the plan that fits how you want to start improving.</p>' +
                 '</div>';
             document.body.appendChild(modal);
 
@@ -168,16 +197,6 @@
                 if (event.key === 'Escape' && modal.classList.contains('open')) closeChooser();
             });
 
-            Array.prototype.slice.call(document.querySelectorAll('[data-sk-checkout="true"]')).forEach(function (link) {
-                if (link.getAttribute('data-sk-plan-direct') === 'true') return;
-                var location = link.getAttribute('data-sk-location') || '';
-                if (location === 'pricing_monthly' || location === 'pricing_annual') return;
-                link.addEventListener('click', function (event) {
-                    event.preventDefault();
-                    openChooser(link);
-                });
-            });
-
             var pricing = root.querySelector('#pricing');
             if (pricing) {
                 var monthlyButton = pricing.querySelector('[data-sk-location="pricing_monthly"]');
@@ -187,17 +206,18 @@
                 if (annualButton) annualButton.textContent = 'Get My Improvement Plan';
                 if (annualCard) {
                     var save = annualCard.querySelector('.dj-plan-save');
-                    if (save) save.textContent = 'Best Value · 2 Months Free';
-                    if (!annualCard.querySelector('.dj-annual-bonus')) {
-                        var bonus = document.createElement('div');
-                        bonus.className = 'dj-annual-bonus';
-                        bonus.innerHTML = '<strong>Personally reviewed by Slayerkey</strong><span>Gameplay + mechanics review · custom routine · clear improvement priorities</span>';
-                        annualCard.insertBefore(bonus, annualButton);
-                    }
+                    if (save) save.textContent = '2 Months Free';
+                    var oldBonus = annualCard.querySelector('.dj-annual-bonus');
+                    if (oldBonus && oldBonus.parentNode) oldBonus.parentNode.removeChild(oldBonus);
                 }
             }
 
             window.SK_openDojoPlanChooser = openChooser;
+            if (pendingPlanTrigger) {
+                var trigger = pendingPlanTrigger;
+                pendingPlanTrigger = null;
+                openChooser(trigger);
+            }
         })();
 
         /* Replace the visible review rail so the inline scroll loop can only touch a detached node.
