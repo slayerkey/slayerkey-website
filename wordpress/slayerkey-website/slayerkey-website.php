@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.19
+ * Version: 0.1.20
  * Author: Slayerkey
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.19' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.20' );
 define( 'SLAYERKEY_POSTHOG_TOKEN', 'phc_m92yxHMa2BTnSu7KmebGKu8sEitMki4oPhdLTKZzcpMc' );
 define( 'SLAYERKEY_POSTHOG_HOST', 'https://edge.slayerkey.com' );
 define( 'SLAYERKEY_POSTHOG_UI_HOST', 'https://us.posthog.com' );
@@ -134,6 +134,20 @@ function slayerkey_website_prepare_preview_html( $html, $slug ) {
     return str_replace( 'utm_source=slayerkey_site', 'utm_source=private_preview', $html );
 }
 
+function slayerkey_website_asset_version( $relative_path ) {
+    $path = plugin_dir_path( __FILE__ ) . ltrim( $relative_path, '/' );
+
+    if ( is_readable( $path ) ) {
+        $mtime = filemtime( $path );
+
+        if ( false !== $mtime ) {
+            return SLAYERKEY_WEBSITE_VERSION . '.' . $mtime;
+        }
+    }
+
+    return SLAYERKEY_WEBSITE_VERSION;
+}
+
 function slayerkey_website_render_private_preview() {
     $slug = slayerkey_website_preview_slug_from_request();
 
@@ -179,7 +193,7 @@ function slayerkey_website_render_private_preview() {
                 'slayerkey-private-preview-' . $slug,
                 plugin_dir_url( __FILE__ ) . $preview['style'],
                 array(),
-                SLAYERKEY_WEBSITE_VERSION
+                slayerkey_website_asset_version( $preview['style'] )
             );
         }
 
@@ -188,7 +202,7 @@ function slayerkey_website_render_private_preview() {
                 'slayerkey-private-preview-' . $slug,
                 plugin_dir_url( __FILE__ ) . $preview['script'],
                 array(),
-                SLAYERKEY_WEBSITE_VERSION,
+                slayerkey_website_asset_version( $preview['script'] ),
                 true
             );
         }
@@ -233,17 +247,46 @@ function slayerkey_website_version_marker() {
 }
 add_action( 'wp_head', 'slayerkey_website_version_marker', 0 );
 
+function slayerkey_website_file_sha256( $relative_path ) {
+    $path = plugin_dir_path( __FILE__ ) . ltrim( $relative_path, '/' );
+
+    if ( ! is_readable( $path ) ) {
+        return null;
+    }
+
+    $hash = hash_file( 'sha256', $path );
+    return false === $hash ? null : $hash;
+}
+
 function slayerkey_website_health_response() {
+    $deploy_marker_path = plugin_dir_path( __FILE__ ) . 'DEPLOYED_COMMIT.txt';
+    $deployed_commit = null;
+
+    if ( is_readable( $deploy_marker_path ) ) {
+        $marker = trim( (string) file_get_contents( $deploy_marker_path ) );
+        $deployed_commit = '' === $marker ? null : $marker;
+    }
+
+    $dojo_index_path = plugin_dir_path( __FILE__ ) . 'previews/dojo-v3/index.html';
+    $dojo_index = is_readable( $dojo_index_path ) ? file_get_contents( $dojo_index_path ) : false;
+
     return rest_ensure_response(
         array(
             'plugin_active' => true,
             'version' => SLAYERKEY_WEBSITE_VERSION,
+            'deployed_commit' => $deployed_commit,
             'posthog_host' => SLAYERKEY_POSTHOG_HOST,
             'posthog_ui_host' => SLAYERKEY_POSTHOG_UI_HOST,
             'tracking_asset' => plugin_dir_url( __FILE__ ) . 'assets/js/tracking.js',
             'private_previews_enabled' => true,
             'public_work_enabled' => false,
             'public_work_archived' => true,
+            'dojo_assets' => array(
+                'index_sha256' => slayerkey_website_file_sha256( 'previews/dojo-v3/index.html' ),
+                'js_sha256' => slayerkey_website_file_sha256( 'previews/dojo-v3/dojo.js' ),
+                'css_sha256' => slayerkey_website_file_sha256( 'previews/dojo-v3/dojo.css' ),
+                'contains_derek' => false !== $dojo_index && false !== strpos( $dojo_index, 'std-derekvictory.png' ),
+            ),
             'hooks' => array(
                 'version_marker_registered' => false !== has_action( 'wp_head', 'slayerkey_website_version_marker' ),
                 'posthog_snippet_registered' => false !== has_action( 'wp_head', 'slayerkey_website_posthog_snippet' ),
@@ -296,7 +339,7 @@ function slayerkey_website_enqueue_tracking() {
         'slayerkey-website-tracking',
         plugin_dir_url( __FILE__ ) . 'assets/js/tracking.js',
         array(),
-        SLAYERKEY_WEBSITE_VERSION,
+        slayerkey_website_asset_version( 'assets/js/tracking.js' ),
         true
     );
 }
