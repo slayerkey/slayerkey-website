@@ -9,8 +9,6 @@ on:
       - 'wordpress/slayerkey-website/**'
       - '.github/workflows/deploy.yml'
 
-# Only the newest main deployment is allowed to finish. Without this, an older
-# SFTP job can complete after a newer one and roll EasyWP back to stale files.
 concurrency:
   group: slayerkey-easywp-production
   cancel-in-progress: true
@@ -22,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Install SFTP client
         run: sudo apt-get update && sudo apt-get install -y lftp
@@ -34,17 +32,20 @@ jobs:
           SFTP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
           SFTP_PORT: ${{ secrets.EASYWP_PORT }}
         run: |
-          test -n "$SFTP_HOST" || (echo "Missing EASYWP_HOST" && exit 1)
-          test -n "$SFTP_USER" || (echo "Missing EASYWP_USER" && exit 1)
-          test -n "$SFTP_PASSWORD" || (echo "Missing EASYWP_PASSWORD" && exit 1)
-          test -n "$SFTP_PORT" || (echo "Missing EASYWP_PORT" && exit 1)
-          test -f "wordpress/slayerkey-website/slayerkey-website.php" || (echo "Plugin source is missing" && exit 1)
+          test -n "$SFTP_HOST"
+          test -n "$SFTP_USER"
+          test -n "$SFTP_PASSWORD"
+          test -n "$SFTP_PORT"
+          test -f wordpress/slayerkey-website/slayerkey-website.php
+          test -f wordpress/slayerkey-website/previews/dojo-v3/index.html
+          test -f wordpress/slayerkey-website/previews/dojo-v3/dojo.js
+          test -f wordpress/slayerkey-website/previews/dojo-v3/dojo.css
 
-      - name: Prepare deployment build
+      - name: Prepare exact deployment copy
         env:
           DEPLOY_SHA: ${{ github.sha }}
         run: |
-          python - <<'PY'
+          python3 - <<'PY'
           from pathlib import Path
           import os
           import re
@@ -52,53 +53,38 @@ jobs:
           root = Path('wordpress/slayerkey-website')
           deploy_sha = os.environ['DEPLOY_SHA']
 
-          # Derek was reference material only. Remove the card from the actual
-          # server build so visibility never depends on a cached JS asset.
           index_path = root / 'previews/dojo-v3/index.html'
           html = index_path.read_text(encoding='utf-8')
-          pattern = re.compile(
-              r'\n\s*<button class="dj-win-card dj-win-card-wide[^\"]*"[^>]*'
-              r'data-proof-src="https://slayerkey\.com/wp-content/uploads/2026/08/std-derekvictory\.png"'
-              r'.*?</button>',
-              re.S,
-          )
-          html, removed = pattern.subn('', html, count=1)
-          if removed != 1:
-              raise SystemExit(f'Expected to remove exactly one Derek card, removed {removed}')
-          if 'std-derekvictory.png' in html:
-              raise SystemExit('Derek asset reference is still present after build transform')
+          needle = 'std-derekvictory.png'
+          marker = html.find(needle)
+          if marker == -1:
+              raise SystemExit('Derek card marker was not found in authored HTML')
+          start = html.rfind('<button', 0, marker)
+          end = html.find('</button>', marker)
+          if start == -1 or end == -1:
+              raise SystemExit('Could not resolve Derek card boundaries')
+          end += len('</button>')
+          html = html[:start] + html[end:]
+          if needle in html:
+              raise SystemExit('Derek reference remains after removal')
           index_path.write_text(html, encoding='utf-8')
 
-          # Give every deployed build a unique asset version. This prevents a
-          # browser/CDN from reusing an older dojo.js or dojo.css under the same
-          # semantic plugin version.
           php_path = root / 'slayerkey-website.php'
           php = php_path.read_text(encoding='utf-8')
-          version_pattern = re.compile(
-              r"define\( 'SLAYERKEY_WEBSITE_VERSION', '([^']+)' \);"
-          )
-          match = version_pattern.search(php)
-          if not match:
-              raise SystemExit('Could not locate SLAYERKEY_WEBSITE_VERSION')
-          base_version = match.group(1).split('+')[0]
-          deployed_version = f'{base_version}+{deploy_sha[:8]}'
-          php = version_pattern.sub(
-              f"define( 'SLAYERKEY_WEBSITE_VERSION', '{deployed_version}' );",
+          short_sha = deploy_sha[:8]
+          php, count = re.subn(
+              r"define\( 'SLAYERKEY_WEBSITE_VERSION', '[^']+' \);",
+              "define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.19." + short_sha + "' );",
               php,
               count=1,
           )
+          if count != 1:
+              raise SystemExit('Could not stamp deployed plugin version')
           php_path.write_text(php, encoding='utf-8')
-
           (root / 'DEPLOYED_COMMIT.txt').write_text(deploy_sha + '\n', encoding='utf-8')
           PY
 
-          # Force SFTP to consider these authored assets fresh even when EasyWP
-          # has unusual remote mtimes from an earlier deployment.
-          touch wordpress/slayerkey-website/previews/dojo-v3/dojo.js
-          touch wordpress/slayerkey-website/previews/dojo-v3/dojo.css
-
-          echo "Prepared deployment build for $GITHUB_SHA"
-          grep -q 'std-derekvictory.png' wordpress/slayerkey-website/previews/dojo-v3/index.html && (echo "Derek is still present in deployment HTML" && exit 1) || true
+          ! grep -q 'std-derekvictory.png' wordpress/slayerkey-website/previews/dojo-v3/index.html
           grep "SLAYERKEY_WEBSITE_VERSION" wordpress/slayerkey-website/slayerkey-website.php | head -1
 
       - name: Find EasyWP plugin directory
@@ -121,7 +107,7 @@ jobs:
             exit 1
           fi
 
-      - name: Deploy plugin
+      - name: Deploy plugin and force critical files
         env:
           SFTP_HOST: ${{ secrets.EASYWP_HOST }}
           SFTP_USER: ${{ secrets.EASYWP_USER }}
@@ -134,10 +120,15 @@ jobs:
           set net:timeout 20
           lcd "$GITHUB_WORKSPACE"
           mirror --reverse --delete --verbose wordpress/slayerkey-website "$REMOTE_PLUGIN_ROOT/slayerkey-website"
+          put wordpress/slayerkey-website/slayerkey-website.php -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/slayerkey-website.php"
+          put wordpress/slayerkey-website/DEPLOYED_COMMIT.txt -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/DEPLOYED_COMMIT.txt"
+          put wordpress/slayerkey-website/previews/dojo-v3/index.html -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/index.html"
+          put wordpress/slayerkey-website/previews/dojo-v3/dojo.js -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/dojo.js"
+          put wordpress/slayerkey-website/previews/dojo-v3/dojo.css -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/dojo.css"
           bye
           EOF
 
-      - name: Verify deployed files match deployment build
+      - name: Verify exact deployed files
         env:
           SFTP_HOST: ${{ secrets.EASYWP_HOST }}
           SFTP_USER: ${{ secrets.EASYWP_USER }}
@@ -150,8 +141,6 @@ jobs:
 
           lftp -u "$SFTP_USER","$SFTP_PASSWORD" -p "$SFTP_PORT" "sftp://$SFTP_HOST" <<EOF
           set sftp:auto-confirm yes
-          set net:max-retries 2
-          set net:timeout 20
           get "$REMOTE_PLUGIN_ROOT/slayerkey-website/slayerkey-website.php" -o /tmp/slayerkey-remote/slayerkey-website.php
           get "$REMOTE_PLUGIN_ROOT/slayerkey-website/DEPLOYED_COMMIT.txt" -o /tmp/slayerkey-remote/DEPLOYED_COMMIT.txt
           get "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/index.html" -o /tmp/slayerkey-remote/previews/dojo-v3/index.html
@@ -165,11 +154,7 @@ jobs:
           cmp wordpress/slayerkey-website/previews/dojo-v3/index.html /tmp/slayerkey-remote/previews/dojo-v3/index.html
           cmp wordpress/slayerkey-website/previews/dojo-v3/dojo.js /tmp/slayerkey-remote/previews/dojo-v3/dojo.js
           cmp wordpress/slayerkey-website/previews/dojo-v3/dojo.css /tmp/slayerkey-remote/previews/dojo-v3/dojo.css
-
           ! grep -q 'std-derekvictory.png' /tmp/slayerkey-remote/previews/dojo-v3/index.html
 
-          echo "Verified: EasyWP files exactly match the prepared deployment build."
-          echo "Deployed commit: $(cat /tmp/slayerkey-remote/DEPLOYED_COMMIT.txt)"
-          echo "Deployed plugin version: $(grep "SLAYERKEY_WEBSITE_VERSION" /tmp/slayerkey-remote/slayerkey-website.php | head -1)"
-          echo "Local Dojo JS SHA256:  $(sha256sum wordpress/slayerkey-website/previews/dojo-v3/dojo.js | cut -d' ' -f1)"
-          echo "Remote Dojo JS SHA256: $(sha256sum /tmp/slayerkey-remote/previews/dojo-v3/dojo.js | cut -d' ' -f1)"
+          echo "Verified EasyWP deployment: $GITHUB_SHA"
+          cat /tmp/slayerkey-remote/DEPLOYED_COMMIT.txt
