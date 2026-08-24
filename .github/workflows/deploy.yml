@@ -58,20 +58,38 @@ jobs:
           test -f wordpress/slayerkey-website/previews/dojo-v3/dojo.css
           ! grep -q 'std-derekvictory.png' wordpress/slayerkey-website/previews/dojo-v3/index.html
 
-      - name: Stamp deployment identity
+      - name: Build content addressed deployment
         env:
           DEPLOY_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+          import hashlib
+          import json
           import os
           import re
+          import shutil
 
           root = Path('wordpress/slayerkey-website')
           deploy_sha = os.environ['DEPLOY_SHA']
+          dojo_dir = root / 'previews/dojo-v3'
+          js_source = dojo_dir / 'dojo.js'
+          css_source = dojo_dir / 'dojo.css'
+
+          js_sha = hashlib.sha256(js_source.read_bytes()).hexdigest()
+          css_sha = hashlib.sha256(css_source.read_bytes()).hexdigest()
+          js_name = f'dojo.{js_sha[:16]}.js'
+          css_name = f'dojo.{css_sha[:16]}.css'
+          js_relative = f'previews/dojo-v3/{js_name}'
+          css_relative = f'previews/dojo-v3/{css_name}'
+
+          shutil.copy2(js_source, dojo_dir / js_name)
+          shutil.copy2(css_source, dojo_dir / css_name)
+
           php_path = root / 'slayerkey-website.php'
           php = php_path.read_text(encoding='utf-8')
+
           version_match = re.search(
               r"define\( 'SLAYERKEY_WEBSITE_VERSION', '([^']+)' \);",
               php,
@@ -88,12 +106,50 @@ jobs:
           )
           if count != 1:
               raise SystemExit('Could not stamp deployed plugin version')
+
+          php, style_count = re.subn(
+              r"'style'\s*=>\s*'previews/dojo-v3/dojo(?:\.[0-9a-f]{16})?\.css'",
+              "'style'       => '" + css_relative + "'",
+              php,
+              count=1,
+          )
+          php, script_count = re.subn(
+              r"'script'\s*=>\s*'previews/dojo-v3/dojo(?:\.[0-9a-f]{16})?\.js'",
+              "'script'      => '" + js_relative + "'",
+              php,
+              count=1,
+          )
+          if style_count != 1 or script_count != 1:
+              raise SystemExit(
+                  f'Could not rewrite Dojo content-addressed assets: style={style_count}, script={script_count}'
+              )
+
           php_path.write_text(php, encoding='utf-8')
           (root / 'DEPLOYED_COMMIT.txt').write_text(deploy_sha + '\n', encoding='utf-8')
+          (root / 'DEPLOYED_ASSETS.json').write_text(
+              json.dumps(
+                  {
+                      'commit': deploy_sha,
+                      'dojo_js': js_relative,
+                      'dojo_js_sha256': js_sha,
+                      'dojo_css': css_relative,
+                      'dojo_css_sha256': css_sha,
+                  },
+                  indent=2,
+              ) + '\n',
+              encoding='utf-8',
+          )
+
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as env:
+              env.write(f'DOJO_JS_FILE={js_relative}\n')
+              env.write(f'DOJO_JS_SHA={js_sha}\n')
+              env.write(f'DOJO_CSS_FILE={css_relative}\n')
+              env.write(f'DOJO_CSS_SHA={css_sha}\n')
           PY
 
           grep "SLAYERKEY_WEBSITE_VERSION" wordpress/slayerkey-website/slayerkey-website.php | head -1
-          sha256sum wordpress/slayerkey-website/previews/dojo-v3/dojo.js
+          grep "previews/dojo-v3/dojo\." wordpress/slayerkey-website/slayerkey-website.php
+          cat wordpress/slayerkey-website/DEPLOYED_ASSETS.json
 
       - name: Find EasyWP plugin directory
         env:
@@ -130,8 +186,11 @@ jobs:
           set net:timeout 20
           lcd "$GITHUB_WORKSPACE"
           mirror --reverse --delete --verbose wordpress/slayerkey-website "$REMOTE_PLUGIN_ROOT/slayerkey-website"
+          put "wordpress/slayerkey-website/$DOJO_JS_FILE" -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/$DOJO_JS_FILE"
+          put "wordpress/slayerkey-website/$DOJO_CSS_FILE" -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/$DOJO_CSS_FILE"
           put wordpress/slayerkey-website/slayerkey-website.php -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/slayerkey-website.php"
           put wordpress/slayerkey-website/DEPLOYED_COMMIT.txt -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/DEPLOYED_COMMIT.txt"
+          put wordpress/slayerkey-website/DEPLOYED_ASSETS.json -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/DEPLOYED_ASSETS.json"
           put wordpress/slayerkey-website/previews/dojo-v3/index.html -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/index.html"
           put wordpress/slayerkey-website/previews/dojo-v3/dojo.js -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/dojo.js"
           put wordpress/slayerkey-website/previews/dojo-v3/dojo.css -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/dojo.css"
@@ -153,17 +212,23 @@ jobs:
           set sftp:auto-confirm yes
           get "$REMOTE_PLUGIN_ROOT/slayerkey-website/slayerkey-website.php" -o /tmp/slayerkey-remote/slayerkey-website.php
           get "$REMOTE_PLUGIN_ROOT/slayerkey-website/DEPLOYED_COMMIT.txt" -o /tmp/slayerkey-remote/DEPLOYED_COMMIT.txt
+          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/DEPLOYED_ASSETS.json" -o /tmp/slayerkey-remote/DEPLOYED_ASSETS.json
           get "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/index.html" -o /tmp/slayerkey-remote/previews/dojo-v3/index.html
           get "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/dojo.js" -o /tmp/slayerkey-remote/previews/dojo-v3/dojo.js
           get "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/dojo.css" -o /tmp/slayerkey-remote/previews/dojo-v3/dojo.css
+          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/$DOJO_JS_FILE" -o "/tmp/slayerkey-remote/$DOJO_JS_FILE"
+          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/$DOJO_CSS_FILE" -o "/tmp/slayerkey-remote/$DOJO_CSS_FILE"
           bye
           EOF
 
           cmp wordpress/slayerkey-website/slayerkey-website.php /tmp/slayerkey-remote/slayerkey-website.php
           cmp wordpress/slayerkey-website/DEPLOYED_COMMIT.txt /tmp/slayerkey-remote/DEPLOYED_COMMIT.txt
+          cmp wordpress/slayerkey-website/DEPLOYED_ASSETS.json /tmp/slayerkey-remote/DEPLOYED_ASSETS.json
           cmp wordpress/slayerkey-website/previews/dojo-v3/index.html /tmp/slayerkey-remote/previews/dojo-v3/index.html
           cmp wordpress/slayerkey-website/previews/dojo-v3/dojo.js /tmp/slayerkey-remote/previews/dojo-v3/dojo.js
           cmp wordpress/slayerkey-website/previews/dojo-v3/dojo.css /tmp/slayerkey-remote/previews/dojo-v3/dojo.css
+          cmp "wordpress/slayerkey-website/$DOJO_JS_FILE" "/tmp/slayerkey-remote/$DOJO_JS_FILE"
+          cmp "wordpress/slayerkey-website/$DOJO_CSS_FILE" "/tmp/slayerkey-remote/$DOJO_CSS_FILE"
           ! grep -q 'std-derekvictory.png' /tmp/slayerkey-remote/previews/dojo-v3/index.html
 
       - name: Verify public HTTP sees the exact deployment
@@ -174,8 +239,9 @@ jobs:
           BASE_URL="https://slayerkey.com/wp-content/plugins/slayerkey-website"
           HEALTH_URL="https://slayerkey.com/wp-json/slayerkey/v1/health?cb=$DEPLOY_SHA"
           MARKER_URL="$BASE_URL/DEPLOYED_COMMIT.txt?cb=$DEPLOY_SHA"
-          JS_URL="$BASE_URL/previews/dojo-v3/dojo.js?cb=$DEPLOY_SHA"
-          EXPECTED_JS_SHA="$(sha256sum wordpress/slayerkey-website/previews/dojo-v3/dojo.js | awk '{print $1}')"
+          ASSETS_URL="$BASE_URL/DEPLOYED_ASSETS.json?cb=$DEPLOY_SHA"
+          JS_URL="$BASE_URL/$DOJO_JS_FILE"
+          CSS_URL="$BASE_URL/$DOJO_CSS_FILE"
 
           marker=""
           for attempt in $(seq 1 12); do
@@ -188,14 +254,21 @@ jobs:
           done
           test "$marker" = "$DEPLOY_SHA"
 
-          curl -fsSL --connect-timeout 10 --max-time 30 -H 'Cache-Control: no-cache' "$JS_URL" -o /tmp/public-dojo.js
+          curl -fsSL --connect-timeout 10 --max-time 30 -H 'Cache-Control: no-cache' "$ASSETS_URL" -o /tmp/public-assets.json
+          cmp wordpress/slayerkey-website/DEPLOYED_ASSETS.json /tmp/public-assets.json
+
+          curl -fsSL --connect-timeout 10 --max-time 30 "$JS_URL" -o /tmp/public-dojo.js
           PUBLIC_JS_SHA="$(sha256sum /tmp/public-dojo.js | awk '{print $1}')"
-          test "$PUBLIC_JS_SHA" = "$EXPECTED_JS_SHA"
+          test "$PUBLIC_JS_SHA" = "$DOJO_JS_SHA"
+
+          curl -fsSL --connect-timeout 10 --max-time 30 "$CSS_URL" -o /tmp/public-dojo.css
+          PUBLIC_CSS_SHA="$(sha256sum /tmp/public-dojo.css | awk '{print $1}')"
+          test "$PUBLIC_CSS_SHA" = "$DOJO_CSS_SHA"
 
           health_ok=0
           for attempt in $(seq 1 12); do
             if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$HEALTH_URL" -o /tmp/slayerkey-health.json; then
-              if python3 - "$DEPLOY_SHA" "$EXPECTED_JS_SHA" <<'PY'
+              if python3 - "$DEPLOY_SHA" "$DOJO_JS_SHA" <<'PY'
           import json
           import sys
 
@@ -205,17 +278,20 @@ jobs:
               data = json.load(fh)
 
           actual_commit = data.get('deployed_commit')
+          actual_version = str(data.get('version') or '')
           actual_js = (data.get('dojo_assets') or {}).get('js_sha256')
           contains_derek = (data.get('dojo_assets') or {}).get('contains_derek')
 
           if actual_commit != expected_commit:
               raise SystemExit(f'health deployed_commit mismatch: {actual_commit!r}')
+          if not actual_version.endswith('.' + expected_commit[:8]):
+              raise SystemExit(f'health plugin version mismatch: {actual_version!r}')
           if actual_js != expected_js:
               raise SystemExit(f'health dojo.js hash mismatch: {actual_js!r}')
           if contains_derek is not False:
               raise SystemExit(f'health contains_derek was not false: {contains_derek!r}')
 
-          print('Public health endpoint matches exact deployed commit and dojo.js hash.')
+          print('Public health endpoint matches exact deployed commit, PHP version, and dojo.js hash.')
           PY
               then
                 health_ok=1
@@ -228,7 +304,10 @@ jobs:
           test "$health_ok" = "1"
 
           echo "Verified public EasyWP deployment: $DEPLOY_SHA"
-          echo "dojo.js sha256: $EXPECTED_JS_SHA"
+          echo "dojo.js asset: $DOJO_JS_FILE"
+          echo "dojo.js sha256: $DOJO_JS_SHA"
+          echo "dojo.css asset: $DOJO_CSS_FILE"
+          echo "dojo.css sha256: $DOJO_CSS_SHA"
 
       - name: Mark deployment successful
         uses: actions/github-script@v7

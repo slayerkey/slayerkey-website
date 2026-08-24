@@ -85,15 +85,15 @@ Interpret it strictly:
 * missing status = the deploy workflow has not started, so the commit is **not verified live**
 * pending = deployment or verification is still running
 * failure = SFTP deployment, remote byte verification, or public HTTP verification failed
-* success = EasyWP contains the exact commit and the public site serves the exact Dojo JavaScript hash for that commit
+* success = EasyWP contains the exact commit and the public site serves the exact Dojo assets for that commit
 
 Do not hand off a preview URL, call a change deployed, or promote a preview to live until `easywp/deploy` is `success` for the exact commit being discussed.
 
 The workflow verifies deployment in three layers:
 
-1. It uploads the plugin and critical Dojo files over SFTP.
-2. It downloads those files back over SFTP and byte compares them with the workflow workspace.
-3. It requests the public `DEPLOYED_COMMIT.txt`, public `dojo.js`, and `/wp-json/slayerkey/v1/health` endpoints with a commit specific cache buster and verifies the commit plus SHA256 hash seen through HTTP.
+1. It builds content addressed Dojo JS/CSS filenames from SHA256 hashes and rewrites the deployed PHP preview map to use those unique physical asset paths. This avoids relying on query string cache busting for EasyWP/CDN static assets.
+2. It uploads the plugin and critical Dojo files over SFTP, then downloads them back and byte compares them with the workflow workspace.
+3. It requests the public `DEPLOYED_COMMIT.txt`, `DEPLOYED_ASSETS.json`, content addressed JS/CSS files, and `/wp-json/slayerkey/v1/health` endpoint. It verifies the exact commit, plugin version, and SHA256 hashes seen through HTTP before marking the commit successful.
 
 The workflow also uses a single concurrency group with `cancel-in-progress: true`, so an older deployment cannot finish after a newer deployment and overwrite the server with stale files.
 
