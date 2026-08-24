@@ -1,12 +1,5 @@
 <style>
 /* Near-final preview polish. Keep the working WordPress/theme shell intact. */
-html,body,.site,.site-content,#content,.content-area,.site-main{
-  background:#07111a!important;
-}
-.site-content,#content,.content-area,.site-main{
-  margin-top:0!important;
-  padding-top:0!important;
-}
 #sk-std{
   width:100vw;
   max-width:none;
@@ -17,7 +10,7 @@ html,body,.site,.site-content,#content,.content-area,.site-main{
 #sk-std h1,#sk-std h2,#sk-std h3{font-weight:400!important;}
 #sk-std .dj-mid-cta{text-align:center;margin-top:28px;}
 
-/* Community proof uses the verified original Dojo collage. */
+/* Community proof is real HTML. The known-good wins collage is cropped with CSS only. */
 #sk-std .dj-community-grid{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
@@ -44,17 +37,25 @@ html,body,.site,.site-content,#content,.content-area,.site-main{
   box-shadow:0 24px 58px rgba(0,0,0,.30);
 }
 #sk-std .dj-win-thumb{
+  position:relative;
   width:100%;
   aspect-ratio:1.48/1;
-  background-image:url('https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp?v=20260823-static');
-  background-repeat:no-repeat;
-  background-size:300% 200%;
-  background-color:#0a1117;
+  overflow:hidden;
+  background:#0a1117;
 }
-#sk-std .dj-win-thumb.is-zus{background-position:0 0;}
-#sk-std .dj-win-thumb.is-morien{background-position:50% 0;}
-#sk-std .dj-win-thumb.is-ikkai{background-position:0 100%;}
-#sk-std .dj-win-thumb.is-jagi{background-position:50% 100%;}
+#sk-std .dj-win-thumb img{
+  position:absolute;
+  left:0;
+  top:0;
+  width:300%;
+  max-width:none!important;
+  height:auto;
+  pointer-events:none;
+  user-select:none;
+}
+#sk-std .dj-win-thumb.is-morien img{left:-100%;}
+#sk-std .dj-win-thumb.is-ikkai img{top:-100%;}
+#sk-std .dj-win-thumb.is-jagi img{left:-100%;top:-100%;}
 #sk-std .dj-win-copy{padding:16px 18px 17px;}
 #sk-std .dj-win-copy small{
   display:block;
@@ -67,21 +68,6 @@ html,body,.site,.site-content,#content,.content-area,.site-main{
 }
 #sk-std .dj-win-copy strong{display:block;color:#fff;font-size:1rem;line-height:1.25;}
 #sk-std .dj-win-copy span{display:block;margin-top:5px;color:var(--dj-muted);font-size:.78rem;line-height:1.45;}
-
-/* Continuous left-to-right review rail. Kept in page CSS so it does not depend on preview JS. */
-#sk-std .dj-review-track{
-  display:flex!important;
-  gap:14px!important;
-  width:max-content!important;
-  will-change:transform;
-  animation:skDojoReviewRail 22s linear infinite!important;
-  animation-play-state:running!important;
-}
-#sk-std .dj-review-rail:hover .dj-review-track{animation-play-state:running!important;}
-@keyframes skDojoReviewRail{
-  from{transform:translate3d(calc(-50% - 7px),0,0)}
-  to{transform:translate3d(0,0,0)}
-}
 
 /* Monthly + annual plan choice. Text is native HTML, not JavaScript-injected. */
 #sk-std .dj-value-box{grid-template-columns:minmax(0,.82fr) minmax(520px,1.18fr);}
@@ -120,7 +106,7 @@ html,body,.site,.site-content,#content,.content-area,.site-main{
 }
 </style>
 
-<main id="sk-std" class="sk-dojo-preview" data-page-variant="dojo_conversion_v7">
+<main id="sk-std" class="sk-dojo-preview" data-page-variant="dojo_conversion_v8">
   <section class="dj-hero" id="top">
     <div class="container dj-hero-grid">
       <div class="dj-hero-copy reveal">
@@ -223,20 +209,20 @@ html,body,.site,.site-content,#content,.content-area,.site-main{
         <p>Rank ups, win streaks, huge games, and the work actually showing up in ranked.</p>
       </div>
       <div class="dj-community-grid">
-        <button class="dj-win-card reveal" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp?v=20260823-static" aria-label="Expand first time Diamond community proof">
-          <div class="dj-win-thumb is-zus" aria-hidden="true"></div>
+        <button class="dj-win-card reveal" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/wins.webp?v=20260824-static-final" aria-label="Expand first time Diamond community proof">
+          <div class="dj-win-thumb is-zus" aria-hidden="true"><img loading="eager" decoding="async" src="assets/wins.webp?v=20260824-static-final" alt=""></div>
           <div class="dj-win-copy"><small>Rank Up</small><strong>First time Diamond</strong><span>The climb showing up in the rank screen and match history.</span></div>
         </button>
-        <button class="dj-win-card reveal d1" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp?v=20260823-static" aria-label="Expand huge game community proof">
-          <div class="dj-win-thumb is-morien" aria-hidden="true"></div>
+        <button class="dj-win-card reveal d1" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/wins.webp?v=20260824-static-final" aria-label="Expand huge game community proof">
+          <div class="dj-win-thumb is-morien" aria-hidden="true"><img loading="eager" decoding="async" src="assets/wins.webp?v=20260824-static-final" alt=""></div>
           <div class="dj-win-copy"><small>Huge Game</small><strong>Big scoreboard performance</strong><span>A strong game posted directly inside the community.</span></div>
         </button>
-        <button class="dj-win-card reveal d2" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp?v=20260823-static" aria-label="Expand ten game win streak community proof">
-          <div class="dj-win-thumb is-ikkai" aria-hidden="true"></div>
+        <button class="dj-win-card reveal d2" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/wins.webp?v=20260824-static-final" aria-label="Expand ten game win streak community proof">
+          <div class="dj-win-thumb is-ikkai" aria-hidden="true"><img loading="eager" decoding="async" src="assets/wins.webp?v=20260824-static-final" alt=""></div>
           <div class="dj-win-copy"><small>Consistency</small><strong>10 game win streak</strong><span>Ten straight wins while figuring out which game was even worth reviewing next.</span></div>
         </button>
-        <button class="dj-win-card reveal d3" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/community-wins.webp?v=20260823-static" aria-label="Expand rank up game community proof">
-          <div class="dj-win-thumb is-jagi" aria-hidden="true"></div>
+        <button class="dj-win-card reveal d3" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/wins.webp?v=20260824-static-final" aria-label="Expand rank up game community proof">
+          <div class="dj-win-thumb is-jagi" aria-hidden="true"><img loading="eager" decoding="async" src="assets/wins.webp?v=20260824-static-final" alt=""></div>
           <div class="dj-win-copy"><small>Rank Up Games</small><strong>60% headshot rate</strong><span>“Your teachings turning me into Thanos for the rank up games.”</span></div>
         </button>
       </div>
@@ -287,7 +273,7 @@ html,body,.site,.site-content,#content,.content-area,.site-main{
           <div class="dj-price">$19.99</div>
           <a class="btn" href="https://whop.com/checkout/plan_eVop6pXsIhHlf/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=pricing_monthly" data-sk-cta="dojo-pricing-monthly" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="pricing_monthly">Start Monthly</a>
         </aside>
-        <aside class="dj-price-card">
+        <aside class="dj-price-card dj-price-card-premium">
           <div class="dj-per">Annual</div>
           <div class="dj-plan-save">Two months free</div>
           <div class="dj-price">$199.99</div>
