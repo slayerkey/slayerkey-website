@@ -1,0 +1,3 @@
+Dojo plan chooser preview marker.
+Created 2026-08-24.
+Purpose: force a clean EasyWP deploy for the monthly versus annual chooser preview.
