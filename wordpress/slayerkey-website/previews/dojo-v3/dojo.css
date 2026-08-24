@@ -1,3 +1,5 @@
+html:has(#sk-std),body:has(#sk-std){background:#07111a!important}
+body:has(#sk-std) #page,body:has(#sk-std) .site,body:has(#sk-std) .site-content,body:has(#sk-std) main{background-color:#07111a!important}
 #sk-std{
   --dj-bg:var(--bg,#07111a);
   --dj-ink:var(--ink,#f5f7fa);
@@ -36,13 +38,11 @@
 #sk-std .btn:hover{transform:translateY(-2px);filter:brightness(1.04);box-shadow:0 19px 40px rgba(255,70,85,.29)}
 #sk-std .btn:focus-visible,#sk-std button:focus-visible,#sk-std summary:focus-visible{outline:2px solid var(--dj-teal);outline-offset:4px}
 
-/* Keep sections dense enough to feel intentional instead of leaving giant dead zones. */
 #sk-std .dj-section{padding:58px 0;border-top:1px solid var(--dj-line)}
 #sk-std .dj-section-head{max-width:920px;margin-bottom:30px}
 #sk-std .dj-section-head.centered{margin-left:auto;margin-right:auto}
 #sk-std .dj-section-head p,#sk-std .dj-review-head p{max-width:700px;margin:13px auto 0;font-size:.96rem}
 
-/* Hero */
 #sk-std .dj-hero{padding:34px 0 52px;border-top:0}
 #sk-std .dj-hero-grid{display:grid;grid-template-columns:minmax(0,1.13fr) minmax(410px,.87fr);gap:42px;align-items:center}
 #sk-std .dj-hero-copy{min-width:0}
@@ -58,14 +58,12 @@
 #sk-std .dj-unmute:hover{background:rgba(255,70,85,.92);transform:translate(-50%,-50%) scale(1.025)}
 #sk-std .dj-unmute[hidden]{display:none!important}
 
-/* Real player result images */
 #sk-std .dj-proof-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
 #sk-std .dj-proof-image{appearance:none;width:100%;padding:8px;border:1px solid var(--dj-line);background:#09151f;cursor:zoom-in;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.24);transition:transform .25s var(--dj-ease),border-color .25s ease,box-shadow .25s ease}
 #sk-std .dj-proof-image:hover{transform:translateY(-3px);border-color:rgba(40,223,203,.34);box-shadow:0 24px 60px rgba(0,0,0,.30)}
 #sk-std .dj-proof-image img{width:100%;height:auto;object-fit:contain}
 #sk-std .dj-center{text-align:center;margin-top:26px}
 
-/* Problem and feedback loop */
 #sk-std .dj-two-col{display:grid;grid-template-columns:minmax(0,.94fr) minmax(0,1.06fr);gap:56px;align-items:start}
 #sk-std .dj-body-copy{margin-top:18px;font-size:1rem;line-height:1.68}
 #sk-std .dj-callout{margin-top:20px;padding-left:16px;border-left:3px solid var(--dj-red);color:#fff;font-weight:850}
@@ -81,46 +79,51 @@
 #sk-std .dj-loop-card h3{margin-top:14px}
 #sk-std .dj-loop-card p{margin-top:7px;font-size:.81rem}
 
-/* What is included */
 #sk-std .dj-includes{border-top:1px solid var(--dj-line)}
 #sk-std .dj-includes>div{display:grid;grid-template-columns:150px 330px 1fr;gap:28px;align-items:start;padding:19px 0;border-bottom:1px solid var(--dj-line)}
 #sk-std .dj-includes small{color:var(--dj-teal);font-size:.67rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
 #sk-std .dj-includes strong{color:#fff;font-size:.96rem}
 #sk-std .dj-includes p{font-size:.84rem}
 
-/* Community wins. These are intentionally designed like compact Discord proof cards,
-   rather than the old fake polygon rank badges that were breaking the section. */
-#sk-std .dj-community-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;max-width:980px;margin:0 auto}
-#sk-std .dj-discord-card{position:relative;min-height:188px;padding:22px 22px 20px;border:1px solid rgba(255,255,255,.105);background:linear-gradient(180deg,rgba(16,31,43,.92),rgba(9,21,30,.92));box-shadow:0 18px 45px rgba(0,0,0,.20);overflow:hidden}
-#sk-std .dj-discord-card:before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--dj-teal),rgba(40,223,203,.12))}
-#sk-std .dj-discord-user{display:flex;align-items:center;gap:10px;margin-bottom:17px}
-#sk-std .dj-discord-user>span{width:36px;height:36px;display:grid;place-items:center;border-radius:50%;background:#132633;border:1px solid rgba(255,255,255,.12);color:#fff;font-size:.72rem;font-weight:900}
-#sk-std .dj-discord-user strong{color:#fff;font-size:.84rem}
-#sk-std .dj-discord-card>p{color:#d3dde3;font-size:.9rem;line-height:1.58}
-#sk-std .dj-result-tag{display:inline-flex;margin-top:18px;padding:6px 9px;border:1px solid rgba(40,223,203,.22);background:rgba(40,223,203,.07);color:var(--dj-teal);font-size:.65rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+#sk-std .dj-community-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;max-width:1120px;margin:0 auto}
+#sk-std .dj-win-card{appearance:none;display:block;width:100%;padding:0;overflow:hidden;border:1px solid rgba(255,255,255,.11);background:#090f14;text-align:left;cursor:zoom-in;box-shadow:0 18px 45px rgba(0,0,0,.22);transition:transform .25s var(--dj-ease),border-color .25s ease,box-shadow .25s ease}
+#sk-std .dj-win-card:hover{transform:translateY(-3px);border-color:rgba(40,223,203,.36);box-shadow:0 24px 58px rgba(0,0,0,.30)}
+#sk-std .dj-win-thumb{width:100%;aspect-ratio:1.48/1;background-repeat:no-repeat!important;background-position:center!important;background-size:cover!important;background-color:#0a1117}
+#sk-std .dj-win-thumb.is-zus{background-image:url('/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/zus-final.jpg?v=15')!important}
+#sk-std .dj-win-thumb.is-morien{background-image:url('/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/morien-final.jpg?v=15')!important}
+#sk-std .dj-win-thumb.is-ikkai{background-image:url('/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/ikkai-final.jpg?v=15')!important}
+#sk-std .dj-win-thumb.is-jagi{background-image:url('/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/jagi-final.jpg?v=15')!important}
+#sk-std .dj-win-copy{padding:16px 18px 17px}
+#sk-std .dj-win-copy small{display:block;margin-bottom:4px;color:var(--dj-teal);font-size:.65rem;font-weight:900;letter-spacing:.11em;text-transform:uppercase}
+#sk-std .dj-win-copy strong{display:block;color:#fff;font-size:1rem;line-height:1.25}
+#sk-std .dj-win-copy span{display:block;margin-top:5px;color:var(--dj-muted);font-size:.78rem;line-height:1.45}
 
-/* Review proof */
 #sk-std .dj-stars{margin:7px 0 13px;color:var(--dj-red);font-size:clamp(2.25rem,4vw,3.8rem);line-height:1;letter-spacing:.08em}
 #sk-std .dj-review-head{max-width:920px;margin:0 auto 28px;text-align:center}
 #sk-std .dj-review-rail{width:100%;overflow:hidden;padding:2px 0 8px;mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
-#sk-std .dj-review-track{display:flex;gap:14px;width:max-content;will-change:transform;animation:djReviewMarquee 54s linear infinite}
-#sk-std .dj-review-rail:hover .dj-review-track{animation-play-state:paused}
+#sk-std .dj-review-track{display:flex;gap:14px;width:max-content;will-change:transform;animation:skDojoReviewRailFinal 32s linear infinite!important;animation-play-state:running!important}
+#sk-std .dj-review-rail:hover .dj-review-track{animation-play-state:running!important}
 #sk-std .dj-review-track>article{width:min(365px,78vw);min-height:142px;padding:20px 21px;border:1px solid rgba(255,255,255,.105);background:linear-gradient(180deg,rgba(16,31,43,.88),rgba(8,19,27,.90));box-shadow:0 14px 34px rgba(0,0,0,.18)}
 #sk-std .dj-review-track>article>div{color:#ffd45b;font-size:.9rem;letter-spacing:.11em}
 #sk-std .dj-review-track>article p{margin-top:11px;color:#d4dde3;font-size:.86rem;line-height:1.55}
-@keyframes djReviewMarquee{from{transform:translate3d(0,0,0)}to{transform:translate3d(calc(-50% - 7px),0,0)}}
+@keyframes skDojoReviewRailFinal{from{transform:translate3d(calc(-50% - 7px),0,0)}to{transform:translate3d(0,0,0)}}
 
-/* Offer */
-#sk-std .dj-value-box{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:46px;align-items:center;padding:40px;border:1px solid rgba(255,255,255,.12);background:linear-gradient(135deg,rgba(255,70,85,.07),rgba(40,223,203,.045))}
+#sk-std .dj-value-box{display:grid;grid-template-columns:minmax(0,.82fr) minmax(520px,1.18fr);gap:46px;align-items:center;padding:40px;border:1px solid rgba(255,255,255,.12);background:linear-gradient(135deg,rgba(255,70,85,.07),rgba(40,223,203,.045))}
 #sk-std .dj-checks{display:grid;grid-template-columns:1fr 1fr;gap:9px 20px;margin-top:22px;color:#c4d0d7;font-size:.8rem}
 #sk-std .dj-checks span:before{content:'✓';margin-right:8px;color:var(--dj-teal);font-weight:900}
-#sk-std .dj-price-card{padding:28px;border:1px solid rgba(255,70,85,.5);background:#08141d;text-align:center;box-shadow:0 18px 48px rgba(0,0,0,.25)}
+#sk-std .dj-plan-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+#sk-std .dj-price-card{padding:28px;border:1px solid rgba(255,70,85,.5);background:#08141d;text-align:center;box-shadow:0 18px 48px rgba(0,0,0,.25);height:100%;display:flex;flex-direction:column;justify-content:center}
 #sk-std .dj-price{color:#fff;font-family:var(--font-display,'Arial Black',Impact,sans-serif);font-size:3.65rem;line-height:1}
-#sk-std .dj-per{margin-top:4px;color:#8fa0ac;font-size:.7rem;font-weight:850;letter-spacing:.12em;text-transform:uppercase}
-#sk-std .dj-price-card p{margin:14px 0 20px;color:#fff;font-size:.84rem;font-weight:800}
-#sk-std .dj-price-card .btn{width:100%}
+#sk-std .dj-per{margin:0 0 10px;color:#8fa0ac;font-size:0;font-weight:850;letter-spacing:.12em;text-transform:uppercase;order:1}
+#sk-std .dj-plan-options .dj-price-card:first-child .dj-per:after{content:'Monthly';font-size:.72rem}
+#sk-std .dj-plan-options .dj-price-card:last-child .dj-per:after{content:'Annual';font-size:.72rem}
+#sk-std .dj-price-card .dj-price{order:2}
+#sk-std .dj-plan-options .dj-price-card:last-child .dj-plan-save{order:2;margin:0 auto 10px;font-size:0;display:inline-flex;align-self:center;padding:5px 9px;border:1px solid rgba(40,223,203,.26);background:rgba(40,223,203,.07);color:var(--dj-teal);font-weight:900;letter-spacing:.07em;text-transform:uppercase}
+#sk-std .dj-plan-options .dj-price-card:last-child .dj-plan-save:after{content:'Two months free';font-size:.66rem}
+#sk-std .dj-plan-options .dj-price-card:last-child .dj-price{order:3}
+#sk-std .dj-plan-note{display:none!important}
+#sk-std .dj-price-card .btn{width:100%;order:4;margin-top:24px}
 
-/* FAQ */
 #sk-std .dj-faq-wrap{max-width:920px}
 #sk-std .dj-faq{border-top:1px solid var(--dj-line)}
 #sk-std .dj-faq details{border-bottom:1px solid var(--dj-line)}
@@ -134,14 +137,12 @@
 #sk-std .dj-final h2{max-width:930px;margin-inline:auto}
 #sk-std .dj-final p{max-width:650px;margin:15px auto 24px}
 
-/* Reveal animation. Both the existing global footer script and dojo.js can reveal these. */
 #sk-std .reveal{opacity:0;transform:translate3d(0,20px,0);filter:blur(1.2px);transition:opacity .68s var(--dj-ease),transform .68s var(--dj-ease),filter .68s var(--dj-ease)}
 #sk-std .reveal.d1{transition-delay:.06s}
 #sk-std .reveal.d2{transition-delay:.12s}
 #sk-std .reveal.d3{transition-delay:.18s}
 #sk-std .reveal.show,#sk-std .reveal.is-visible{opacity:1;transform:none;filter:none}
 
-/* Proof lightbox */
 #sk-std .dj-lightbox{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(0,4,8,.92);backdrop-filter:blur(10px)}
 #sk-std .dj-lightbox.open{display:flex}
 #sk-std .dj-lightbox img{max-width:min(1500px,96vw);max-height:92vh;object-fit:contain;box-shadow:0 30px 90px rgba(0,0,0,.55)}
@@ -160,7 +161,7 @@
   #sk-std .dj-loop-card:nth-child(-n+2){border-bottom:1px solid var(--dj-line)}
   #sk-std .dj-includes>div{grid-template-columns:120px 1fr;gap:14px 24px}
   #sk-std .dj-includes p{grid-column:2}
-  #sk-std .dj-price-card{max-width:430px}
+  #sk-std .dj-plan-options{grid-template-columns:1fr 1fr}
 }
 @media(max-width:700px){
   #sk-std .container{width:calc(100% - 28px)}
@@ -170,7 +171,7 @@
   #sk-std h2{font-size:clamp(1.95rem,9.5vw,2.65rem)}
   #sk-std .hero-line{white-space:normal}
   #sk-std .dj-proofline{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
-  #sk-std .dj-proof-grid,#sk-std .dj-community-grid{grid-template-columns:1fr}
+  #sk-std .dj-proof-grid,#sk-std .dj-community-grid,#sk-std .dj-plan-options{grid-template-columns:1fr}
   #sk-std .dj-loop-grid{grid-template-columns:1fr}
   #sk-std .dj-loop-card{min-height:0;border-right:0!important;border-bottom:1px solid var(--dj-line)}
   #sk-std .dj-loop-card:last-child{border-bottom:0}
@@ -179,7 +180,6 @@
   #sk-std .dj-value-box{padding:24px 19px;gap:30px}
   #sk-std .dj-checks{grid-template-columns:1fr}
   #sk-std .dj-unmute{font-size:.74rem;padding:.75rem 1rem}
-  #sk-std .dj-discord-card{min-height:0}
   #sk-std .dj-review-track>article{width:min(330px,84vw)}
   #sk-std .dj-final{padding:58px 0 64px}
 }
