@@ -79,6 +79,7 @@
             if (!oldRail || !oldRail.parentNode || !window.requestAnimationFrame) return;
 
             var rail = oldRail.cloneNode(true);
+            rail.classList.add('show');
             oldRail.parentNode.replaceChild(rail, oldRail);
 
             var track = rail.querySelector('.dj-review-track');
