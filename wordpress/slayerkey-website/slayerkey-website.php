@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.16
+ * Version: 0.1.17
  * Author: Slayerkey
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.16' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.17' );
 define( 'SLAYERKEY_POSTHOG_TOKEN', 'phc_m92yxHMa2BTnSu7KmebGKu8sEitMki4oPhdLTKZzcpMc' );
 define( 'SLAYERKEY_POSTHOG_HOST', 'https://edge.slayerkey.com' );
 define( 'SLAYERKEY_POSTHOG_UI_HOST', 'https://us.posthog.com' );
@@ -70,6 +70,20 @@ function slayerkey_website_preview_slug_from_request() {
 function slayerkey_website_is_private_preview_request() {
     return null !== slayerkey_website_preview_slug_from_request();
 }
+
+function slayerkey_website_preview_body_classes( $classes ) {
+    $slug = slayerkey_website_preview_slug_from_request();
+
+    if ( null === $slug ) {
+        return $classes;
+    }
+
+    $classes[] = 'slayerkey-private-preview';
+    $classes[] = 'slayerkey-preview-' . $slug;
+
+    return array_values( array_unique( $classes ) );
+}
+add_filter( 'body_class', 'slayerkey_website_preview_body_classes' );
 
 function slayerkey_website_is_public_work_request() {
     if ( empty( $_SERVER['REQUEST_URI'] ) ) {
