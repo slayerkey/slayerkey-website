@@ -113,27 +113,36 @@
         (function installPlanChooser() {
             var monthlyCheckout = 'https://whop.com/checkout/plan_eVop6pXsIhHlf/?utm_source=private_preview&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=plan_chooser_monthly';
             var annualCheckout = 'https://whop.com/checkout/plan_kaaoYadRlBi4n/?utm_source=private_preview&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=plan_chooser_annual';
+            var chooserVersion = 'dojo-plan-chooser-v3';
 
-            if (!document.getElementById('dojoPlanChooserStyles')) {
-                var styles = document.createElement('style');
-                styles.id = 'dojoPlanChooserStyles';
-                styles.textContent = '' +
-                    '.sk-plan-modal{position:fixed;inset:0;z-index:100020;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(0,5,9,.82);backdrop-filter:blur(14px)}' +
-                    '.sk-plan-modal.open{display:flex}.sk-plan-shell{position:relative;width:min(900px,100%);max-height:min(780px,calc(100vh - 36px));overflow:auto;padding:31px 30px 30px;background:linear-gradient(180deg,#0d1c28,#08131c);border:1px solid rgba(255,255,255,.13);box-shadow:0 34px 120px rgba(0,0,0,.66);color:#f7fbff}' +
-                    '.sk-plan-close{position:absolute;right:13px;top:13px;display:grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid rgba(255,255,255,.13);border-radius:999px;background:#07121b;color:#9fb0bb;font-size:1.05rem;line-height:1;cursor:pointer}.sk-plan-close:hover{color:#fff;border-color:rgba(255,255,255,.3)}' +
-                    '.sk-plan-head{text-align:center;max-width:680px;margin:0 auto 24px;padding:0 36px}.sk-plan-head h3{margin:0;color:#fff;font-family:var(--font-display,Arial Black,Impact,sans-serif);font-size:clamp(1.9rem,4vw,3rem);font-weight:900;line-height:.96;text-transform:uppercase}.sk-plan-head p{margin:12px auto 0;color:#9fb0bb;font-size:.9rem;line-height:1.45}' +
-                    '.sk-plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch}.sk-plan-card{position:relative;display:flex;flex-direction:column;align-items:center;min-height:470px;padding:25px;border:1px solid rgba(255,255,255,.13);background:#08141d;text-align:center}.sk-plan-card.annual{transform:translateY(-6px);border-color:rgba(44,224,204,.72);background:linear-gradient(180deg,rgba(15,35,43,.99),rgba(7,20,29,.99));box-shadow:0 25px 70px rgba(0,0,0,.35),0 0 36px rgba(44,224,204,.08)}.sk-plan-card.annual:before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,transparent,#2ce0cc,transparent)}' +
-                    '.sk-plan-badge{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:6px 10px;border:1px solid rgba(44,224,204,.32);background:rgba(44,224,204,.08);color:#2ce0cc;font-size:.62rem;font-weight:900;letter-spacing:.11em;text-transform:uppercase}' +
-                    '.sk-plan-name{margin-top:16px;color:#fff;font-size:.8rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}.sk-plan-card.monthly .sk-plan-name{margin-top:2px}.sk-plan-price{margin-top:8px;color:#fff;font-family:var(--font-display,Arial Black,Impact,sans-serif);font-size:3rem;font-weight:900;line-height:1}.sk-plan-price span{font-family:var(--font-body,Inter,Arial,sans-serif);font-size:.78rem;font-weight:800;color:#9fb0bb}.sk-plan-save{margin-top:9px;color:#2ce0cc;font-size:.78rem;font-weight:900}' +
-                    '.sk-plan-list{display:grid;align-content:start;justify-items:center;gap:10px;width:100%;margin:24px auto 24px;padding:0;list-style:none;color:#cbd6dc;font-size:.8rem;line-height:1.4;text-align:center}.sk-plan-list li{display:flex;align-items:flex-start;justify-content:center;gap:8px;width:min(100%,330px)}.sk-plan-list li:before{content:"✓";flex:0 0 auto;color:#2ce0cc;font-weight:900}.sk-plan-list strong{color:#fff}' +
-                    '.sk-plan-action{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;margin-top:auto;padding:0 17px;border:1px solid rgba(255,255,255,.13);background:linear-gradient(135deg,#ff596c,#ff4655);color:#fff!important;font-size:.77rem;font-weight:900;letter-spacing:.05em;text-align:center;text-decoration:none;text-transform:uppercase;box-shadow:0 14px 34px rgba(255,70,85,.18);transition:transform .18s ease,filter .18s ease}.sk-plan-action:hover{transform:translateY(-2px);filter:brightness(1.05)}.sk-plan-card.annual .sk-plan-action{background:linear-gradient(135deg,#23cdbb,#2ce0cc);color:#041014!important;box-shadow:0 14px 34px rgba(44,224,204,.14)}' +
-                    '@media(max-width:700px){.sk-plan-modal{align-items:flex-start;padding:8px}.sk-plan-shell{width:100%;max-height:calc(100dvh - 16px);padding:48px 14px 16px}.sk-plan-grid{grid-template-columns:1fr}.sk-plan-card{min-height:0;padding:22px 18px}.sk-plan-card.annual{order:-1;transform:none}.sk-plan-head{padding:0 8px;margin-bottom:18px}.sk-plan-head h3{font-size:clamp(1.8rem,10vw,2.45rem)}.sk-plan-head p{font-size:.82rem}.sk-plan-price{font-size:2.7rem}.sk-plan-list{margin:20px auto 22px}.sk-plan-action{margin-top:8px}.sk-plan-close{right:10px;top:10px}}';
-                document.head.appendChild(styles);
-            }
+            /* Own this UI completely. If an older cached script mounted a chooser first, remove it
+               and its styles rather than inheriting a mixed old/new state. */
+            Array.prototype.slice.call(document.querySelectorAll('#sk-plan-chooser')).forEach(function (existing) {
+                if (existing.parentNode) existing.parentNode.removeChild(existing);
+            });
+            var existingStyles = document.getElementById('dojoPlanChooserStyles');
+            if (existingStyles && existingStyles.parentNode) existingStyles.parentNode.removeChild(existingStyles);
+
+            var styles = document.createElement('style');
+            styles.id = 'dojoPlanChooserStyles';
+            styles.setAttribute('data-sk-chooser-version', chooserVersion);
+            styles.textContent = '' +
+                '.sk-plan-modal{position:fixed;inset:0;z-index:100020;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(0,5,9,.82);backdrop-filter:blur(14px)}' +
+                '.sk-plan-modal.open{display:flex}.sk-plan-shell{position:relative;width:min(900px,100%);max-height:min(780px,calc(100vh - 36px));overflow:auto;padding:31px 30px 30px;background:linear-gradient(180deg,#0d1c28,#08131c);border:1px solid rgba(255,255,255,.13);box-shadow:0 34px 120px rgba(0,0,0,.66);color:#f7fbff}' +
+                '.sk-plan-close{position:absolute;right:13px;top:13px;display:grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid rgba(255,255,255,.13);border-radius:999px;background:#07121b;color:#9fb0bb;font-size:1.05rem;line-height:1;cursor:pointer}.sk-plan-close:hover{color:#fff;border-color:rgba(255,255,255,.3)}' +
+                '.sk-plan-head{text-align:center;max-width:680px;margin:0 auto 24px;padding:0 36px}.sk-plan-head h3{margin:0;color:#fff;font-family:var(--font-display,Arial Black,Impact,sans-serif);font-size:clamp(1.9rem,4vw,3rem);font-weight:900;line-height:.96;text-transform:uppercase}.sk-plan-head p{margin:12px auto 0;color:#9fb0bb;font-size:.9rem;line-height:1.45}' +
+                '.sk-plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch}.sk-plan-card{position:relative;display:flex;flex-direction:column;align-items:center;min-height:470px;padding:25px;border:1px solid rgba(255,255,255,.13);background:#08141d;text-align:center}.sk-plan-card.annual{transform:translateY(-6px);border-color:rgba(44,224,204,.72);background:linear-gradient(180deg,rgba(15,35,43,.99),rgba(7,20,29,.99));box-shadow:0 25px 70px rgba(0,0,0,.35),0 0 36px rgba(44,224,204,.08)}.sk-plan-card.annual:before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,transparent,#2ce0cc,transparent)}' +
+                '.sk-plan-badge{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:6px 10px;border:1px solid rgba(44,224,204,.32);background:rgba(44,224,204,.08);color:#2ce0cc;font-size:.62rem;font-weight:900;letter-spacing:.11em;text-transform:uppercase}' +
+                '.sk-plan-name{margin-top:16px;color:#fff;font-size:.8rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}.sk-plan-card.monthly .sk-plan-name{margin-top:2px}.sk-plan-price{margin-top:8px;color:#fff;font-family:var(--font-display,Arial Black,Impact,sans-serif);font-size:3rem;font-weight:900;line-height:1}.sk-plan-price span{font-family:var(--font-body,Inter,Arial,sans-serif);font-size:.78rem;font-weight:800;color:#9fb0bb}.sk-plan-save{margin-top:9px;color:#2ce0cc;font-size:.78rem;font-weight:900}' +
+                '.sk-plan-list{display:grid;align-content:start;justify-items:stretch;gap:10px;width:min(100%,340px);margin:24px auto;padding:0;list-style:none;color:#cbd6dc;font-size:.8rem;line-height:1.4;text-align:left}.sk-plan-list li{display:grid;grid-template-columns:18px minmax(0,1fr);align-items:start;gap:8px;width:100%;text-align:left}.sk-plan-list li:before{content:"✓";grid-column:1;justify-self:center;color:#2ce0cc;font-weight:900}.sk-plan-list strong{color:#fff}' +
+                '.sk-plan-action{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;margin-top:auto;padding:0 17px;border:1px solid rgba(255,255,255,.13);background:linear-gradient(135deg,#ff596c,#ff4655);color:#fff!important;font-size:.77rem;font-weight:900;letter-spacing:.05em;text-align:center;text-decoration:none;text-transform:uppercase;box-shadow:0 14px 34px rgba(255,70,85,.18);transition:transform .18s ease,filter .18s ease}.sk-plan-action:hover{transform:translateY(-2px);filter:brightness(1.05)}.sk-plan-card.annual .sk-plan-action{background:linear-gradient(135deg,#23cdbb,#2ce0cc);color:#041014!important;box-shadow:0 14px 34px rgba(44,224,204,.14)}' +
+                '@media(max-width:700px){.sk-plan-modal{align-items:flex-start;padding:8px}.sk-plan-shell{width:100%;max-height:calc(100dvh - 16px);padding:48px 14px 16px}.sk-plan-grid{grid-template-columns:1fr}.sk-plan-card{min-height:0;padding:22px 18px}.sk-plan-card.annual{order:-1;transform:none}.sk-plan-head{padding:0 8px;margin-bottom:18px}.sk-plan-head h3{font-size:clamp(1.8rem,10vw,2.45rem)}.sk-plan-head p{font-size:.82rem}.sk-plan-price{font-size:2.7rem}.sk-plan-list{width:min(100%,320px);margin:20px auto 22px}.sk-plan-action{margin-top:8px}.sk-plan-close{right:10px;top:10px}}';
+            document.head.appendChild(styles);
 
             var modal = document.createElement('div');
             modal.className = 'sk-plan-modal';
             modal.id = 'sk-plan-chooser';
+            modal.setAttribute('data-sk-chooser-version', chooserVersion);
             modal.setAttribute('aria-hidden', 'true');
             modal.innerHTML = '' +
                 '<div class="sk-plan-shell" role="dialog" aria-modal="true" aria-labelledby="sk-plan-title">' +
@@ -154,12 +163,22 @@
                 '<div class="sk-plan-name">Annual</div>' +
                 '<div class="sk-plan-price">$199.99 <span>/ year</span></div>' +
                 '<div class="sk-plan-save">2 months free</div>' +
-                '<ul class="sk-plan-list"><li>Everything in Monthly</li><li>Your gameplay + mechanics personally reviewed by Slayerkey</li><li><strong>Personalized Improvement Plan</strong> + custom training routine</li><li>Clear improvement priorities</li></ul>' +
+                '<ul class="sk-plan-list"><li>Everything in Monthly</li><li>Your gameplay + mechanics personally reviewed by Slayerkey</li><li>Personalized Improvement Plan + custom training routine</li><li>Clear improvement priorities</li></ul>' +
                 '<a class="sk-plan-action" href="' + annualCheckout + '" target="_blank" rel="noopener" data-sk-cta="dojo-plan-annual" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="plan_chooser_annual" data-sk-plan-direct="true">Get My Improvement Plan</a>' +
                 '</article>' +
                 '</div>' +
                 '</div>';
             document.body.appendChild(modal);
+
+            /* If another cached chooser implementation tries to mount later, keep only this version. */
+            if ('MutationObserver' in window && document.body) {
+                var chooserObserver = new MutationObserver(function () {
+                    Array.prototype.slice.call(document.querySelectorAll('#sk-plan-chooser')).forEach(function (candidate) {
+                        if (candidate !== modal && candidate.parentNode) candidate.parentNode.removeChild(candidate);
+                    });
+                });
+                chooserObserver.observe(document.body, { childList: true, subtree: true });
+            }
 
             var closeButton = modal.querySelector('.sk-plan-close');
             var lastTrigger = null;
