@@ -9,9 +9,16 @@ on:
       - 'wordpress/slayerkey-website/**'
       - '.github/workflows/deploy.yml'
 
+# Only the newest main deployment is allowed to finish. Without this, an older
+# SFTP job can complete after a newer one and roll EasyWP back to stale files.
+concurrency:
+  group: slayerkey-easywp-production
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
@@ -32,6 +39,9 @@ jobs:
           test -n "$SFTP_PASSWORD" || (echo "Missing EASYWP_PASSWORD" && exit 1)
           test -n "$SFTP_PORT" || (echo "Missing EASYWP_PORT" && exit 1)
           test -f "wordpress/slayerkey-website/slayerkey-website.php" || (echo "Plugin source is missing" && exit 1)
+
+      - name: Stamp deployment commit
+        run: printf '%s\n' "$GITHUB_SHA" > wordpress/slayerkey-website/DEPLOYED_COMMIT.txt
 
       - name: Find EasyWP plugin directory
         env:
@@ -85,6 +95,7 @@ jobs:
           set net:max-retries 2
           set net:timeout 20
           get "$REMOTE_PLUGIN_ROOT/slayerkey-website/slayerkey-website.php" -o /tmp/slayerkey-remote/slayerkey-website.php
+          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/DEPLOYED_COMMIT.txt" -o /tmp/slayerkey-remote/DEPLOYED_COMMIT.txt
           get "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/index.html" -o /tmp/slayerkey-remote/previews/dojo-v3/index.html
           get "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/dojo.js" -o /tmp/slayerkey-remote/previews/dojo-v3/dojo.js
           get "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/dojo.css" -o /tmp/slayerkey-remote/previews/dojo-v3/dojo.css
@@ -92,10 +103,12 @@ jobs:
           EOF
 
           cmp wordpress/slayerkey-website/slayerkey-website.php /tmp/slayerkey-remote/slayerkey-website.php
+          cmp wordpress/slayerkey-website/DEPLOYED_COMMIT.txt /tmp/slayerkey-remote/DEPLOYED_COMMIT.txt
           cmp wordpress/slayerkey-website/previews/dojo-v3/index.html /tmp/slayerkey-remote/previews/dojo-v3/index.html
           cmp wordpress/slayerkey-website/previews/dojo-v3/dojo.js /tmp/slayerkey-remote/previews/dojo-v3/dojo.js
           cmp wordpress/slayerkey-website/previews/dojo-v3/dojo.css /tmp/slayerkey-remote/previews/dojo-v3/dojo.css
 
           echo "Verified: EasyWP files exactly match GitHub."
+          echo "Deployed commit: $(cat /tmp/slayerkey-remote/DEPLOYED_COMMIT.txt)"
           echo "Local plugin SHA256:  $(sha256sum wordpress/slayerkey-website/slayerkey-website.php | cut -d' ' -f1)"
           echo "Remote plugin SHA256: $(sha256sum /tmp/slayerkey-remote/slayerkey-website.php | cut -d' ' -f1)"
