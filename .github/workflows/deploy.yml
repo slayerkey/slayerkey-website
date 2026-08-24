@@ -73,6 +73,7 @@ jobs:
 
           root = Path('wordpress/slayerkey-website')
           deploy_sha = os.environ['DEPLOY_SHA']
+          short_sha = deploy_sha[:8]
           dojo_dir = root / 'previews/dojo-v3'
           js_source = dojo_dir / 'dojo.js'
           css_source = dojo_dir / 'dojo.css'
@@ -89,7 +90,6 @@ jobs:
 
           php_path = root / 'slayerkey-website.php'
           php = php_path.read_text(encoding='utf-8')
-
           version_match = re.search(
               r"define\( 'SLAYERKEY_WEBSITE_VERSION', '([^']+)' \);",
               php,
@@ -97,14 +97,13 @@ jobs:
           if not version_match:
               raise SystemExit('Could not find authored plugin version')
           base_version = version_match.group(1).split('+')[0]
-          short_sha = deploy_sha[:8]
-          php, count = re.subn(
+          php, version_count = re.subn(
               r"define\( 'SLAYERKEY_WEBSITE_VERSION', '[^']+' \);",
               "define( 'SLAYERKEY_WEBSITE_VERSION', '" + base_version + "." + short_sha + "' );",
               php,
               count=1,
           )
-          if count != 1:
+          if version_count != 1:
               raise SystemExit('Could not stamp deployed plugin version')
 
           php, style_count = re.subn(
@@ -125,26 +124,30 @@ jobs:
               )
 
           php_path.write_text(php, encoding='utf-8')
+
+          assets = {
+              'commit': deploy_sha,
+              'dojo_js': js_relative,
+              'dojo_js_sha256': js_sha,
+              'dojo_css': css_relative,
+              'dojo_css_sha256': css_sha,
+          }
+          assets_json = json.dumps(assets, indent=2) + '\n'
+          marker_name = f'DEPLOYED_COMMIT.{short_sha}.txt'
+          assets_name = f'DEPLOYED_ASSETS.{short_sha}.json'
+
           (root / 'DEPLOYED_COMMIT.txt').write_text(deploy_sha + '\n', encoding='utf-8')
-          (root / 'DEPLOYED_ASSETS.json').write_text(
-              json.dumps(
-                  {
-                      'commit': deploy_sha,
-                      'dojo_js': js_relative,
-                      'dojo_js_sha256': js_sha,
-                      'dojo_css': css_relative,
-                      'dojo_css_sha256': css_sha,
-                  },
-                  indent=2,
-              ) + '\n',
-              encoding='utf-8',
-          )
+          (root / marker_name).write_text(deploy_sha + '\n', encoding='utf-8')
+          (root / 'DEPLOYED_ASSETS.json').write_text(assets_json, encoding='utf-8')
+          (root / assets_name).write_text(assets_json, encoding='utf-8')
 
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as env:
               env.write(f'DOJO_JS_FILE={js_relative}\n')
               env.write(f'DOJO_JS_SHA={js_sha}\n')
               env.write(f'DOJO_CSS_FILE={css_relative}\n')
               env.write(f'DOJO_CSS_SHA={css_sha}\n')
+              env.write(f'DEPLOY_MARKER_FILE={marker_name}\n')
+              env.write(f'DEPLOY_ASSETS_FILE={assets_name}\n')
           PY
 
           grep "SLAYERKEY_WEBSITE_VERSION" wordpress/slayerkey-website/slayerkey-website.php | head -1
@@ -190,7 +193,9 @@ jobs:
           put "wordpress/slayerkey-website/$DOJO_CSS_FILE" -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/$DOJO_CSS_FILE"
           put wordpress/slayerkey-website/slayerkey-website.php -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/slayerkey-website.php"
           put wordpress/slayerkey-website/DEPLOYED_COMMIT.txt -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/DEPLOYED_COMMIT.txt"
+          put "wordpress/slayerkey-website/$DEPLOY_MARKER_FILE" -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/$DEPLOY_MARKER_FILE"
           put wordpress/slayerkey-website/DEPLOYED_ASSETS.json -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/DEPLOYED_ASSETS.json"
+          put "wordpress/slayerkey-website/$DEPLOY_ASSETS_FILE" -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/$DEPLOY_ASSETS_FILE"
           put wordpress/slayerkey-website/previews/dojo-v3/index.html -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/index.html"
           put wordpress/slayerkey-website/previews/dojo-v3/dojo.js -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/dojo.js"
           put wordpress/slayerkey-website/previews/dojo-v3/dojo.css -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/dojo.css"
@@ -212,7 +217,9 @@ jobs:
           set sftp:auto-confirm yes
           get "$REMOTE_PLUGIN_ROOT/slayerkey-website/slayerkey-website.php" -o /tmp/slayerkey-remote/slayerkey-website.php
           get "$REMOTE_PLUGIN_ROOT/slayerkey-website/DEPLOYED_COMMIT.txt" -o /tmp/slayerkey-remote/DEPLOYED_COMMIT.txt
+          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/$DEPLOY_MARKER_FILE" -o "/tmp/slayerkey-remote/$DEPLOY_MARKER_FILE"
           get "$REMOTE_PLUGIN_ROOT/slayerkey-website/DEPLOYED_ASSETS.json" -o /tmp/slayerkey-remote/DEPLOYED_ASSETS.json
+          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/$DEPLOY_ASSETS_FILE" -o "/tmp/slayerkey-remote/$DEPLOY_ASSETS_FILE"
           get "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/index.html" -o /tmp/slayerkey-remote/previews/dojo-v3/index.html
           get "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/dojo.js" -o /tmp/slayerkey-remote/previews/dojo-v3/dojo.js
           get "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/dojo.css" -o /tmp/slayerkey-remote/previews/dojo-v3/dojo.css
@@ -223,7 +230,9 @@ jobs:
 
           cmp wordpress/slayerkey-website/slayerkey-website.php /tmp/slayerkey-remote/slayerkey-website.php
           cmp wordpress/slayerkey-website/DEPLOYED_COMMIT.txt /tmp/slayerkey-remote/DEPLOYED_COMMIT.txt
+          cmp "wordpress/slayerkey-website/$DEPLOY_MARKER_FILE" "/tmp/slayerkey-remote/$DEPLOY_MARKER_FILE"
           cmp wordpress/slayerkey-website/DEPLOYED_ASSETS.json /tmp/slayerkey-remote/DEPLOYED_ASSETS.json
+          cmp "wordpress/slayerkey-website/$DEPLOY_ASSETS_FILE" "/tmp/slayerkey-remote/$DEPLOY_ASSETS_FILE"
           cmp wordpress/slayerkey-website/previews/dojo-v3/index.html /tmp/slayerkey-remote/previews/dojo-v3/index.html
           cmp wordpress/slayerkey-website/previews/dojo-v3/dojo.js /tmp/slayerkey-remote/previews/dojo-v3/dojo.js
           cmp wordpress/slayerkey-website/previews/dojo-v3/dojo.css /tmp/slayerkey-remote/previews/dojo-v3/dojo.css
@@ -238,32 +247,63 @@ jobs:
           set -euo pipefail
           BASE_URL="https://slayerkey.com/wp-content/plugins/slayerkey-website"
           HEALTH_URL="https://slayerkey.com/wp-json/slayerkey/v1/health?cb=$DEPLOY_SHA"
-          MARKER_URL="$BASE_URL/DEPLOYED_COMMIT.txt?cb=$DEPLOY_SHA"
-          ASSETS_URL="$BASE_URL/DEPLOYED_ASSETS.json?cb=$DEPLOY_SHA"
+          MARKER_URL="$BASE_URL/$DEPLOY_MARKER_FILE"
+          ASSETS_URL="$BASE_URL/$DEPLOY_ASSETS_FILE"
           JS_URL="$BASE_URL/$DOJO_JS_FILE"
           CSS_URL="$BASE_URL/$DOJO_CSS_FILE"
 
-          marker=""
+          marker_ok=0
           for attempt in $(seq 1 12); do
             marker="$(curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$MARKER_URL" 2>/dev/null | tr -d '\r\n' || true)"
             if [ "$marker" = "$DEPLOY_SHA" ]; then
+              marker_ok=1
               break
             fi
-            echo "Public marker not current yet (attempt $attempt/12): ${marker:-missing}"
+            echo "Public unique commit marker not current yet (attempt $attempt/12): ${marker:-missing}"
             sleep 5
           done
-          test "$marker" = "$DEPLOY_SHA"
+          test "$marker_ok" = "1"
 
-          curl -fsSL --connect-timeout 10 --max-time 30 -H 'Cache-Control: no-cache' "$ASSETS_URL" -o /tmp/public-assets.json
-          cmp wordpress/slayerkey-website/DEPLOYED_ASSETS.json /tmp/public-assets.json
+          assets_ok=0
+          for attempt in $(seq 1 12); do
+            if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$ASSETS_URL" -o /tmp/public-assets.json; then
+              if cmp -s "wordpress/slayerkey-website/$DEPLOY_ASSETS_FILE" /tmp/public-assets.json; then
+                assets_ok=1
+                break
+              fi
+            fi
+            echo "Public unique asset manifest not current yet (attempt $attempt/12)."
+            sleep 5
+          done
+          test "$assets_ok" = "1"
 
-          curl -fsSL --connect-timeout 10 --max-time 30 "$JS_URL" -o /tmp/public-dojo.js
-          PUBLIC_JS_SHA="$(sha256sum /tmp/public-dojo.js | awk '{print $1}')"
-          test "$PUBLIC_JS_SHA" = "$DOJO_JS_SHA"
+          js_ok=0
+          for attempt in $(seq 1 12); do
+            if curl -fsSL --connect-timeout 10 --max-time 20 "$JS_URL" -o /tmp/public-dojo.js; then
+              PUBLIC_JS_SHA="$(sha256sum /tmp/public-dojo.js | awk '{print $1}')"
+              if [ "$PUBLIC_JS_SHA" = "$DOJO_JS_SHA" ]; then
+                js_ok=1
+                break
+              fi
+            fi
+            echo "Public content-addressed dojo.js not current yet (attempt $attempt/12)."
+            sleep 5
+          done
+          test "$js_ok" = "1"
 
-          curl -fsSL --connect-timeout 10 --max-time 30 "$CSS_URL" -o /tmp/public-dojo.css
-          PUBLIC_CSS_SHA="$(sha256sum /tmp/public-dojo.css | awk '{print $1}')"
-          test "$PUBLIC_CSS_SHA" = "$DOJO_CSS_SHA"
+          css_ok=0
+          for attempt in $(seq 1 12); do
+            if curl -fsSL --connect-timeout 10 --max-time 20 "$CSS_URL" -o /tmp/public-dojo.css; then
+              PUBLIC_CSS_SHA="$(sha256sum /tmp/public-dojo.css | awk '{print $1}')"
+              if [ "$PUBLIC_CSS_SHA" = "$DOJO_CSS_SHA" ]; then
+                css_ok=1
+                break
+              fi
+            fi
+            echo "Public content-addressed dojo.css not current yet (attempt $attempt/12)."
+            sleep 5
+          done
+          test "$css_ok" = "1"
 
           health_ok=0
           for attempt in $(seq 1 12); do
