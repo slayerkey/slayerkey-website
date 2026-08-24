@@ -1,3 +1,19 @@
+body.slayerkey-preview-dojo-v3,
+body.slayerkey-preview-dojo-v3 .site,
+body.slayerkey-preview-dojo-v3 .site-content,
+body.slayerkey-preview-dojo-v3 #content,
+body.slayerkey-preview-dojo-v3 .content-area,
+body.slayerkey-preview-dojo-v3 .site-main{
+  background:#07111a!important;
+}
+body.slayerkey-preview-dojo-v3 .site-content,
+body.slayerkey-preview-dojo-v3 #content,
+body.slayerkey-preview-dojo-v3 .content-area,
+body.slayerkey-preview-dojo-v3 .site-main{
+  margin-top:0!important;
+  padding-top:0!important;
+}
+
 #sk-std{
   --dj-bg:var(--bg,#07111a);
   --dj-ink:var(--ink,#f5f7fa);
@@ -88,8 +104,7 @@
 #sk-std .dj-includes strong{color:#fff;font-size:.96rem}
 #sk-std .dj-includes p{font-size:.84rem}
 
-/* Community wins. These are intentionally designed like compact Discord proof cards,
-   rather than the old fake polygon rank badges that were breaking the section. */
+/* Community wins */
 #sk-std .dj-community-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;max-width:980px;margin:0 auto}
 #sk-std .dj-discord-card{position:relative;min-height:188px;padding:22px 22px 20px;border:1px solid rgba(255,255,255,.105);background:linear-gradient(180deg,rgba(16,31,43,.92),rgba(9,21,30,.92));box-shadow:0 18px 45px rgba(0,0,0,.20);overflow:hidden}
 #sk-std .dj-discord-card:before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--dj-teal),rgba(40,223,203,.12))}
@@ -99,16 +114,16 @@
 #sk-std .dj-discord-card>p{color:#d3dde3;font-size:.9rem;line-height:1.58}
 #sk-std .dj-result-tag{display:inline-flex;margin-top:18px;padding:6px 9px;border:1px solid rgba(40,223,203,.22);background:rgba(40,223,203,.07);color:var(--dj-teal);font-size:.65rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
 
-/* Review proof */
+/* Review proof. One CSS marquee owns the motion. */
 #sk-std .dj-stars{margin:7px 0 13px;color:var(--dj-red);font-size:clamp(2.25rem,4vw,3.8rem);line-height:1;letter-spacing:.08em}
 #sk-std .dj-review-head{max-width:920px;margin:0 auto 28px;text-align:center}
 #sk-std .dj-review-rail{width:100%;overflow:hidden;padding:2px 0 8px;mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
-#sk-std .dj-review-track{display:flex;gap:14px;width:max-content;will-change:transform;animation:djReviewMarquee 54s linear infinite}
-#sk-std .dj-review-rail:hover .dj-review-track{animation-play-state:paused}
+#sk-std .dj-review-track{display:flex;gap:14px;width:max-content;will-change:transform;animation:djReviewMarquee 22s linear infinite}
+#sk-std .dj-review-rail:hover .dj-review-track{animation-play-state:running}
 #sk-std .dj-review-track>article{width:min(365px,78vw);min-height:142px;padding:20px 21px;border:1px solid rgba(255,255,255,.105);background:linear-gradient(180deg,rgba(16,31,43,.88),rgba(8,19,27,.90));box-shadow:0 14px 34px rgba(0,0,0,.18)}
 #sk-std .dj-review-track>article>div{color:#ffd45b;font-size:.9rem;letter-spacing:.11em}
 #sk-std .dj-review-track>article p{margin-top:11px;color:#d4dde3;font-size:.86rem;line-height:1.55}
-@keyframes djReviewMarquee{from{transform:translate3d(0,0,0)}to{transform:translate3d(calc(-50% - 7px),0,0)}}
+@keyframes djReviewMarquee{from{transform:translate3d(calc(-50% - 7px),0,0)}to{transform:translate3d(0,0,0)}}
 
 /* Offer */
 #sk-std .dj-value-box{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:46px;align-items:center;padding:40px;border:1px solid rgba(255,255,255,.12);background:linear-gradient(135deg,rgba(255,70,85,.07),rgba(40,223,203,.045))}
@@ -119,6 +134,10 @@
 #sk-std .dj-per{margin-top:4px;color:#8fa0ac;font-size:.7rem;font-weight:850;letter-spacing:.12em;text-transform:uppercase}
 #sk-std .dj-price-card p{margin:14px 0 20px;color:#fff;font-size:.84rem;font-weight:800}
 #sk-std .dj-price-card .btn{width:100%}
+#sk-std .dj-price-card-premium{position:relative;transform:translateY(-6px);border-color:rgba(40,223,203,.72);background:linear-gradient(180deg,rgba(15,35,43,.98),rgba(7,20,29,.98));box-shadow:0 26px 72px rgba(0,0,0,.36),0 0 0 1px rgba(40,223,203,.10),0 0 42px rgba(40,223,203,.09)}
+#sk-std .dj-price-card-premium:before{content:'';position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,transparent,var(--dj-teal),transparent)}
+#sk-std .dj-price-card-premium .dj-price{font-size:3.9rem}
+#sk-std .dj-price-card-premium .dj-plan-save{border-color:rgba(40,223,203,.5);background:rgba(40,223,203,.12);box-shadow:0 8px 26px rgba(40,223,203,.08)}
 
 /* FAQ */
 #sk-std .dj-faq-wrap{max-width:920px}
@@ -134,7 +153,7 @@
 #sk-std .dj-final h2{max-width:930px;margin-inline:auto}
 #sk-std .dj-final p{max-width:650px;margin:15px auto 24px}
 
-/* Reveal animation. Both the existing global footer script and dojo.js can reveal these. */
+/* Reveal animation */
 #sk-std .reveal{opacity:0;transform:translate3d(0,20px,0);filter:blur(1.2px);transition:opacity .68s var(--dj-ease),transform .68s var(--dj-ease),filter .68s var(--dj-ease)}
 #sk-std .reveal.d1{transition-delay:.06s}
 #sk-std .reveal.d2{transition-delay:.12s}
@@ -161,6 +180,7 @@
   #sk-std .dj-includes>div{grid-template-columns:120px 1fr;gap:14px 24px}
   #sk-std .dj-includes p{grid-column:2}
   #sk-std .dj-price-card{max-width:430px}
+  #sk-std .dj-price-card-premium{transform:none}
 }
 @media(max-width:700px){
   #sk-std .container{width:calc(100% - 28px)}
