@@ -13,10 +13,6 @@
         var root = document.getElementById('sk-std');
         if (!root) return;
 
-        /* Derek was reference material only, not a final community proof card. */
-        var derekCard = root.querySelector('[data-proof-src*="std-derekvictory.png"]');
-        if (derekCard) derekCard.remove();
-
         /* Framer-style reveal, with reduced motion respected. */
         var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         var reveals = Array.prototype.slice.call(root.querySelectorAll('.reveal'));
@@ -72,7 +68,7 @@
             if (link.textContent && link.textContent.trim()) link.textContent = 'Start Improving';
         });
 
-        /* Replace the visible review rail so the older inline scroll loop can only touch a detached node.
+        /* Replace the visible review rail so the inline scroll loop can only touch a detached node.
            The visible rail uses time modulo cycle width, so there is no accumulated reset delay or pause. */
         (function installReviewRail() {
             var oldRail = root.querySelector('.dj-review-rail');

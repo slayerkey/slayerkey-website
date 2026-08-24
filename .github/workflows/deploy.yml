@@ -25,7 +25,7 @@ jobs:
       - name: Install SFTP client
         run: sudo apt-get update && sudo apt-get install -y lftp
 
-      - name: Verify required secrets
+      - name: Verify required secrets and source
         env:
           SFTP_HOST: ${{ secrets.EASYWP_HOST }}
           SFTP_USER: ${{ secrets.EASYWP_USER }}
@@ -40,8 +40,9 @@ jobs:
           test -f wordpress/slayerkey-website/previews/dojo-v3/index.html
           test -f wordpress/slayerkey-website/previews/dojo-v3/dojo.js
           test -f wordpress/slayerkey-website/previews/dojo-v3/dojo.css
+          ! grep -q 'std-derekvictory.png' wordpress/slayerkey-website/previews/dojo-v3/index.html
 
-      - name: Prepare exact deployment copy
+      - name: Stamp deployment identity
         env:
           DEPLOY_SHA: ${{ github.sha }}
         run: |
@@ -52,23 +53,6 @@ jobs:
 
           root = Path('wordpress/slayerkey-website')
           deploy_sha = os.environ['DEPLOY_SHA']
-
-          index_path = root / 'previews/dojo-v3/index.html'
-          html = index_path.read_text(encoding='utf-8')
-          needle = 'std-derekvictory.png'
-          marker = html.find(needle)
-          if marker == -1:
-              raise SystemExit('Derek card marker was not found in authored HTML')
-          start = html.rfind('<button', 0, marker)
-          end = html.find('</button>', marker)
-          if start == -1 or end == -1:
-              raise SystemExit('Could not resolve Derek card boundaries')
-          end += len('</button>')
-          html = html[:start] + html[end:]
-          if needle in html:
-              raise SystemExit('Derek reference remains after removal')
-          index_path.write_text(html, encoding='utf-8')
-
           php_path = root / 'slayerkey-website.php'
           php = php_path.read_text(encoding='utf-8')
           version_match = re.search(
@@ -91,7 +75,6 @@ jobs:
           (root / 'DEPLOYED_COMMIT.txt').write_text(deploy_sha + '\n', encoding='utf-8')
           PY
 
-          ! grep -q 'std-derekvictory.png' wordpress/slayerkey-website/previews/dojo-v3/index.html
           grep "SLAYERKEY_WEBSITE_VERSION" wordpress/slayerkey-website/slayerkey-website.php | head -1
 
       - name: Find EasyWP plugin directory
