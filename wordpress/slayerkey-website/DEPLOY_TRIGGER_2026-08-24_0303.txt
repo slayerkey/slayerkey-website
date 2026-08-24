@@ -1,0 +1,3 @@
+Force deployment after simplifying the EasyWP workflow.
+The deployed commit stamp should advance past a69e3d08.
+Derek must not exist in deployed dojo-v3/index.html.
