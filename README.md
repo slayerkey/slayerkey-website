@@ -45,7 +45,7 @@ The production plugin exposes:
 
 `https://slayerkey.com/wp-json/slayerkey/v1/health`
 
-It returns the active plugin version, PostHog proxy host, UI host, tracking asset URL, and whether the production hooks are registered. It does not expose the PostHog project token.
+It returns the active plugin version, the exact deployed Git commit, hashes for the critical Dojo HTML/JS/CSS files, PostHog configuration, and whether the production hooks are registered. It does not expose the PostHog project token.
 
 ## Versions and experiments
 
@@ -68,9 +68,38 @@ Required repository secrets:
 
 Use port `22` for `EASYWP_PORT`.
 
-The workflow uploads only the `wordpress/slayerkey-website` folder into EasyWP's WordPress plugin directory. Pushes to `main` that change the plugin automatically deploy to EasyWP.
+Every push to `main` runs the EasyWP deployment workflow. The workflow uploads only the `wordpress/slayerkey-website` folder into EasyWP's WordPress plugin directory.
 
 The **Slayerkey Website** plugin only needs to be activated once in WordPress Admin. Future plugin and page updates deploy from GitHub without another activation step.
+
+### Deployment contract
+
+A commit being present on `main` does **not** mean it is live on EasyWP.
+
+Each `main` commit gets a commit status named:
+
+`easywp/deploy`
+
+Interpret it strictly:
+
+* missing status = the deploy workflow has not started, so the commit is **not verified live**
+* pending = deployment or verification is still running
+* failure = SFTP deployment, remote byte verification, or public HTTP verification failed
+* success = EasyWP contains the exact commit and the public site serves the exact Dojo JavaScript hash for that commit
+
+Do not hand off a preview URL, call a change deployed, or promote a preview to live until `easywp/deploy` is `success` for the exact commit being discussed.
+
+The workflow verifies deployment in three layers:
+
+1. It uploads the plugin and critical Dojo files over SFTP.
+2. It downloads those files back over SFTP and byte compares them with the workflow workspace.
+3. It requests the public `DEPLOYED_COMMIT.txt`, public `dojo.js`, and `/wp-json/slayerkey/v1/health` endpoints with a commit specific cache buster and verifies the commit plus SHA256 hash seen through HTTP.
+
+The workflow also uses a single concurrency group with `cancel-in-progress: true`, so an older deployment cannot finish after a newer deployment and overwrite the server with stale files.
+
+For a private Dojo preview, use the exact verified deployment SHA as the cache buster:
+
+`https://slayerkey.com/preview/dojo-v3/?cb=<verified-commit-sha>`
 
 ## Safety
 
