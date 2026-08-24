@@ -1,22 +1,27 @@
 <style>
-/* Near-final preview polish. Keep the working WordPress/theme shell intact. */
+/* Critical preview-only overrides live inline so stale theme/plugin CSS cannot win. */
 #sk-std{
   width:100vw;
   max-width:none;
   margin-left:calc(50% - 50vw);
   margin-right:calc(50% - 50vw);
+  margin-top:-31px;
+  margin-bottom:-40px;
+  padding-top:31px;
+  padding-bottom:40px;
   overflow-x:clip;
 }
 #sk-std h1,#sk-std h2,#sk-std h3{font-weight:400!important;}
 #sk-std .dj-mid-cta{text-align:center;margin-top:28px;}
 
-/* Community proof is real HTML. The known-good wins collage is cropped with CSS only. */
+/* Original community screenshots. No collage crops, scaling hacks, or generated thumbnails. */
 #sk-std .dj-community-grid{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:18px;
   max-width:1120px;
   margin:0 auto;
+  align-items:start;
 }
 #sk-std .dj-win-card{
   appearance:none;
@@ -36,26 +41,23 @@
   border-color:rgba(40,223,203,.36);
   box-shadow:0 24px 58px rgba(0,0,0,.30);
 }
+#sk-std .dj-win-card-wide{grid-column:1/-1;}
 #sk-std .dj-win-thumb{
-  position:relative;
   width:100%;
-  aspect-ratio:1.48/1;
   overflow:hidden;
-  background:#0a1117;
+  background:#19191d;
+  line-height:0;
 }
 #sk-std .dj-win-thumb img{
-  position:absolute;
-  left:0;
-  top:0;
-  width:300%;
-  max-width:none!important;
-  height:auto;
+  position:static!important;
+  display:block;
+  width:100%!important;
+  max-width:100%!important;
+  height:auto!important;
+  object-fit:contain;
   pointer-events:none;
   user-select:none;
 }
-#sk-std .dj-win-thumb.is-morien img{left:-100%;}
-#sk-std .dj-win-thumb.is-ikkai img{top:-100%;}
-#sk-std .dj-win-thumb.is-jagi img{left:-100%;top:-100%;}
 #sk-std .dj-win-copy{padding:16px 18px 17px;}
 #sk-std .dj-win-copy small{
   display:block;
@@ -69,15 +71,36 @@
 #sk-std .dj-win-copy strong{display:block;color:#fff;font-size:1rem;line-height:1.25;}
 #sk-std .dj-win-copy span{display:block;margin-top:5px;color:var(--dj-muted);font-size:.78rem;line-height:1.45;}
 
-/* Monthly + annual plan choice. Text is native HTML, not JavaScript-injected. */
+/* The rail is driven by scrollLeft in the inline script below. This avoids animation/transform overrides. */
+#sk-std .dj-review-track{animation:none!important;transform:none!important;}
+#sk-std .dj-review-rail:hover .dj-review-track{animation-play-state:running!important;}
+
+/* Monthly and annual use identical rows so labels, prices, and CTAs align. */
 #sk-std .dj-value-box{grid-template-columns:minmax(0,.82fr) minmax(520px,1.18fr);}
-#sk-std .dj-plan-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;}
-#sk-std .dj-plan-options .dj-price-card{height:100%;display:flex;flex-direction:column;justify-content:center;}
-#sk-std .dj-plan-options .btn{margin-top:auto;}
+#sk-std .dj-plan-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch;}
+#sk-std .dj-plan-options .dj-price-card{
+  height:100%;
+  min-height:246px;
+  display:grid;
+  grid-template-rows:auto 30px auto 1fr auto;
+  align-items:center;
+  row-gap:10px;
+}
+#sk-std .dj-plan-options .dj-per{
+  margin:0;
+  color:#cbd6dc;
+  font-size:.72rem;
+  font-weight:900;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+}
 #sk-std .dj-plan-save{
   display:inline-flex;
   align-self:center;
-  margin:8px auto 12px;
+  justify-self:center;
+  align-items:center;
+  min-height:28px;
+  margin:0;
   padding:5px 9px;
   border:1px solid rgba(40,223,203,.26);
   background:rgba(40,223,203,.07);
@@ -85,16 +108,20 @@
   font-size:.63rem;
   font-weight:900;
   letter-spacing:.07em;
+  line-height:1;
   text-transform:uppercase;
 }
-#sk-std .dj-plan-options .dj-per{
-  margin:0 0 12px;
-  color:#cbd6dc;
-  font-size:.72rem;
-  font-weight:900;
-  letter-spacing:.13em;
-  text-transform:uppercase;
+#sk-std .dj-plan-save-placeholder{visibility:hidden;}
+#sk-std .dj-plan-options .dj-price{align-self:center;}
+#sk-std .dj-plan-options .btn{align-self:end;margin-top:0;}
+#sk-std .dj-price-card-premium{
+  transform:none!important;
+  border-color:rgba(40,223,203,.72)!important;
+  background:linear-gradient(180deg,rgba(15,35,43,.98),rgba(7,20,29,.98))!important;
+  box-shadow:0 26px 72px rgba(0,0,0,.36),0 0 0 1px rgba(40,223,203,.10),0 0 42px rgba(40,223,203,.09)!important;
 }
+#sk-std .dj-price-card-premium:before{content:'';position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,transparent,var(--dj-teal),transparent);}
+#sk-std .dj-price-card-premium .dj-price{font-size:3.9rem;}
 
 @media(max-width:900px){
   #sk-std .dj-value-box{grid-template-columns:1fr;}
@@ -102,11 +129,11 @@
 @media(max-width:700px){
   #sk-std{width:100%;margin-left:0;margin-right:0;}
   #sk-std .dj-community-grid,#sk-std .dj-plan-options{grid-template-columns:1fr;gap:14px;}
-  #sk-std .dj-win-thumb{aspect-ratio:1.35/1;}
+  #sk-std .dj-win-card-wide{grid-column:auto;}
 }
 </style>
 
-<main id="sk-std" class="sk-dojo-preview" data-page-variant="dojo_conversion_v8">
+<main id="sk-std" class="sk-dojo-preview" data-page-variant="dojo_conversion_v9">
   <section class="dj-hero" id="top">
     <div class="container dj-hero-grid">
       <div class="dj-hero-copy reveal">
@@ -209,21 +236,25 @@
         <p>Rank ups, win streaks, huge games, and the work actually showing up in ranked.</p>
       </div>
       <div class="dj-community-grid">
-        <button class="dj-win-card reveal" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/wins.webp?v=20260824-static-final" aria-label="Expand first time Diamond community proof">
-          <div class="dj-win-thumb is-zus" aria-hidden="true"><img loading="eager" decoding="async" src="assets/wins.webp?v=20260824-static-final" alt=""></div>
-          <div class="dj-win-copy"><small>Rank Up</small><strong>First time Diamond</strong><span>The climb showing up in the rank screen and match history.</span></div>
+        <button class="dj-win-card reveal" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/std-diawin-huge.png" aria-label="Expand first time Diamond community proof">
+          <div class="dj-win-thumb"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/std-diawin-huge.png" alt="Zus sharing a first time Diamond 1 rank up, match history, and act triangle"></div>
+          <div class="dj-win-copy"><small>Rank Up</small><strong>First time Diamond</strong><span>Zus hit Diamond 1 and posted the promotion, match history, and act triangle in the Dojo.</span></div>
         </button>
-        <button class="dj-win-card reveal d1" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/wins.webp?v=20260824-static-final" aria-label="Expand huge game community proof">
-          <div class="dj-win-thumb is-morien" aria-hidden="true"><img loading="eager" decoding="async" src="assets/wins.webp?v=20260824-static-final" alt=""></div>
-          <div class="dj-win-copy"><small>Huge Game</small><strong>Big scoreboard performance</strong><span>A strong game posted directly inside the community.</span></div>
+        <button class="dj-win-card reveal d1" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/std-10gamewinstreak.png" aria-label="Expand ten game win streak community proof">
+          <div class="dj-win-thumb"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/std-10gamewinstreak.png" alt="Ikkai sharing a ten game Valorant win streak and Platinum 3 match history"></div>
+          <div class="dj-win-copy"><small>Consistency</small><strong>10 game win streak</strong><span>Ikkai posted ten straight wins and was deciding which game was even worth reviewing next.</span></div>
         </button>
-        <button class="dj-win-card reveal d2" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/wins.webp?v=20260824-static-final" aria-label="Expand ten game win streak community proof">
-          <div class="dj-win-thumb is-ikkai" aria-hidden="true"><img loading="eager" decoding="async" src="assets/wins.webp?v=20260824-static-final" alt=""></div>
-          <div class="dj-win-copy"><small>Consistency</small><strong>10 game win streak</strong><span>Ten straight wins while figuring out which game was even worth reviewing next.</span></div>
+        <button class="dj-win-card reveal d2" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/std-46bomb-huge.png" aria-label="Expand 46 kill game community proof">
+          <div class="dj-win-thumb"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/std-46bomb-huge.png" alt="Morien scoreboard showing 46 kills, 15 deaths, 1 assist, and 428 ACS in a 15 to 13 victory"></div>
+          <div class="dj-win-copy"><small>Huge Game</small><strong>46 kills · 428 ACS</strong><span>Morien went 46/15/1 in a 15–13 win.</span></div>
         </button>
-        <button class="dj-win-card reveal d3" type="button" data-proof-src="https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/wins.webp?v=20260824-static-final" aria-label="Expand rank up game community proof">
-          <div class="dj-win-thumb is-jagi" aria-hidden="true"><img loading="eager" decoding="async" src="assets/wins.webp?v=20260824-static-final" alt=""></div>
-          <div class="dj-win-copy"><small>Rank Up Games</small><strong>60% headshot rate</strong><span>“Your teachings turning me into Thanos for the rank up games.”</span></div>
+        <button class="dj-win-card reveal d3" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/std-bronzetosilverwinstreak.png" aria-label="Expand Bronze to Silver community proof">
+          <div class="dj-win-thumb"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/std-bronzetosilverwinstreak.png" alt="Community improvement post showing a win heavy match history and Silver 1 rank"></div>
+          <div class="dj-win-copy"><small>Rank Climb</small><strong>Bronze to Silver</strong><span>A win-heavy run into Silver 1, posted in the community with #improvement.</span></div>
+        </button>
+        <button class="dj-win-card dj-win-card-wide reveal d1" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/std-derekvictory.png" aria-label="Expand Derek victory community proof">
+          <div class="dj-win-thumb"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/std-derekvictory.png" alt="Derek sharing a 13 to 6 victory with 27 kills, 9 deaths, 5 assists, 397 ACS, and 261 damage per round"></div>
+          <div class="dj-win-copy"><small>Carry Game</small><strong>27/9/5 · 397 ACS</strong><span>Derek posted 27/9/5 with 397 ACS and 261 damage per round in a 13–6 win.</span></div>
         </button>
       </div>
       <div class="dj-center reveal d2"><a class="btn" href="https://whop.com/checkout/plan_eVop6pXsIhHlf/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=community_start_improving" data-sk-cta="dojo-community-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="community">Start Improving</a></div>
@@ -270,13 +301,16 @@
       <div class="dj-plan-options">
         <aside class="dj-price-card">
           <div class="dj-per">Monthly</div>
+          <div class="dj-plan-save dj-plan-save-placeholder" aria-hidden="true">Two months free</div>
           <div class="dj-price">$19.99</div>
+          <div aria-hidden="true"></div>
           <a class="btn" href="https://whop.com/checkout/plan_eVop6pXsIhHlf/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=pricing_monthly" data-sk-cta="dojo-pricing-monthly" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="pricing_monthly">Start Monthly</a>
         </aside>
         <aside class="dj-price-card dj-price-card-premium">
           <div class="dj-per">Annual</div>
           <div class="dj-plan-save">Two months free</div>
           <div class="dj-price">$199.99</div>
+          <div aria-hidden="true"></div>
           <a class="btn" href="https://whop.com/checkout/plan_kaaoYadRlBi4n/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=pricing_annual" data-sk-cta="dojo-pricing-annual" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="pricing_annual">Start Annual</a>
         </aside>
       </div>
@@ -309,3 +343,54 @@
     <img src="" alt="Expanded proof">
   </div>
 </main>
+
+<script>
+(function () {
+  var rail = document.querySelector('#sk-std .dj-review-rail');
+  var track = document.querySelector('#sk-std .dj-review-track');
+  if (!rail || !track || !window.requestAnimationFrame) return;
+
+  track.style.setProperty('animation', 'none', 'important');
+  track.style.setProperty('transform', 'none', 'important');
+
+  var cards = track.children;
+  var halfIndex = Math.floor(cards.length / 2);
+  if (!cards.length || halfIndex < 1 || !cards[halfIndex]) return;
+
+  var cycleWidth = 0;
+  var position = 0;
+  var lastTime = 0;
+  var speed = 48;
+
+  function measure() {
+    cycleWidth = cards[halfIndex].offsetLeft - cards[0].offsetLeft;
+    if (cycleWidth <= 0) return;
+    position = cycleWidth;
+    rail.scrollLeft = position;
+  }
+
+  function move(now) {
+    if (!cycleWidth) {
+      window.requestAnimationFrame(move);
+      return;
+    }
+    if (!lastTime) lastTime = now;
+    var delta = Math.min((now - lastTime) / 1000, 0.05);
+    lastTime = now;
+    position -= speed * delta;
+    if (position <= 0) position += cycleWidth;
+    rail.scrollLeft = position;
+    window.requestAnimationFrame(move);
+  }
+
+  window.requestAnimationFrame(function () {
+    measure();
+    window.requestAnimationFrame(move);
+  });
+
+  window.addEventListener('resize', function () {
+    lastTime = 0;
+    measure();
+  }, { passive: true });
+})();
+</script>
