@@ -71,10 +71,17 @@ jobs:
 
           php_path = root / 'slayerkey-website.php'
           php = php_path.read_text(encoding='utf-8')
+          version_match = re.search(
+              r"define\( 'SLAYERKEY_WEBSITE_VERSION', '([^']+)' \);",
+              php,
+          )
+          if not version_match:
+              raise SystemExit('Could not find authored plugin version')
+          base_version = version_match.group(1).split('+')[0]
           short_sha = deploy_sha[:8]
           php, count = re.subn(
               r"define\( 'SLAYERKEY_WEBSITE_VERSION', '[^']+' \);",
-              "define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.19." + short_sha + "' );",
+              "define( 'SLAYERKEY_WEBSITE_VERSION', '" + base_version + "." + short_sha + "' );",
               php,
               count=1,
           )
