@@ -123,7 +123,7 @@
         (function installPlanChooser() {
             var monthlyCheckout = 'https://whop.com/checkout/plan_eVop6pXsIhHlf/?utm_source=private_preview&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=plan_chooser_monthly';
             var annualCheckout = 'https://whop.com/checkout/plan_kaaoYadRlBi4n/?utm_source=private_preview&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=plan_chooser_annual';
-            var chooserVersion = 'dojo-plan-chooser-final';
+            var chooserVersion = 'dojo-plan-chooser-offer-sync';
 
             Array.prototype.slice.call(document.querySelectorAll('#sk-plan-chooser')).forEach(function (existing) {
                 if (existing.parentNode) existing.parentNode.removeChild(existing);
@@ -157,14 +157,14 @@
                 '<button class="sk-plan-close" type="button" aria-label="Close plan chooser">✕</button>' +
                 '<div class="sk-plan-head">' +
                 '<h3 id="sk-plan-title">How Do You Want To Start?</h3>' +
-                '<p><strong>Full Dojo access starts at $19.99/month.</strong> Annual saves two months and starts with your personal mechanics analysis immediately.</p>' +
+                '<p><strong>Full Dojo access starts at $19.99/month.</strong> Annual saves two months and unlocks both your Personal Mechanics Analysis and Personal VOD Review immediately.</p>' +
                 '</div>' +
                 '<div class="sk-plan-grid">' +
                 '<article class="sk-plan-card monthly">' +
                 '<div class="sk-plan-badge placeholder" aria-hidden="true">Complete Dojo</div>' +
                 '<div class="sk-plan-name">Monthly</div>' +
                 '<div class="sk-plan-price">$19.99 <span>/ month</span></div>' +
-                '<ul class="sk-plan-list"><li><strong>Complete Dojo access</strong></li><li>7 Day Foundation + structured 90 day roadmap</li><li>VOD reviews, Tracker reviews, coaching, teams, and training</li><li>Personal mechanics analysis as you progress</li></ul>' +
+                '<ul class="sk-plan-list"><li><strong>Complete Dojo access</strong></li><li>7 Day Improvement Plan + Monthly Roadmap</li><li>Personal Tracker Reviews</li><li>Weekly Coaching + Daily Feedback</li><li>Mechanics Analysis + Personal VOD Review unlock as you progress</li></ul>' +
                 '<a class="sk-plan-action" href="' + monthlyCheckout + '" target="_blank" rel="noopener" data-sk-cta="dojo-plan-monthly" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="plan_chooser_monthly" data-sk-plan-direct="true">Join The Dojo</a>' +
                 '</article>' +
                 '<article class="sk-plan-card annual">' +
@@ -172,7 +172,7 @@
                 '<div class="sk-plan-name">Annual</div>' +
                 '<div class="sk-plan-price">$199.99 <span>/ year</span></div>' +
                 '<div class="sk-plan-save">2 months free</div>' +
-                '<ul class="sk-plan-list"><li><strong>Everything in Monthly</strong></li><li><strong>Personal mechanics analysis immediately</strong></li><li>Custom routine, drills, resources, and priorities immediately</li><li>Start knowing exactly what to fix mechanically</li></ul>' +
+                '<ul class="sk-plan-list"><li><strong>Everything in Monthly</strong></li><li><strong>Personal Mechanics Analysis immediately</strong></li><li><strong>Personal VOD Review immediately</strong></li><li>Custom routine, drills, resources, and priorities immediately</li></ul>' +
                 '<a class="sk-plan-action" href="' + annualCheckout + '" target="_blank" rel="noopener" data-sk-cta="dojo-plan-annual" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="plan_chooser_annual" data-sk-plan-direct="true">Get My Improvement Plan</a>' +
                 '</article>' +
                 '</div>' +
