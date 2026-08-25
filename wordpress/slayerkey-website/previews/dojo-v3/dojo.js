@@ -435,3 +435,98 @@
         }
     });
 })();
+
+/* Lightweight post-launch presentation polish: no new sales architecture or interaction owner. */
+(function () {
+    'use strict';
+
+    function applyPostLaunchPolish() {
+        var root = document.getElementById('sk-std');
+        if (!root) return;
+
+        var oldStyle = document.getElementById('dojoPostLaunchPolishStyles');
+        if (oldStyle && oldStyle.parentNode) oldStyle.parentNode.removeChild(oldStyle);
+
+        var style = document.createElement('style');
+        style.id = 'dojoPostLaunchPolishStyles';
+        style.textContent = '' +
+            '#sk-std .reveal{opacity:0!important;transform:translate3d(0,28px,0) scale(.985)!important;filter:none!important;transition:opacity .72s cubic-bezier(.16,1,.3,1),transform .72s cubic-bezier(.16,1,.3,1)!important}' +
+            '#sk-std .reveal.show,#sk-std .reveal.is-visible{opacity:1!important;transform:translate3d(0,0,0) scale(1)!important;filter:none!important}' +
+            '#sk-std #pricing .dj-value-box{grid-template-columns:minmax(0,.7fr) minmax(540px,1.3fr)!important;align-items:start!important;padding:34px!important}' +
+            '#sk-std #pricing .dj-checks,#sk-std #pricing .dj-pricing-note{display:none!important}' +
+            '#sk-std #pricing .dj-plan-options .dj-price-card{height:auto!important;min-height:360px!important;padding:22px!important}' +
+            '#sk-std #pricing .dj-pricing-list{gap:8px!important;margin:18px 0 20px!important}' +
+            '#sk-std #pricing .dj-body-copy{margin-top:14px!important}' +
+            '.sk-plan-card{min-height:390px!important}' +
+            '.sk-plan-list{gap:9px!important;margin:20px auto 22px!important}' +
+            '@media(max-width:1050px){#sk-std #pricing .dj-value-box{grid-template-columns:1fr!important}}' +
+            '@media(max-width:700px){#sk-std #pricing .dj-value-box{padding:24px 18px!important}.sk-plan-card{min-height:0!important}}' +
+            '@media(prefers-reduced-motion:reduce){#sk-std .reveal{opacity:1!important;transform:none!important;filter:none!important;transition:none!important}}';
+        document.head.appendChild(style);
+
+        var pricing = root.querySelector('#pricing');
+        if (pricing) {
+            var pricingCopy = pricing.querySelector('.dj-body-copy');
+            if (pricingCopy) pricingCopy.textContent = 'Both plans include the complete Dojo. Start Monthly for full access, or choose Annual to save two months and get both personal reviews immediately.';
+
+            var checks = pricing.querySelector('.dj-checks');
+            if (checks && checks.parentNode) checks.parentNode.removeChild(checks);
+            var note = pricing.querySelector('.dj-pricing-note');
+            if (note && note.parentNode) note.parentNode.removeChild(note);
+
+            var pricingCards = pricing.querySelectorAll('.dj-price-card');
+            if (pricingCards[0]) {
+                var monthlyList = pricingCards[0].querySelector('.dj-pricing-list');
+                if (monthlyList) monthlyList.innerHTML = '<li><strong>Complete Dojo access</strong></li><li>7 Day Improvement Plan + Monthly Roadmap</li><li>Tracker reviews + weekly coaching</li><li>Daily feedback + private teams + accountability</li><li>100+ lessons + training library</li>';
+            }
+            if (pricingCards[1]) {
+                var annualList = pricingCards[1].querySelector('.dj-pricing-list');
+                if (annualList) annualList.innerHTML = '<li><strong>Everything in Monthly</strong></li><li><strong>Personal Mechanics Analysis immediately</strong></li><li><strong>Personal VOD Review immediately</strong></li><li>Custom routine + improvement priorities immediately</li>';
+            }
+        }
+
+        var chooser = document.getElementById('sk-plan-chooser');
+        if (chooser) {
+            var chooserCards = chooser.querySelectorAll('.sk-plan-card');
+            if (chooserCards[0]) {
+                var chooserMonthly = chooserCards[0].querySelector('.sk-plan-list');
+                if (chooserMonthly) chooserMonthly.innerHTML = '<li><strong>Complete Dojo access</strong></li><li>7 Day Improvement Plan + Monthly Roadmap</li><li>Tracker reviews + weekly coaching</li><li>Daily feedback + private teams + accountability</li><li>100+ lessons + training library</li>';
+            }
+            if (chooserCards[1]) {
+                var chooserAnnual = chooserCards[1].querySelector('.sk-plan-list');
+                if (chooserAnnual) chooserAnnual.innerHTML = '<li><strong>Everything in Monthly</strong></li><li><strong>Personal Mechanics Analysis immediately</strong></li><li><strong>Personal VOD Review immediately</strong></li><li>Custom routine + improvement priorities immediately</li>';
+            }
+        }
+
+        var faq = root.querySelector('#faq .dj-faq');
+        if (faq) {
+            var keep = {
+                'Is this for my rank?': true,
+                'Is this just another Discord server?': true,
+                'What happens after I join?': true,
+                'What is the difference between Monthly and Annual?': true,
+                'Why would I buy this instead of watching free YouTube videos?': true
+            };
+
+            Array.prototype.slice.call(faq.querySelectorAll('details')).forEach(function (item) {
+                var summary = item.querySelector('summary');
+                var title = summary ? summary.textContent.trim() : '';
+                if (!keep[title]) {
+                    if (item.parentNode) item.parentNode.removeChild(item);
+                    return;
+                }
+
+                if (title === 'Is this for my rank?') {
+                    var answer = item.querySelector('p');
+                    if (answer) answer.textContent = 'Yes. The process is built around finding the next problem in your games, regardless of where you are starting. The priority changes with the player; the Diagnose → Prioritize → Train → Apply → Review → Repeat loop does not.';
+                }
+            });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyPostLaunchPolish, { once: true });
+    } else {
+        applyPostLaunchPolish();
+    }
+})();
