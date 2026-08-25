@@ -3,6 +3,40 @@
 
     var pendingPlanTrigger = null;
 
+    function installFinalPolishStyles() {
+        var previous = document.getElementById('dojoFinalPolishStyles');
+        if (previous && previous.parentNode) previous.parentNode.removeChild(previous);
+
+        var style = document.createElement('style');
+        style.id = 'dojoFinalPolishStyles';
+        style.textContent = '' +
+            '#sk-std .dj-hero .dj-cta-note,#sk-std .dj-final .dj-cta-note{display:none!important}' +
+            '#sk-std .dj-proofline{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 18px!important;align-items:start;margin-top:26px!important;padding-top:20px!important}' +
+            '#sk-std .dj-proofline span{display:grid;grid-template-columns:18px minmax(0,1fr);gap:7px;align-items:start;min-width:0;padding:2px 0;line-height:1.38}' +
+            '#sk-std .dj-proofline span:before{margin-right:0!important;text-align:center}' +
+            '#sk-std .dj-proof-featured,#sk-std .dj-proof-static{display:flex;flex-direction:column}' +
+            '#sk-std .dj-proof-image{order:1}' +
+            '#sk-std .dj-proof-summary{order:2;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:6px!important;padding:18px 18px 20px!important;border-top:1px solid rgba(255,255,255,.09)!important;border-bottom:0!important;background:linear-gradient(180deg,rgba(40,223,203,.055),rgba(7,18,27,.94))!important;text-align:center!important}' +
+            '#sk-std .dj-proof-summary small{display:block;color:#fff!important;font-size:1.02rem!important;font-weight:900!important;letter-spacing:.045em!important;line-height:1.25!important;text-align:center!important;text-transform:uppercase}' +
+            '#sk-std .dj-proof-summary strong{display:block;color:var(--dj-teal)!important;font-size:.86rem!important;font-weight:900!important;letter-spacing:.035em!important;line-height:1.3!important;text-align:center!important;text-transform:uppercase}' +
+            '#sk-std .dj-proof-featured .dj-proof-summary{padding:21px 22px 23px!important}' +
+            '#sk-std .dj-proof-featured .dj-proof-summary small{font-size:1.28rem!important}' +
+            '#sk-std .dj-proof-featured .dj-proof-summary strong{font-size:.98rem!important}' +
+            '#sk-std .dj-proof-note{display:none!important}' +
+            '#sk-std .dj-diagnosis-card small{line-height:1.35}' +
+            '#sk-std .dj-diagnosis-card>p{max-width:720px}' +
+            '#sk-std .dj-includes strong{line-height:1.42}' +
+            '#sk-std .dj-faq summary{position:relative;padding-right:32px;line-height:1.35}' +
+            '#sk-std .dj-faq summary:after{position:absolute;right:0;top:50%;float:none;transform:translateY(-50%)}' +
+            '@media(max-width:1040px){#sk-std .dj-proofline{grid-template-columns:repeat(2,minmax(0,1fr))!important}#sk-std .dj-proofline span:last-child{grid-column:1/-1;max-width:360px}}' +
+            '@media(max-width:900px){#sk-std .dj-proof-featured .dj-proof-summary small{font-size:1.16rem!important}#sk-std .dj-proof-featured .dj-proof-summary strong{font-size:.92rem!important}#sk-std .dj-proof-summary small{font-size:1.08rem!important}#sk-std .dj-proof-summary strong{font-size:.9rem!important}}' +
+            '@media(max-width:700px){#sk-std .dj-proofline{grid-template-columns:1fr!important;gap:10px!important;margin-top:22px!important;padding-top:17px!important}#sk-std .dj-proofline span:last-child{grid-column:auto;max-width:none}#sk-std .dj-proof-summary{align-items:center!important;padding:16px 15px 18px!important}#sk-std .dj-proof-summary small,#sk-std .dj-proof-summary strong{text-align:center!important}#sk-std .dj-proof-featured .dj-proof-summary{padding:18px 15px 20px!important}}' +
+            '@media(max-width:430px){#sk-std .dj-proof-summary small{font-size:.92rem!important;letter-spacing:.025em!important}#sk-std .dj-proof-summary strong{font-size:.8rem!important;letter-spacing:.02em!important}#sk-std .dj-proof-featured .dj-proof-summary small{font-size:1rem!important}#sk-std .dj-proof-featured .dj-proof-summary strong{font-size:.84rem!important}}';
+        document.head.appendChild(style);
+    }
+
+    installFinalPolishStyles();
+
     function isDirectPlanLink(link) {
         if (!link) return false;
         if (link.getAttribute('data-sk-plan-direct') === 'true') return true;
@@ -38,6 +72,50 @@
     ready(function () {
         var root = document.getElementById('sk-std');
         if (!root) return;
+
+        /* Final customer-facing polish. Keep plan timing in pricing/chooser/FAQ, not feature cards. */
+        (function applyFinalPolishCopy() {
+            var heroLead = root.querySelector('.dj-hero .lead');
+            if (heroLead) heroLead.textContent = 'Stop guessing what to work on. Get a clear plan, personal feedback, and a month by month roadmap so you always know what to focus on next.';
+
+            Array.prototype.slice.call(root.querySelectorAll('.dj-hero .dj-cta-note,.dj-final .dj-cta-note')).forEach(function (note) {
+                if (note.parentNode) note.parentNode.removeChild(note);
+            });
+
+            var proofNote = root.querySelector('.dj-proof-note');
+            if (proofNote && proofNote.parentNode) proofNote.parentNode.removeChild(proofNote);
+
+            var diagnosis = root.querySelector('#diagnosis');
+            if (diagnosis) {
+                var diagnosisHeading = diagnosis.querySelector('.dj-section-head h2');
+                var diagnosisIntro = diagnosis.querySelector('.dj-section-head>p');
+                if (diagnosisHeading) diagnosisHeading.innerHTML = 'Get Personal Direction <span class="gradient-text">At Every Stage.</span>';
+                if (diagnosisIntro) diagnosisIntro.textContent = 'Start with a personal Tracker Review, weekly coaching, and daily feedback. As you progress, deeper mechanics and VOD reviews give you increasingly specific corrections. Annual unlocks both personal reviews immediately.';
+
+                var cards = diagnosis.querySelectorAll('.dj-diagnosis-card');
+                var labels = [
+                    'Available From The Start',
+                    'Available From The Start',
+                    'Personal Progression Milestone',
+                    'Advanced Progression Milestone'
+                ];
+                var bodies = [
+                    'Your Tracker and habits are reviewed for things like volume, agent consistency, filling, switching, Deathmatch usage, and obvious patterns that are slowing improvement.',
+                    'Bring questions, problems, and what you are working on into weekly coaching, then use daily feedback and community help to stay corrected while you apply the roadmap.',
+                    'Submit Deathmatch gameplay. Slayerkey identifies the mechanical weaknesses that actually matter, explains why, and gives you the drills, routines, resources, and priorities to fix them.',
+                    'Submit one of your real games for a dedicated recorded breakdown of the decisions, rounds, mistakes, and patterns that matter, plus actionable notes and clear improvement priorities.'
+                ];
+                Array.prototype.forEach.call(cards, function (card, index) {
+                    var label = card.querySelector('small');
+                    var body = card.querySelector(':scope > p:not(.dj-diagnosis-outcome)');
+                    if (label && labels[index]) label.textContent = labels[index];
+                    if (body && bodies[index]) body.textContent = bodies[index];
+                });
+            }
+
+            var trainingCopy = root.querySelector('#inside .dj-section-head>p');
+            if (trainingCopy) trainingCopy.textContent = '100+ lessons and roughly 50 hours of training across mechanics, agents, maps, game sense, mentality, reviews, and analysis give you the resources to work on the problem that matters right now.';
+        })();
 
         /* Reveal behavior, with reduced motion respected. */
         var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
