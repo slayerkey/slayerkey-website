@@ -56,7 +56,10 @@
 
         window.posthog.capture('cta_click', {
             cta_id: element.getAttribute('data-sk-cta'),
+            cta_location: element.getAttribute('data-sk-location') || null,
+            offer: element.getAttribute('data-sk-offer') || null,
+            plan_direct: element.getAttribute('data-sk-plan-direct') === 'true',
             page_path: window.location.pathname
         });
-    });
+    }, true);
 })();
