@@ -1,0 +1,3 @@
+@media(max-width:860px){
+  #system-page .sys-loop-step:not(:last-child):after{display:none!important}
+}
