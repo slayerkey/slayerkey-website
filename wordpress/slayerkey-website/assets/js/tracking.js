@@ -35,13 +35,39 @@
         }
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', updateLegacyDojoPrice);
-    } else {
+    function alignDojoPricingCards() {
+        if (!document.getElementById('sk-std') || !document.getElementById('pricing')) {
+            return;
+        }
+
+        var style = document.getElementById('sk-dojo-pricing-alignment');
+
+        if (!style) {
+            style = document.createElement('style');
+            style.id = 'sk-dojo-pricing-alignment';
+            document.head.appendChild(style);
+        }
+
+        style.textContent = '' +
+            '#sk-std #pricing .dj-plan-options{align-items:stretch!important}' +
+            '#sk-std #pricing .dj-price-card,#sk-std #pricing .dj-price-card-premium{transform:none!important}' +
+            '#sk-std #pricing .dj-price-card .dj-price,#sk-std #pricing .dj-price-card-premium .dj-price{font-size:3.65rem!important;line-height:1!important}' +
+            '#sk-std #pricing .dj-price-card{align-self:stretch!important}';
+    }
+
+    function initialize() {
         updateLegacyDojoPrice();
+        alignDojoPricingCards();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initialize);
+    } else {
+        initialize();
     }
 
     window.setTimeout(updateLegacyDojoPrice, 750);
+    window.setTimeout(alignDojoPricingCards, 750);
 
     document.addEventListener('click', function (event) {
         if (!(event.target instanceof Element)) {
