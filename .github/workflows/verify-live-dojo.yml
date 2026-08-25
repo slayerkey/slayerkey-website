@@ -1,11 +1,10 @@
 name: Verify Live Dojo Homepage
 
 on:
-  workflow_run:
-    workflows:
-      - Deploy Slayerkey Website to EasyWP
-    types:
-      - completed
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -13,11 +12,10 @@ permissions:
 
 jobs:
   verify:
-    if: github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+      DEPLOY_SHA: ${{ github.sha }}
 
     steps:
       - name: Mark live Dojo verification pending
@@ -31,7 +29,7 @@ jobs:
               sha,
               state: 'pending',
               context: 'live-dojo/verify',
-              description: 'Verifying public Dojo homepage',
+              description: 'Waiting for public Dojo homepage',
               target_url: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
             });
 
@@ -41,46 +39,32 @@ jobs:
           HOME_URL="https://slayerkey.com/?cb=$DEPLOY_SHA"
           HEALTH_URL="https://slayerkey.com/wp-json/slayerkey/v1/health?cb=$DEPLOY_SHA"
 
-          home_ok=0
-          health_ok=0
-
-          for attempt in $(seq 1 18); do
-            echo "Homepage verification attempt $attempt"
+          verified=0
+          for attempt in $(seq 1 24); do
+            echo "Live verification attempt $attempt"
             home="$(curl -fsSL --connect-timeout 10 --max-time 25 -H 'Cache-Control: no-cache' "$HOME_URL" 2>/dev/null || true)"
+            health="$(curl -fsSL --connect-timeout 10 --max-time 25 -H 'Cache-Control: no-cache' "$HEALTH_URL" 2>/dev/null || true)"
 
-            if printf '%s' "$home" | grep -q 'Slayerkey live Dojo v3' \
+            deployed_commit="$(printf '%s' "$health" | jq -r '.deployed_commit // empty' 2>/dev/null || true)"
+            public_enabled="$(printf '%s' "$health" | jq -r '.public_dojo_enabled // false' 2>/dev/null || true)"
+            public_hook="$(printf '%s' "$health" | jq -r '.hooks.public_dojo_registered // false' 2>/dev/null || true)"
+
+            if [ "$deployed_commit" = "$DEPLOY_SHA" ] \
+              && [ "$public_enabled" = "true" ] \
+              && [ "$public_hook" = "true" ] \
+              && printf '%s' "$home" | grep -q 'Slayerkey live Dojo v3' \
               && printf '%s' "$home" | grep -q 'id="sk-std"' \
               && printf '%s' "$home" | grep -q 'Training Dojo Membership' \
               && ! printf '%s' "$home" | grep -q '\$15/month'; then
-              home_ok=1
+              verified=1
               break
             fi
 
             sleep 5
           done
 
-          if [ "$home_ok" -ne 1 ]; then
-            echo "Public homepage did not serve the live Dojo for $DEPLOY_SHA"
-            exit 1
-          fi
-
-          for attempt in $(seq 1 12); do
-            echo "Health verification attempt $attempt"
-            health="$(curl -fsSL --connect-timeout 10 --max-time 25 -H 'Cache-Control: no-cache' "$HEALTH_URL" 2>/dev/null || true)"
-
-            if [ -n "$health" ] \
-              && [ "$(printf '%s' "$health" | jq -r '.deployed_commit // empty' 2>/dev/null || true)" = "$DEPLOY_SHA" ] \
-              && [ "$(printf '%s' "$health" | jq -r '.public_dojo_enabled // false' 2>/dev/null || true)" = "true" ] \
-              && [ "$(printf '%s' "$health" | jq -r '.hooks.public_dojo_registered // false' 2>/dev/null || true)" = "true" ]; then
-              health_ok=1
-              break
-            fi
-
-            sleep 5
-          done
-
-          if [ "$health_ok" -ne 1 ]; then
-            echo "Health endpoint did not confirm the public Dojo for $DEPLOY_SHA"
+          if [ "$verified" -ne 1 ]; then
+            echo "Public homepage and health endpoint did not converge on $DEPLOY_SHA"
             exit 1
           fi
 
