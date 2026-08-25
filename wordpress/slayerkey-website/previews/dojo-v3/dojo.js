@@ -22,6 +22,8 @@
             '#sk-std .dj-proof-featured .dj-proof-summary{padding:21px 22px 23px!important}' +
             '#sk-std .dj-proof-featured .dj-proof-summary small{font-size:1.28rem!important}' +
             '#sk-std .dj-proof-featured .dj-proof-summary strong{font-size:.98rem!important}' +
+            '#sk-std .dj-proof-player{display:block;color:#8fa0ac;font-size:.62rem;font-weight:900;letter-spacing:.14em;line-height:1.2;text-align:center;text-transform:uppercase}' +
+            '#sk-std .dj-proof-featured .dj-proof-player{font-size:.68rem}' +
             '#sk-std .dj-proof-note{display:none!important}' +
             '#sk-std .dj-diagnosis-card small{line-height:1.35}' +
             '#sk-std .dj-diagnosis-card>p{max-width:720px}' +
@@ -82,8 +84,38 @@
                 if (note.parentNode) note.parentNode.removeChild(note);
             });
 
+            var proofIntro = root.querySelector('#proof .dj-kicker-copy');
+            if (proofIntro) proofIntro.textContent = 'Real results from players Slayerkey has coached, trained, and helped improve. Open any screenshot to see the original proof.';
+
+            var proofNames = ['Lazy', 'Darkblood', 'Chrake', 'G09'];
+            Array.prototype.forEach.call(root.querySelectorAll('.dj-proof-summary'), function (summary, index) {
+                if (!proofNames[index] || summary.querySelector('.dj-proof-player')) return;
+                var player = document.createElement('span');
+                player.className = 'dj-proof-player';
+                player.textContent = proofNames[index];
+                summary.insertBefore(player, summary.firstChild);
+            });
+
             var proofNote = root.querySelector('.dj-proof-note');
             if (proofNote && proofNote.parentNode) proofNote.parentNode.removeChild(proofNote);
+
+            var mechanism = root.querySelector('#how-it-works');
+            if (mechanism) {
+                var mechanismIntro = mechanism.querySelector('.dj-kicker-copy');
+                if (mechanismIntro) mechanismIntro.textContent = 'The Dojo helps you find the biggest problem in your game, fix it, then move on to the next one. You are not paying to wander through a giant library.';
+
+                var mechanismCards = mechanism.querySelectorAll('.dj-mech-step');
+                if (mechanismCards[1]) {
+                    var priorityHeading = mechanismCards[1].querySelector('h3');
+                    var priorityBody = mechanismCards[1].querySelector('p');
+                    if (priorityHeading) priorityHeading.textContent = 'Prioritize';
+                    if (priorityBody) priorityBody.textContent = 'Figure out what matters most and turn it into a clear focus, routine, or next step.';
+                }
+                if (mechanismCards[5]) {
+                    var repeatBody = mechanismCards[5].querySelector('p');
+                    if (repeatBody) repeatBody.textContent = 'Keep fixing the biggest thing holding you back, then move to the next one.';
+                }
+            }
 
             var diagnosis = root.querySelector('#diagnosis');
             if (diagnosis) {
@@ -115,6 +147,11 @@
 
             var trainingCopy = root.querySelector('#inside .dj-section-head>p');
             if (trainingCopy) trainingCopy.textContent = '100+ lessons and roughly 50 hours of training across mechanics, agents, maps, game sense, mentality, reviews, and analysis give you the resources to work on the problem that matters right now.';
+
+            var monthlyPriceButton = root.querySelector('[data-sk-location="pricing_monthly"]');
+            var annualPriceButton = root.querySelector('[data-sk-location="pricing_annual"]');
+            if (monthlyPriceButton) monthlyPriceButton.textContent = 'Join Monthly';
+            if (annualPriceButton) annualPriceButton.textContent = 'Join Annual';
         })();
 
         /* Reveal behavior, with reduced motion respected. */
@@ -201,7 +238,7 @@
         (function installPlanChooser() {
             var monthlyCheckout = 'https://whop.com/checkout/plan_eVop6pXsIhHlf/?utm_source=private_preview&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=plan_chooser_monthly';
             var annualCheckout = 'https://whop.com/checkout/plan_kaaoYadRlBi4n/?utm_source=private_preview&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=plan_chooser_annual';
-            var chooserVersion = 'dojo-plan-chooser-offer-sync';
+            var chooserVersion = 'dojo-plan-chooser-final-copy';
 
             Array.prototype.slice.call(document.querySelectorAll('#sk-plan-chooser')).forEach(function (existing) {
                 if (existing.parentNode) existing.parentNode.removeChild(existing);
@@ -243,7 +280,7 @@
                 '<div class="sk-plan-name">Monthly</div>' +
                 '<div class="sk-plan-price">$19.99 <span>/ month</span></div>' +
                 '<ul class="sk-plan-list"><li><strong>Complete Dojo access</strong></li><li>7 Day Improvement Plan + Monthly Roadmap</li><li>Personal Tracker Reviews</li><li>Weekly Coaching + Daily Feedback</li><li>Mechanics Analysis + Personal VOD Review unlock as you progress</li></ul>' +
-                '<a class="sk-plan-action" href="' + monthlyCheckout + '" target="_blank" rel="noopener" data-sk-cta="dojo-plan-monthly" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="plan_chooser_monthly" data-sk-plan-direct="true">Join The Dojo</a>' +
+                '<a class="sk-plan-action" href="' + monthlyCheckout + '" target="_blank" rel="noopener" data-sk-cta="dojo-plan-monthly" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="plan_chooser_monthly" data-sk-plan-direct="true">Join Monthly</a>' +
                 '</article>' +
                 '<article class="sk-plan-card annual">' +
                 '<div class="sk-plan-badge">Best Value</div>' +
@@ -251,7 +288,7 @@
                 '<div class="sk-plan-price">$199.99 <span>/ year</span></div>' +
                 '<div class="sk-plan-save">2 months free</div>' +
                 '<ul class="sk-plan-list"><li><strong>Everything in Monthly</strong></li><li><strong>Personal Mechanics Analysis immediately</strong></li><li><strong>Personal VOD Review immediately</strong></li><li>Custom routine, drills, resources, and priorities immediately</li></ul>' +
-                '<a class="sk-plan-action" href="' + annualCheckout + '" target="_blank" rel="noopener" data-sk-cta="dojo-plan-annual" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="plan_chooser_annual" data-sk-plan-direct="true">Get My Improvement Plan</a>' +
+                '<a class="sk-plan-action" href="' + annualCheckout + '" target="_blank" rel="noopener" data-sk-cta="dojo-plan-annual" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="plan_chooser_annual" data-sk-plan-direct="true">Join Annual</a>' +
                 '</article>' +
                 '</div>' +
                 '</div>';
