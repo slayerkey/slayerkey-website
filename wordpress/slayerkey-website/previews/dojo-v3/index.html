@@ -1,5 +1,5 @@
 <style>
-/* Critical preview-only overrides live inline so stale theme/plugin CSS cannot win. */
+/* Final conversion pass overrides. Keep the hardened preview architecture intact. */
 #sk-std{
   width:100vw;
   max-width:none;
@@ -10,128 +10,142 @@
 }
 #sk-std h1,#sk-std h2,#sk-std h3{font-weight:400!important;}
 #sk-std .dj-mid-cta{text-align:center;margin-top:28px;}
+#sk-std .dj-section-head .dj-kicker-copy{max-width:760px;margin:13px auto 0;}
+#sk-std .dj-cta-note{margin-top:9px;color:#8395a2;font-size:.72rem;font-weight:700;}
+#sk-std .dj-hero .dj-cta-note{text-align:left;}
 
-/* Original community screenshots. No collage crops, scaling hacks, or generated thumbnails. */
-#sk-std .dj-community-grid{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:18px;
-  max-width:1120px;
-  margin:0 auto;
-  align-items:start;
-}
-#sk-std .dj-win-card{
-  appearance:none;
-  display:block;
-  width:100%;
-  padding:0;
-  overflow:hidden;
-  border:1px solid rgba(255,255,255,.11);
-  background:#090f14;
-  text-align:left;
-  cursor:zoom-in;
-  box-shadow:0 18px 45px rgba(0,0,0,.22);
-  transition:transform .25s var(--dj-ease),border-color .25s ease,box-shadow .25s ease;
-}
-#sk-std .dj-win-card:hover{
-  transform:translateY(-3px);
-  border-color:rgba(40,223,203,.36);
-  box-shadow:0 24px 58px rgba(0,0,0,.30);
-}
-#sk-std .dj-win-card-wide{grid-column:1/-1;}
-#sk-std .dj-win-thumb{
-  width:100%;
-  overflow:hidden;
-  background:#19191d;
-  line-height:0;
-}
-#sk-std .dj-win-thumb img{
-  position:static!important;
-  display:block;
-  width:100%!important;
-  max-width:100%!important;
-  height:auto!important;
-  object-fit:contain;
-  pointer-events:none;
-  user-select:none;
-}
+/* Featured transformation + three static results. Real screenshots remain the proof. */
+#sk-std .dj-proof-stack{display:grid;gap:18px;max-width:1120px;margin:0 auto;}
+#sk-std .dj-proof-featured,
+#sk-std .dj-proof-static{border:1px solid rgba(255,255,255,.11);background:#09151f;box-shadow:0 20px 50px rgba(0,0,0,.24);overflow:hidden;}
+#sk-std .dj-proof-featured{border-color:rgba(40,223,203,.28);}
+#sk-std .dj-proof-summary{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 17px;border-bottom:1px solid rgba(255,255,255,.09);background:linear-gradient(90deg,rgba(40,223,203,.065),transparent 62%);}
+#sk-std .dj-proof-summary small{color:var(--dj-teal);font-size:.63rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase;}
+#sk-std .dj-proof-summary strong{color:#fff;font-size:.86rem;line-height:1.3;text-align:right;}
+#sk-std .dj-proof-image{appearance:none;width:100%;padding:0;border:0;background:#07121b;cursor:zoom-in;overflow:hidden;}
+#sk-std .dj-proof-image img{width:100%;height:auto;object-fit:contain;}
+#sk-std .dj-proof-three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;}
+#sk-std .dj-proof-note{max-width:780px;margin:18px auto 0;text-align:center;font-size:.8rem;line-height:1.55;}
+
+/* Mechanism: one feedback loop, not another content library. */
+#sk-std .dj-mechanism{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border:1px solid var(--dj-line);background:rgba(10,24,34,.65);}
+#sk-std .dj-mech-step{position:relative;min-height:190px;padding:22px 19px;border-right:1px solid var(--dj-line);}
+#sk-std .dj-mech-step:last-child{border-right:0;}
+#sk-std .dj-mech-step b{display:block;color:var(--dj-red);font-family:var(--font-display,'Arial Black',Impact,sans-serif);font-size:1.15rem;}
+#sk-std .dj-mech-step h3{margin-top:14px;font-size:.94rem;}
+#sk-std .dj-mech-step p{margin-top:8px;font-size:.76rem;line-height:1.52;}
+#sk-std .dj-mech-step:not(:last-child):after{content:'›';position:absolute;right:-8px;top:50%;z-index:2;transform:translateY(-50%);display:grid;place-items:center;width:16px;height:28px;background:#09151f;color:var(--dj-teal);font-size:1.2rem;font-weight:900;}
+#sk-std .dj-mech-close{max-width:790px;margin:20px auto 0;text-align:center;color:#d5e0e6;font-weight:800;}
+
+/* Personal diagnosis: highest-value product capabilities. */
+#sk-std .dj-diagnosis-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;}
+#sk-std .dj-diagnosis-card{position:relative;padding:25px 25px 23px;border:1px solid var(--dj-line);background:linear-gradient(180deg,rgba(15,31,43,.9),rgba(8,20,29,.92));box-shadow:0 18px 44px rgba(0,0,0,.18);}
+#sk-std .dj-diagnosis-card:before{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:linear-gradient(180deg,var(--dj-teal),rgba(40,223,203,.08));}
+#sk-std .dj-diagnosis-card small{color:var(--dj-teal);font-size:.64rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;}
+#sk-std .dj-diagnosis-card h3{margin-top:9px;}
+#sk-std .dj-diagnosis-card>p{margin-top:9px;font-size:.84rem;line-height:1.58;}
+#sk-std .dj-diagnosis-outcome{margin-top:15px;padding-top:13px;border-top:1px solid rgba(255,255,255,.09);color:#fff!important;font-size:.82rem!important;font-weight:850;}
+#sk-std .dj-diagnosis-outcome:before{content:'→ ';color:var(--dj-red);}
+
+/* First 90 days roadmap. */
+#sk-std .dj-roadmap{display:grid;grid-template-columns:.9fr repeat(3,1fr);gap:0;border:1px solid var(--dj-line);background:rgba(9,22,31,.72);}
+#sk-std .dj-road-step{position:relative;min-height:262px;padding:24px;border-right:1px solid var(--dj-line);}
+#sk-std .dj-road-step:last-child{border-right:0;}
+#sk-std .dj-road-step:first-child{background:linear-gradient(180deg,rgba(255,70,85,.075),rgba(9,22,31,.72));}
+#sk-std .dj-road-step small{display:block;color:var(--dj-teal);font-size:.64rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase;}
+#sk-std .dj-road-step:first-child small{color:#ff7d88;}
+#sk-std .dj-road-step h3{margin-top:12px;font-size:1.06rem;}
+#sk-std .dj-road-step p{margin-top:10px;font-size:.81rem;line-height:1.56;}
+#sk-std .dj-road-result{display:block;margin-top:16px;color:#fff;font-size:.8rem;font-weight:850;line-height:1.45;}
+#sk-std .dj-road-result:before{content:'✓ ';color:var(--dj-teal);}
+#sk-std .dj-road-step:not(:last-child):after{content:'';position:absolute;right:-1px;top:32px;width:1px;height:42px;background:linear-gradient(180deg,var(--dj-teal),transparent);}
+
+/* Original community screenshots. */
+#sk-std .dj-community-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;max-width:1120px;margin:0 auto;align-items:start;}
+#sk-std .dj-win-card{appearance:none;display:block;width:100%;padding:0;overflow:hidden;border:1px solid rgba(255,255,255,.11);background:#090f14;text-align:left;cursor:zoom-in;box-shadow:0 18px 45px rgba(0,0,0,.22);transition:transform .25s var(--dj-ease),border-color .25s ease,box-shadow .25s ease;}
+#sk-std .dj-win-card:hover{transform:translateY(-3px);border-color:rgba(40,223,203,.36);box-shadow:0 24px 58px rgba(0,0,0,.30);}
+#sk-std .dj-win-thumb{width:100%;overflow:hidden;background:#19191d;line-height:0;}
+#sk-std .dj-win-thumb img{position:static!important;display:block;width:100%!important;max-width:100%!important;height:auto!important;object-fit:contain;pointer-events:none;user-select:none;}
 #sk-std .dj-win-copy{padding:16px 18px 17px;}
-#sk-std .dj-win-copy small{
-  display:block;
-  margin-bottom:4px;
-  color:var(--dj-teal);
-  font-size:.65rem;
-  font-weight:900;
-  letter-spacing:.11em;
-  text-transform:uppercase;
-}
+#sk-std .dj-win-copy small{display:block;margin-bottom:4px;color:var(--dj-teal);font-size:.65rem;font-weight:900;letter-spacing:.11em;text-transform:uppercase;}
 #sk-std .dj-win-copy strong{display:block;color:#fff;font-size:1rem;line-height:1.25;}
 #sk-std .dj-win-copy span{display:block;margin-top:5px;color:var(--dj-muted);font-size:.78rem;line-height:1.45;}
 
-/* The visible rail is driven only by dojo.js. */
+/* Review rail motion is owned only by dojo.js. */
 #sk-std .dj-review-track{animation:none!important;transform:none!important;}
 #sk-std .dj-review-rail:hover .dj-review-track{animation-play-state:running!important;}
+#sk-std .dj-authority-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));max-width:980px;margin:0 auto 30px;border:1px solid var(--dj-line);background:rgba(9,22,31,.66);}
+#sk-std .dj-authority-stat{padding:18px;text-align:center;border-right:1px solid var(--dj-line);}
+#sk-std .dj-authority-stat:last-child{border-right:0;}
+#sk-std .dj-authority-stat strong{display:block;color:#fff;font-family:var(--font-display,'Arial Black',Impact,sans-serif);font-size:1.75rem;line-height:1;}
+#sk-std .dj-authority-stat span{display:block;margin-top:7px;color:#93a5b1;font-size:.7rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;}
 
-/* Monthly and annual use identical rows so labels, prices, and CTAs align. */
-#sk-std .dj-value-box{grid-template-columns:minmax(0,.82fr) minmax(520px,1.18fr);}
+/* Pricing uses exactly the same plan story as the chooser. */
+#sk-std .dj-value-box{grid-template-columns:minmax(0,.78fr) minmax(560px,1.22fr);align-items:stretch;}
 #sk-std .dj-plan-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch;}
-#sk-std .dj-plan-options .dj-price-card{
-  height:100%;
-  min-height:246px;
-  display:grid;
-  grid-template-rows:auto 30px auto 1fr auto;
-  align-items:center;
-  row-gap:10px;
-}
-#sk-std .dj-plan-options .dj-per{
-  margin:0;
-  color:#cbd6dc;
-  font-size:.72rem;
-  font-weight:900;
-  letter-spacing:.13em;
-  text-transform:uppercase;
-}
-#sk-std .dj-plan-save{
-  display:inline-flex;
-  align-self:center;
-  justify-self:center;
-  align-items:center;
-  min-height:28px;
-  margin:0;
-  padding:5px 9px;
-  border:1px solid rgba(40,223,203,.26);
-  background:rgba(40,223,203,.07);
-  color:var(--dj-teal);
-  font-size:.63rem;
-  font-weight:900;
-  letter-spacing:.07em;
-  line-height:1;
-  text-transform:uppercase;
-}
+#sk-std .dj-plan-options .dj-price-card{height:100%;min-height:420px;display:flex;flex-direction:column;align-items:stretch;padding:26px;text-align:left;}
+#sk-std .dj-plan-options .dj-per{margin:0;text-align:center;color:#cbd6dc;font-size:.72rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase;}
+#sk-std .dj-plan-options .dj-price{text-align:center;margin-top:8px;}
+#sk-std .dj-plan-save{align-self:center;display:inline-flex;align-items:center;justify-content:center;min-height:28px;margin:8px auto 0;padding:5px 9px;border:1px solid rgba(40,223,203,.26);background:rgba(40,223,203,.07);color:var(--dj-teal);font-size:.63rem;font-weight:900;letter-spacing:.07em;line-height:1;text-transform:uppercase;}
 #sk-std .dj-plan-save-placeholder{visibility:hidden;}
-#sk-std .dj-plan-options .dj-price{align-self:center;}
-#sk-std .dj-plan-options .btn{align-self:end;margin-top:0;}
-#sk-std .dj-price-card-premium{
-  position:relative;
-  transform:none!important;
-  border-color:rgba(40,223,203,.72)!important;
-  background:linear-gradient(180deg,rgba(15,35,43,.98),rgba(7,20,29,.98))!important;
-  box-shadow:0 26px 72px rgba(0,0,0,.36),0 0 0 1px rgba(40,223,203,.10),0 0 42px rgba(40,223,203,.09)!important;
-}
-#sk-std .dj-price-card-premium:before{content:'';position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,transparent,var(--dj-teal),transparent);}
-#sk-std .dj-price-card-premium .dj-price{font-size:3.9rem;}
+#sk-std .dj-pricing-list{display:grid;gap:10px;margin:24px 0;padding:0;list-style:none;color:#cbd6dc;font-size:.8rem;line-height:1.45;}
+#sk-std .dj-pricing-list li{display:grid;grid-template-columns:18px minmax(0,1fr);gap:8px;align-items:start;}
+#sk-std .dj-pricing-list li:before{content:'✓';color:var(--dj-teal);font-weight:900;text-align:center;}
+#sk-std .dj-pricing-list strong{color:#fff;}
+#sk-std .dj-price-card .btn{margin-top:auto;}
+#sk-std .dj-price-card-premium{border-color:rgba(40,223,203,.72)!important;background:linear-gradient(180deg,rgba(15,35,43,.98),rgba(7,20,29,.98))!important;box-shadow:0 26px 72px rgba(0,0,0,.36),0 0 0 1px rgba(40,223,203,.10),0 0 42px rgba(40,223,203,.09)!important;}
+#sk-std .dj-pricing-note{margin-top:18px;color:#9fb0bb;font-size:.79rem;line-height:1.55;}
 
-@media(max-width:900px){
+/* Guarantee sits directly beside the purchase decision. */
+#sk-std .dj-guarantee-box{display:grid;grid-template-columns:.8fr 1.2fr;gap:42px;align-items:center;padding:38px;border:1px solid rgba(255,70,85,.28);background:linear-gradient(135deg,rgba(255,70,85,.07),rgba(8,20,29,.7));}
+#sk-std .dj-guarantee-mark{display:flex;align-items:center;gap:16px;color:#fff;}
+#sk-std .dj-guarantee-mark span{display:grid;place-items:center;width:68px;height:68px;border:1px solid rgba(255,70,85,.45);border-radius:50%;background:rgba(255,70,85,.08);color:var(--dj-red);font-family:var(--font-display,'Arial Black',Impact,sans-serif);font-size:1.55rem;}
+#sk-std .dj-guarantee-mark strong{font-family:var(--font-display,'Arial Black',Impact,sans-serif);font-size:1.28rem;line-height:1.05;text-transform:uppercase;}
+#sk-std .dj-guarantee-copy>p{color:#d3dde3;font-size:.9rem;line-height:1.62;}
+#sk-std .dj-guarantee-criteria{display:grid;gap:8px;margin-top:15px;color:#c4d0d7;font-size:.8rem;}
+#sk-std .dj-guarantee-criteria span:before{content:'✓';margin-right:8px;color:var(--dj-teal);font-weight:900;}
+
+/* FAQ density and final close. */
+#sk-std .dj-faq details p{max-width:920px;}
+#sk-std .dj-final .dj-cta-note{text-align:center;}
+
+@media(max-width:1050px){
+  #sk-std .dj-mechanism{grid-template-columns:repeat(3,minmax(0,1fr));}
+  #sk-std .dj-mech-step{border-bottom:1px solid var(--dj-line);}
+  #sk-std .dj-mech-step:nth-child(3){border-right:0;}
+  #sk-std .dj-mech-step:nth-child(n+4){border-bottom:0;}
+  #sk-std .dj-mech-step:after{display:none!important;}
+  #sk-std .dj-roadmap{grid-template-columns:repeat(2,minmax(0,1fr));}
+  #sk-std .dj-road-step:nth-child(2){border-right:0;}
+  #sk-std .dj-road-step:nth-child(-n+2){border-bottom:1px solid var(--dj-line);}
   #sk-std .dj-value-box{grid-template-columns:1fr;}
+}
+@media(max-width:900px){
+  #sk-std .dj-proof-three{grid-template-columns:1fr;}
+  #sk-std .dj-diagnosis-grid{grid-template-columns:1fr;}
+  #sk-std .dj-guarantee-box{grid-template-columns:1fr;gap:24px;}
 }
 @media(max-width:700px){
   #sk-std{width:100%;margin-left:0;margin-right:0;}
+  #sk-std .dj-proof-summary{align-items:flex-start;flex-direction:column;gap:5px;}
+  #sk-std .dj-proof-summary strong{text-align:left;}
+  #sk-std .dj-mechanism{grid-template-columns:1fr;}
+  #sk-std .dj-mech-step{min-height:0;border-right:0;border-bottom:1px solid var(--dj-line)!important;}
+  #sk-std .dj-mech-step:last-child{border-bottom:0!important;}
+  #sk-std .dj-roadmap{grid-template-columns:1fr;}
+  #sk-std .dj-road-step{min-height:0;border-right:0!important;border-bottom:1px solid var(--dj-line)!important;}
+  #sk-std .dj-road-step:last-child{border-bottom:0!important;}
   #sk-std .dj-community-grid,#sk-std .dj-plan-options{grid-template-columns:1fr;gap:14px;}
-  #sk-std .dj-win-card-wide{grid-column:auto;}
+  #sk-std .dj-plan-options .dj-price-card{min-height:0;}
+  #sk-std .dj-authority-strip{grid-template-columns:1fr;}
+  #sk-std .dj-authority-stat{border-right:0;border-bottom:1px solid var(--dj-line);}
+  #sk-std .dj-authority-stat:last-child{border-bottom:0;}
+  #sk-std .dj-guarantee-box{padding:27px 22px;}
+  #sk-std .dj-hero .dj-cta-note{text-align:center;}
 }
 </style>
 
-<main id="sk-std" class="sk-dojo-preview" data-page-variant="dojo_conversion_v9">
+<main id="sk-std" class="sk-dojo-preview" data-page-variant="dojo_conversion_final">
   <section class="dj-hero" id="top">
     <div class="container dj-hero-grid">
       <div class="dj-hero-copy reveal">
@@ -141,14 +155,15 @@
           <span class="hero-line">In 90 Days.</span>
           <span class="hero-line">Or Your Money Back.</span>
         </h1>
-        <p class="lead">Stop guessing what to improve. Get structured training, real feedback, and a place to actually apply it until better decisions become ranked habits.</p>
+        <p class="lead">Stop guessing what is holding you back. Get your games, mechanics, and habits diagnosed, know exactly what to work on, and follow a structured path while you get feedback applying it.</p>
         <div class="dj-actions">
           <a class="btn" href="#pricing" data-sk-cta="dojo-hero-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="hero">Start Improving</a>
+          <p class="dj-cta-note">Choose Monthly or Annual next. You will not be charged by this button.</p>
         </div>
         <div class="dj-proofline" aria-label="Dojo highlights">
-          <span>100+ lessons</span>
-          <span>Weekly VOD reviews</span>
-          <span>Daily coaching</span>
+          <span>Personal VOD feedback</span>
+          <span>Mechanics diagnosis</span>
+          <span>90 day roadmap</span>
         </div>
       </div>
 
@@ -166,14 +181,39 @@
       <div class="dj-section-head centered reveal">
         <div class="eyebrow">Proof Before Promises</div>
         <h2>Real Players. <span class="gradient-text">Real Climbs.</span></h2>
-        <p>Documented results from players I've coached. The images do the talking.</p>
+        <p class="dj-kicker-copy">Results from players Slayerkey has trained, coached, and helped across his Valorant improvement ecosystem. Open any screenshot to see the original proof.</p>
       </div>
-      <div class="dj-proof-grid reveal d1">
-        <button class="dj-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2025/06/lazy-site.png" aria-label="Expand player transformation"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2025/06/lazy-site.png" alt="Documented Valorant player rank transformation"></button>
-        <button class="dj-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2025/06/chrake-site.png" aria-label="Expand player transformation"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2025/06/chrake-site.png" alt="Documented Valorant player rank transformation"></button>
-        <button class="dj-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2025/05/aidn-site.png" aria-label="Expand player transformation"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2025/05/aidn-site.png" alt="Documented Valorant player rank transformation"></button>
-        <button class="dj-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2025/05/dark-site.png" aria-label="Expand player transformation"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2025/05/dark-site.png" alt="Documented Valorant player rank transformation"></button>
+
+      <div class="dj-proof-stack reveal d1">
+        <article class="dj-proof-featured">
+          <div class="dj-proof-summary"><small>Featured Player Transformation</small><strong>Original result screenshot</strong></div>
+          <button class="dj-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/g09-site.png" aria-label="Expand featured player transformation">
+            <img loading="eager" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/g09-site.png" alt="Featured Valorant player transformation result">
+          </button>
+        </article>
+
+        <div class="dj-proof-three">
+          <article class="dj-proof-static">
+            <div class="dj-proof-summary"><small>Player Transformation</small><strong>Original result screenshot</strong></div>
+            <button class="dj-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/dark-site.png" aria-label="Expand player transformation">
+              <img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/dark-site.png" alt="Valorant player transformation result">
+            </button>
+          </article>
+          <article class="dj-proof-static">
+            <div class="dj-proof-summary"><small>Player Transformation</small><strong>Original result screenshot</strong></div>
+            <button class="dj-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/lazy-site.png" aria-label="Expand player transformation">
+              <img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/lazy-site.png" alt="Valorant player transformation result">
+            </button>
+          </article>
+          <article class="dj-proof-static">
+            <div class="dj-proof-summary"><small>Player Transformation</small><strong>Original result screenshot</strong></div>
+            <button class="dj-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/chrake-site.png" aria-label="Expand player transformation">
+              <img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/chrake-site.png" alt="Valorant player transformation result">
+            </button>
+          </article>
+        </div>
       </div>
+      <p class="dj-proof-note">The early transformations show Slayerkey's ability to help players improve. Later on the page, the community section shows progress happening inside the Dojo itself.</p>
       <div class="dj-center reveal d2"><a class="btn" href="#pricing" data-sk-cta="dojo-proof-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="proof">Start Improving</a></div>
     </div>
   </section>
@@ -184,45 +224,121 @@
         <div class="eyebrow">Why Players Stay Stuck</div>
         <h2>Playing More Valorant Isn't the Same as <span class="gradient-text">Improving.</span></h2>
         <p class="dj-body-copy">You can play five games a day and still finish with no idea what actually cost you rounds, what to practice tomorrow, or which habit is keeping you at the same rank.</p>
-        <p class="dj-callout">The problem is not effort. It is a broken feedback loop.</p>
+        <p class="dj-callout">The problem is not a lack of information. It is a broken feedback loop.</p>
       </div>
       <div class="dj-reason-list reveal d1">
-        <div class="dj-reason"><b>01</b><div><strong>Find the mistake that matters.</strong><p>Aim, movement, decision making, awareness, and mentality can all look like the same bad game.</p></div></div>
-        <div class="dj-reason"><b>02</b><div><strong>Get the fix instead of another random tip.</strong><p>YouTube can teach a concept. It cannot diagnose which mistake is costing your RR this week.</p></div></div>
-        <div class="dj-reason"><b>03</b><div><strong>Apply it, get feedback, repeat.</strong><p>The Dojo closes the loop so useful advice turns into something you actually do in ranked.</p></div></div>
+        <div class="dj-reason"><b>01</b><div><strong>Find the mistake that matters.</strong><p>Aim, movement, decision making, awareness, mentality, and habits can all look like the same bad game.</p></div></div>
+        <div class="dj-reason"><b>02</b><div><strong>Stop collecting random fixes.</strong><p>YouTube can teach a concept. It cannot diagnose which mistake is costing you RR right now.</p></div></div>
+        <div class="dj-reason"><b>03</b><div><strong>Get corrected while you apply it.</strong><p>The Dojo closes the loop so useful advice becomes something you repeatedly do in ranked.</p></div></div>
       </div>
     </div>
   </section>
 
-  <section class="dj-section" id="loop">
+  <section class="dj-section" id="how-it-works">
+    <div class="container">
+      <div class="dj-section-head centered reveal">
+        <div class="eyebrow">How The Dojo Actually Works</div>
+        <h2>Diagnose The Problem. <span class="gradient-text">Then Fix The Right Thing.</span></h2>
+        <p class="dj-kicker-copy">This is the improvement loop the membership is built around. You are not paying to wander through a giant library.</p>
+      </div>
+      <div class="dj-mechanism reveal d1">
+        <article class="dj-mech-step"><b>01</b><h3>Diagnose</h3><p>Your games, mechanics, Tracker, and habits reveal what is actually slowing you down.</p></article>
+        <article class="dj-mech-step"><b>02</b><h3>Prescribe</h3><p>Turn the diagnosis into clear priorities, drills, routines, and the next problem to solve.</p></article>
+        <article class="dj-mech-step"><b>03</b><h3>Train</h3><p>Use the exact lessons, mechanics work, agent resources, and map training that match the problem.</p></article>
+        <article class="dj-mech-step"><b>04</b><h3>Apply</h3><p>Take the focus into ranked and deliberate practice instead of training in a vacuum.</p></article>
+        <article class="dj-mech-step"><b>05</b><h3>Review</h3><p>Bring the next game back, ask questions, and get corrected before bad habits become permanent.</p></article>
+        <article class="dj-mech-step"><b>06</b><h3>Repeat</h3><p>Keep solving the highest-value problem until your decisions and mechanics actually change.</p></article>
+      </div>
+      <p class="dj-mech-close reveal d2">Know what is wrong → know what to work on → train it correctly → get feedback while you apply it.</p>
+      <div class="dj-mid-cta reveal d2"><a class="btn" href="#pricing" data-sk-cta="dojo-loop-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="feedback_loop">Start Improving</a></div>
+    </div>
+  </section>
+
+  <section class="dj-section" id="diagnosis">
     <div class="container">
       <div class="dj-section-head reveal">
-        <div class="eyebrow">The Dojo Feedback Loop</div>
-        <h2>Know What to Fix. Learn How. <span class="gradient-text">Actually Practice It.</span></h2>
+        <div class="eyebrow">Personal Feedback & Diagnosis</div>
+        <h2>Someone Is Actually Going To Tell You <span class="gradient-text">What Is Wrong.</span></h2>
+        <p>These are the parts players usually cannot get from another guide, playlist, or generic routine.</p>
       </div>
-      <div class="dj-loop-grid">
-        <article class="dj-loop-card reveal"><span>01</span><h3>Find the problem</h3><p>Weekly VOD reviews identify the mistakes actually costing you rounds.</p></article>
-        <article class="dj-loop-card reveal d1"><span>02</span><h3>Learn the fix</h3><p>100+ lessons cover mechanics, agents, maps, game sense, mentality, and more.</p></article>
-        <article class="dj-loop-card reveal d2"><span>03</span><h3>Ask when stuck</h3><p>Daily coaching gives you a place to get an answer instead of guessing.</p></article>
-        <article class="dj-loop-card reveal d3"><span>04</span><h3>Practice with intent</h3><p>Teams and accountability give the advice somewhere to become a habit.</p></article>
+      <div class="dj-diagnosis-grid">
+        <article class="dj-diagnosis-card reveal">
+          <small>Real Game Review</small>
+          <h3>Personal VOD Review</h3>
+          <p>Submit one of your real games. Slayerkey reviews the decisions, rounds, mistakes, and patterns that matter, with a recorded breakdown plus actionable notes and priorities.</p>
+          <p class="dj-diagnosis-outcome">Know exactly what is costing you rounds instead of guessing.</p>
+        </article>
+        <article class="dj-diagnosis-card reveal d1">
+          <small>Mechanical Diagnosis</small>
+          <h3>Personal Mechanics Analysis</h3>
+          <p>Submit Deathmatch gameplay. Slayerkey identifies the mechanical weaknesses that actually matter, explains why, and points you toward the drills, routines, and resources you need.</p>
+          <p class="dj-diagnosis-outcome">Stop copying generic aim routines. Train the mechanics you actually need.</p>
+        </article>
+        <article class="dj-diagnosis-card reveal d2">
+          <small>Habit Diagnosis</small>
+          <h3>Tracker Review</h3>
+          <p>Your Tracker and habits are reviewed for things like volume, agent consistency, filling, switching, Deathmatch usage, and obvious patterns that are slowing improvement.</p>
+          <p class="dj-diagnosis-outcome">Turn your stats into an actual improvement decision instead of staring at numbers.</p>
+        </article>
+        <article class="dj-diagnosis-card reveal d3">
+          <small>While You Improve</small>
+          <h3>Ongoing Feedback</h3>
+          <p>Weekly VOD reviews, daily coaching and help, accountability, community support, and practice opportunities give you somewhere to get corrected while you are doing the work.</p>
+          <p class="dj-diagnosis-outcome">Get feedback while the problem is still fixable, not months later.</p>
+        </article>
       </div>
-      <div class="dj-mid-cta reveal d2"><a class="btn" href="#pricing" data-sk-cta="dojo-loop-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="feedback_loop">Start Improving</a></div>
+    </div>
+  </section>
+
+  <section class="dj-section" id="roadmap">
+    <div class="container">
+      <div class="dj-section-head centered reveal">
+        <div class="eyebrow">Your First 90 Days</div>
+        <h2>You Will Not Join And Wonder <span class="gradient-text">What To Do First.</span></h2>
+        <p class="dj-kicker-copy">Your first week is mapped out, then each month builds a different part of the player you are trying to become.</p>
+      </div>
+      <div class="dj-roadmap reveal d1">
+        <article class="dj-road-step">
+          <small>Start Here</small>
+          <h3>7 Day Valorant Foundation</h3>
+          <p>Set the fundamentals: commit to an agent, review your Tracker, build a routine, find the right people to play with, and complete real improvement actions.</p>
+          <span class="dj-road-result">Start with direction instead of opening 100 lessons and guessing.</span>
+        </article>
+        <article class="dj-road-step">
+          <small>Month 1</small>
+          <h3>Fix Your Mechanics</h3>
+          <p>Understand why you lose fights, identify your mechanical priorities, and deliberately improve aim, movement, fighting technique, and the drills that support them.</p>
+          <span class="dj-road-result">Go from mechanically inconsistent to knowing what decides your fights.</span>
+        </article>
+        <article class="dj-road-step">
+          <small>Month 2</small>
+          <h3>Master Your Agent</h3>
+          <p>Stop filling and improvising every round. Learn your agent's job, common mistakes, repeatable plans, and what good rounds actually look like.</p>
+          <span class="dj-road-result">Become the confident instalock who actually knows what they are doing.</span>
+        </article>
+        <article class="dj-road-step">
+          <small>Month 3</small>
+          <h3>Master Your Maps</h3>
+          <p>Learn strong angles, important positions, common fights, best comms, map meta, fallback plans, and where different agents create value.</p>
+          <span class="dj-road-result">Turn weak, confusing maps into maps you understand and can plan around.</span>
+        </article>
+      </div>
     </div>
   </section>
 
   <section class="dj-section" id="inside">
     <div class="container">
       <div class="dj-section-head reveal">
-        <div class="eyebrow">Inside the Dojo</div>
-        <h2>Everything Has One Job: <span class="gradient-text">Make You Better.</span></h2>
+        <div class="eyebrow">The Training Is Already There</div>
+        <h2>Once We Find The Problem, <span class="gradient-text">The Fix Is Already Inside.</span></h2>
+        <p>The 100+ lessons and roughly 50 hours of training support the diagnosis. They are not the product by themselves.</p>
       </div>
       <div class="dj-includes reveal d1">
-        <div><small>Training</small><strong>100+ lessons and roughly 50 hours</strong><p>Mechanics, agents, maps, game sense, mindset, VOD reviews, pro analysis, and more.</p></div>
-        <div><small>Feedback</small><strong>Weekly VOD reviews and daily coaching</strong><p>Know what is wrong, why it is happening, and what to focus on next.</p></div>
-        <div><small>Practice</small><strong>Private teams that care about improving</strong><p>Competitive practice around players who want the same thing.</p></div>
-        <div><small>Consistency</small><strong>Accountability and a growing archive</strong><p>Keep showing up instead of restarting your improvement every few weeks.</p></div>
+        <div><small>Mechanics</small><strong>Aim, movement, fighting technique, drills, and mechanics resources</strong><p>Use the training that matches the mechanical problem you are actually trying to solve.</p></div>
+        <div><small>Agents & Maps</small><strong>Agent guides, map guides, game sense, and repeatable plans</strong><p>Build confidence around what to do, where to go, and why a round should be played a certain way.</p></div>
+        <div><small>Analysis</small><strong>VOD reviews, pro analysis, seminar archive, and examples</strong><p>See concepts applied to real rounds and learn from mistakes beyond only your own games.</p></div>
+        <div><small>Support</small><strong>Daily help, accountability, private teams, and member resources</strong><p>Keep applying the work around people who are serious about getting better.</p></div>
       </div>
-      <div class="dj-mid-cta reveal d2"><a class="btn" href="#pricing" data-sk-cta="dojo-inside-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="inside_dojo">Start Improving</a></div>
     </div>
   </section>
 
@@ -230,8 +346,8 @@
     <div class="container">
       <div class="dj-section-head centered reveal">
         <div class="eyebrow">Inside the Community</div>
-        <h2>This Is What <span class="gradient-text">Improvement</span> Looks Like.</h2>
-        <p>Rank ups, win streaks, huge games, and the work actually showing up in ranked.</p>
+        <h2>This Is What <span class="gradient-text">Doing The Work</span> Looks Like.</h2>
+        <p>Real member posts, real rank ups, real streaks, and real games from inside the community.</p>
       </div>
       <div class="dj-community-grid">
         <button class="dj-win-card reveal" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/std-diawin-huge.png" aria-label="Expand first time Diamond community proof">
@@ -257,14 +373,19 @@
 
   <section class="dj-section dj-reviews" id="reviews">
     <div class="container">
-      <div class="dj-review-head centered reveal">
+      <div class="dj-authority-strip reveal" aria-label="Slayerkey improvement experience">
+        <div class="dj-authority-stat"><strong>1,000,000+</strong><span>Total RR gained by players helped</span></div>
+        <div class="dj-authority-stat"><strong>200+</strong><span>Players coached</span></div>
+        <div class="dj-authority-stat"><strong>300+</strong><span>Five star reviews</span></div>
+      </div>
+      <div class="dj-review-head centered reveal d1">
         <div class="eyebrow">Trusted by Players</div>
         <div class="dj-stars" aria-label="Five stars">★★★★★</div>
-        <h2>Rated <span class="gradient-text">4.9/5</span> Across 200+ Reviews.</h2>
-        <p>Real players talking about the feedback, clarity, and improvement process.</p>
+        <h2>Players Keep Saying The Same Thing: <span class="gradient-text">Now I Know What To Fix.</span></h2>
+        <p>Real feedback about clarity, mistakes they did not notice, and what they should work on next.</p>
       </div>
     </div>
-    <div class="dj-review-rail reveal d1" aria-label="Five star review highlights">
+    <div class="dj-review-rail reveal d2" aria-label="Five star review highlights">
       <div class="dj-review-track">
         <article><div>★★★★★</div><p>“Opened my eyes to a lot of mistakes I made that I wasn't even aware of.”</p></article>
         <article><div>★★★★★</div><p>“Amazing coach. He was very helpful and knew exactly what I needed to work on.”</p></article>
@@ -286,39 +407,69 @@
     <div class="container dj-value-box reveal">
       <div>
         <div class="eyebrow">Training Dojo Membership</div>
-        <h2>Choose Monthly or <span class="gradient-text">Save With Annual.</span></h2>
-        <p class="dj-body-copy">Same complete Dojo access either way: the training library, reviews, coaching, teams, accountability, and member resources.</p>
+        <h2>Choose How Fast You Want To <span class="gradient-text">Start Your Diagnosis.</span></h2>
+        <p class="dj-body-copy">Monthly and Annual both include the complete Dojo. Annual is not a different product. It saves two months and moves your personal mechanics diagnosis to the front of the journey.</p>
         <div class="dj-checks">
-          <span>100+ video lessons</span><span>Weekly VOD reviews</span><span>Daily coaching</span><span>Private teams</span><span>Seminar archive</span><span>Mechanics Masterclass</span><span>Agent and map guides</span><span>Member rewards</span>
+          <span>7 Day Valorant Foundation</span><span>90 day improvement roadmap</span><span>Personal VOD feedback</span><span>Tracker reviews</span><span>Personal mechanics analysis</span><span>Daily coaching and help</span><span>Private teams and community</span><span>100+ lesson training library</span>
         </div>
+        <p class="dj-pricing-note">Monthly members receive the personal mechanics analysis as they progress through the program. Annual members skip the wait and start with it immediately.</p>
       </div>
+
       <div class="dj-plan-options">
         <aside class="dj-price-card">
           <div class="dj-per">Monthly</div>
-          <div class="dj-plan-save dj-plan-save-placeholder" aria-hidden="true">Two months free</div>
+          <div class="dj-plan-save dj-plan-save-placeholder" aria-hidden="true">Complete Dojo</div>
           <div class="dj-price">$19.99</div>
-          <div aria-hidden="true"></div>
-          <a class="btn" href="https://whop.com/checkout/plan_eVop6pXsIhHlf/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=pricing_monthly" data-sk-cta="dojo-pricing-monthly" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="pricing_monthly">Start Monthly</a>
+          <ul class="dj-pricing-list">
+            <li><strong>Complete Dojo access</strong></li>
+            <li>7 Day Foundation + structured 90 day roadmap</li>
+            <li>VOD reviews, Tracker reviews, coaching, teams, and resources</li>
+            <li>Personal mechanics analysis as you progress through the program</li>
+          </ul>
+          <a class="btn" href="https://whop.com/checkout/plan_eVop6pXsIhHlf/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=pricing_monthly" data-sk-cta="dojo-pricing-monthly" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="pricing_monthly" data-sk-plan-direct="true">Join The Dojo</a>
         </aside>
+
         <aside class="dj-price-card dj-price-card-premium">
-          <div class="dj-per">Annual</div>
-          <div class="dj-plan-save">Two months free</div>
+          <div class="dj-per">Annual · Best Value</div>
+          <div class="dj-plan-save">2 Months Free</div>
           <div class="dj-price">$199.99</div>
-          <div aria-hidden="true"></div>
-          <a class="btn" href="https://whop.com/checkout/plan_kaaoYadRlBi4n/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=pricing_annual" data-sk-cta="dojo-pricing-annual" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="pricing_annual">Start Annual</a>
+          <ul class="dj-pricing-list">
+            <li><strong>Everything in Monthly</strong></li>
+            <li><strong>Personal mechanics analysis immediately</strong></li>
+            <li>Custom routine, drills, resources, and mechanics priorities immediately</li>
+            <li>Start your 90 days already knowing what to fix mechanically</li>
+          </ul>
+          <a class="btn" href="https://whop.com/checkout/plan_kaaoYadRlBi4n/?utm_source=slayerkey_site&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=pricing_annual" data-sk-cta="dojo-pricing-annual" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="pricing_annual" data-sk-plan-direct="true">Get My Improvement Plan</a>
         </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="dj-section" id="guarantee">
+    <div class="container">
+      <div class="dj-guarantee-box reveal">
+        <div class="dj-guarantee-mark"><span>400</span><strong>RR in 90 days<br>or your money back.</strong></div>
+        <div class="dj-guarantee-copy">
+          <p>This guarantee is for the player who genuinely uses the Dojo and does the work. If you complete the core improvement work, play at least 50 ranked games during the period, actually participate in the Dojo, and still do not gain the promised 400 RR, ask for a refund.</p>
+          <div class="dj-guarantee-criteria"><span>Complete the required core improvement work</span><span>Play at least 50 ranked games during the 90 days</span><span>Actually use and participate in the Dojo instead of buying and disappearing</span></div>
+        </div>
       </div>
     </div>
   </section>
 
   <section class="dj-section" id="faq">
     <div class="container dj-faq-wrap">
-      <div class="dj-section-head centered reveal"><div class="eyebrow">Questions Before You Join</div><h2>Know What You're <span class="gradient-text">Buying.</span></h2></div>
+      <div class="dj-section-head centered reveal"><div class="eyebrow">Questions Before You Join</div><h2>Know Exactly What You're <span class="gradient-text">Buying.</span></h2></div>
       <div class="dj-faq reveal d1">
-        <details><summary>Is this for my rank?</summary><p>Yes. The process is built around finding the next problem in your games, regardless of where you are starting.</p></details>
-        <details><summary>Is this just another Discord server?</summary><p>No. Discord is where the coaching and community live. The product is the improvement loop around lessons, reviews, questions, practice, and accountability.</p></details>
-        <details><summary>Will I actually get help from Slayerkey?</summary><p>Yes. I run the VOD reviews, answer questions inside the community, and help members figure out what they should be working on next.</p></details>
-        <details><summary>What are the plan options?</summary><p>Monthly is $19.99. Annual is $199.99 and gives you two months free compared with monthly.</p></details>
+        <details><summary>Is this for my rank?</summary><p>Yes. The process is built around finding the next problem in your games, regardless of where you are starting. The priority changes with the player; the Diagnose → Prescribe → Train → Apply → Review loop does not.</p></details>
+        <details><summary>Is this just another Discord server?</summary><p>No. Discord is where much of the coaching and community interaction lives. The product is the structured improvement system around personal diagnosis, the 7 Day Foundation, the 90 day roadmap, training, reviews, feedback, practice, and accountability.</p></details>
+        <details><summary>Will Slayerkey actually review my gameplay and help me personally?</summary><p>Yes. Personal VOD review, mechanics analysis, Tracker review, weekly VOD feedback, and ongoing coaching/help are core parts of the Dojo. The exact timing of the mechanics analysis depends on your plan.</p></details>
+        <details><summary>What happens after I join?</summary><p>You start with the 7 Day Valorant Foundation so you know what to do first. From there the core commercial roadmap moves through Mechanics, Agent Mastery, and Map Mastery while you keep getting feedback and using the training that matches your current problem.</p></details>
+        <details><summary>What is the difference between Monthly and Annual?</summary><p>Both plans include the complete Dojo. Monthly is $19.99 per month. Annual is $199.99 per year, saves two months, and moves your Personal Mechanics Analysis plus custom routine/resources to the beginning so you start with your mechanical diagnosis immediately.</p></details>
+        <details><summary>When do Monthly members receive the mechanics analysis?</summary><p>Monthly members receive the mechanics analysis as they progress through the program rather than immediately on day one. The current program direction places it after the initial progression, approximately after Month 1.</p></details>
+        <details><summary>Why would I buy this instead of watching free YouTube videos?</summary><p>Free videos are useful for learning concepts. They cannot diagnose which mistake is costing you RR right now, tell you which skill deserves priority, watch whether you are applying the fix correctly, or adjust the plan based on your next game. That feedback loop is the difference.</p></details>
+        <details><summary>How does the 400 RR guarantee work?</summary><p>The guarantee is meant for players who genuinely use the system. Complete the core improvement work, play at least 50 ranked games during the 90 day period, participate in the Dojo, and if you still do not gain the promised 400 RR, ask for a refund. Formal policy wording can be maintained separately; the page intentionally keeps the explanation plain language.</p></details>
+        <details><summary>How is the Dojo different from the Improvement System or 1:1 Coaching?</summary><p>The Dojo is ongoing structure, feedback, community, training, and accountability. The Improvement System is a self directed one time purchase with a lifetime framework. 1:1 Coaching is the highest touch direct personal help.</p></details>
       </div>
     </div>
   </section>
@@ -326,9 +477,10 @@
   <section class="dj-final">
     <div class="container centered reveal">
       <div class="eyebrow">Your Next 90 Days</div>
-      <h2>You Can Keep Guessing. Or Finally <span class="gradient-text">Know What to Improve.</span></h2>
-      <p>The Dojo puts training, feedback, practice, and accountability in one place.</p>
+      <h2>Stop Guessing. Find The Problem. <span class="gradient-text">Start Fixing It.</span></h2>
+      <p>The Dojo gives you the diagnosis, the priorities, the training, and the feedback loop to keep applying the right work.</p>
       <a class="btn" href="#pricing" data-sk-cta="dojo-final-start" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="final">Start Improving</a>
+      <p class="dj-cta-note">Choose Monthly or Annual next.</p>
     </div>
   </section>
 
