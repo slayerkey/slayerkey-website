@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.20
+ * Version: 0.1.21
  * Author: Slayerkey
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.20' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.21' );
 define( 'SLAYERKEY_POSTHOG_TOKEN', 'phc_m92yxHMa2BTnSu7KmebGKu8sEitMki4oPhdLTKZzcpMc' );
 define( 'SLAYERKEY_POSTHOG_HOST', 'https://edge.slayerkey.com' );
 define( 'SLAYERKEY_POSTHOG_UI_HOST', 'https://us.posthog.com' );
@@ -134,6 +134,13 @@ function slayerkey_website_prepare_preview_html( $html, $slug ) {
     return str_replace( 'utm_source=slayerkey_site', 'utm_source=private_preview', $html );
 }
 
+function slayerkey_website_prepare_public_dojo_html( $html ) {
+    $html = slayerkey_website_prepare_preview_html( $html, 'dojo-v3' );
+
+    // The same verified source powers preview and production. Restore production attribution on live.
+    return str_replace( 'utm_source=private_preview', 'utm_source=slayerkey_site', $html );
+}
+
 function slayerkey_website_asset_version( $relative_path ) {
     $path = plugin_dir_path( __FILE__ ) . ltrim( $relative_path, '/' );
 
@@ -228,6 +235,87 @@ function slayerkey_website_render_private_preview() {
 }
 add_action( 'template_redirect', 'slayerkey_website_render_private_preview', 0 );
 
+function slayerkey_website_is_public_dojo_request() {
+    if ( is_admin() || slayerkey_website_is_private_preview_request() || slayerkey_website_is_public_work_request() ) {
+        return false;
+    }
+
+    return is_front_page();
+}
+
+function slayerkey_website_public_dojo_body_classes( $classes ) {
+    if ( slayerkey_website_is_public_dojo_request() ) {
+        $classes[] = 'slayerkey-live-dojo';
+        $classes[] = 'slayerkey-live-dojo-v3';
+    }
+
+    return array_values( array_unique( $classes ) );
+}
+add_filter( 'body_class', 'slayerkey_website_public_dojo_body_classes' );
+
+function slayerkey_website_render_public_dojo() {
+    if ( ! slayerkey_website_is_public_dojo_request() ) {
+        return;
+    }
+
+    $previews = slayerkey_website_preview_map();
+    $preview = $previews['dojo-v3'];
+    $preview_file = plugin_dir_path( __FILE__ ) . $preview['file'];
+
+    if ( ! is_readable( $preview_file ) ) {
+        return;
+    }
+
+    $html = file_get_contents( $preview_file );
+
+    if ( false === $html ) {
+        return;
+    }
+
+    $html = slayerkey_website_prepare_public_dojo_html( $html );
+
+    if ( ! empty( $preview['style'] ) ) {
+        wp_enqueue_style(
+            'slayerkey-live-dojo-v3',
+            plugin_dir_url( __FILE__ ) . $preview['style'],
+            array(),
+            slayerkey_website_asset_version( $preview['style'] )
+        );
+    }
+
+    if ( ! empty( $preview['script'] ) ) {
+        $script_handle = 'slayerkey-live-dojo-v3';
+        wp_enqueue_script(
+            $script_handle,
+            plugin_dir_url( __FILE__ ) . $preview['script'],
+            array(),
+            slayerkey_website_asset_version( $preview['script'] ),
+            true
+        );
+
+        // The chooser is created by dojo.js. Keep preview attribution private, but rewrite live links.
+        wp_add_inline_script(
+            $script_handle,
+            "(function(){function fixDojoAttribution(){document.querySelectorAll('#sk-plan-chooser a[href*=\"utm_source=private_preview\"]').forEach(function(link){link.href=link.href.replace('utm_source=private_preview','utm_source=slayerkey_site');});}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',fixDojoAttribution);}else{fixDojoAttribution();}if('MutationObserver' in window){new MutationObserver(fixDojoAttribution).observe(document.documentElement,{childList:true,subtree:true});}})();",
+            'after'
+        );
+    }
+
+    global $wp_query;
+    if ( $wp_query instanceof WP_Query ) {
+        $wp_query->is_404 = false;
+        $wp_query->is_page = true;
+    }
+
+    status_header( 200 );
+    get_header();
+    echo "\n<!-- Slayerkey live Dojo v3 -->\n";
+    echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    get_footer();
+    exit;
+}
+add_action( 'template_redirect', 'slayerkey_website_render_public_dojo', 1 );
+
 function slayerkey_website_render_public_work() {
     if ( ! slayerkey_website_is_public_work_request() ) {
         return;
@@ -279,6 +367,7 @@ function slayerkey_website_health_response() {
             'posthog_ui_host' => SLAYERKEY_POSTHOG_UI_HOST,
             'tracking_asset' => plugin_dir_url( __FILE__ ) . 'assets/js/tracking.js',
             'private_previews_enabled' => true,
+            'public_dojo_enabled' => true,
             'public_work_enabled' => false,
             'public_work_archived' => true,
             'dojo_assets' => array(
@@ -292,6 +381,7 @@ function slayerkey_website_health_response() {
                 'posthog_snippet_registered' => false !== has_action( 'wp_head', 'slayerkey_website_posthog_snippet' ),
                 'tracking_enqueue_registered' => false !== has_action( 'wp_enqueue_scripts', 'slayerkey_website_enqueue_tracking' ),
                 'private_preview_registered' => false !== has_action( 'template_redirect', 'slayerkey_website_render_private_preview' ),
+                'public_dojo_registered' => false !== has_action( 'template_redirect', 'slayerkey_website_render_public_dojo' ),
                 'public_work_registered' => false !== has_action( 'template_redirect', 'slayerkey_website_render_public_work' ),
             ),
         )
