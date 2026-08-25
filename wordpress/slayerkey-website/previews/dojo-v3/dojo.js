@@ -10,8 +10,8 @@
         return location === 'pricing_monthly' || location === 'pricing_annual';
     }
 
-    /* Intercept generic Start Improving clicks in capture phase so no other handler or
-       checkout href can win before the chooser is ready. */
+    /* Generic Start Improving actions are intercepted in capture phase. Their authored href is
+       already #pricing, so even a click before this file finishes loading can never choose Monthly. */
     document.addEventListener('click', function (event) {
         if (!event.target || !event.target.closest) return;
         var link = event.target.closest('.sk-cta-btn,.sk-mobile-cta,[data-sk-checkout="true"]');
@@ -39,7 +39,7 @@
         var root = document.getElementById('sk-std');
         if (!root) return;
 
-        /* Framer-style reveal, with reduced motion respected. */
+        /* Reveal behavior, with reduced motion respected. */
         var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         var reveals = Array.prototype.slice.call(root.querySelectorAll('.reveal'));
         if (reduceMotion || !('IntersectionObserver' in window)) {
@@ -55,13 +55,7 @@
             reveals.forEach(function (el) { observer.observe(el); });
         }
 
-        /* Let the proof speak for itself instead of framing the page as a coaching portfolio. */
-        var proofCopy = root.querySelector('#proof .dj-section-head p');
-        if (proofCopy) {
-            proofCopy.textContent = 'Different ranks, different goals, same thing: progress that shows up in ranked.';
-        }
-
-        /* Current Dojo VSL: autoplay muted, then make the sound action unmistakable. */
+        /* Current Dojo VSL: autoplay muted, then make sound opt-in unmistakable. */
         var iframe = document.getElementById('dojoVideo');
         var unmuteButton = document.getElementById('unmuteBtn');
         if (iframe && unmuteButton) {
@@ -86,9 +80,7 @@
             });
         }
 
-        /* Header and generic page CTAs get a safe non-checkout fallback. The capture handler opens
-           the chooser; if JS were interrupted, the fallback only moves to pricing instead of silently
-           selecting Monthly. */
+        /* Header CTAs use the same safe fallback and the same chooser as the page CTAs. */
         Array.prototype.slice.call(document.querySelectorAll('.sk-cta-btn,.sk-mobile-cta')).forEach(function (link) {
             var mobile = link.classList.contains('sk-mobile-cta');
             var location = mobile ? 'global_header_mobile' : 'global_header_desktop';
@@ -109,34 +101,33 @@
             link.removeAttribute('rel');
         });
 
-        /* Plan chooser. Generic Start Improving CTAs open this instead of silently choosing Monthly. */
+        /* One and only one plan chooser. Monthly remains visibly first on mobile so the page never
+           accidentally communicates that entry starts at $199.99. */
         (function installPlanChooser() {
             var monthlyCheckout = 'https://whop.com/checkout/plan_eVop6pXsIhHlf/?utm_source=private_preview&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=plan_chooser_monthly';
             var annualCheckout = 'https://whop.com/checkout/plan_kaaoYadRlBi4n/?utm_source=private_preview&utm_medium=dojo_page&utm_campaign=dojo_membership&utm_content=plan_chooser_annual';
-            var chooserVersion = 'dojo-plan-chooser-v3';
+            var chooserVersion = 'dojo-plan-chooser-final';
 
-            /* Own this UI completely. If an older cached script mounted a chooser first, remove it
-               and its styles rather than inheriting a mixed old/new state. */
             Array.prototype.slice.call(document.querySelectorAll('#sk-plan-chooser')).forEach(function (existing) {
                 if (existing.parentNode) existing.parentNode.removeChild(existing);
             });
-            var existingStyles = document.getElementById('dojoPlanChooserStyles');
-            if (existingStyles && existingStyles.parentNode) existingStyles.parentNode.removeChild(existingStyles);
+            var staleStyles = document.getElementById('dojoPlanChooserStyles');
+            if (staleStyles && staleStyles.parentNode) staleStyles.parentNode.removeChild(staleStyles);
 
             var styles = document.createElement('style');
             styles.id = 'dojoPlanChooserStyles';
             styles.setAttribute('data-sk-chooser-version', chooserVersion);
             styles.textContent = '' +
-                '.sk-plan-modal{position:fixed;inset:0;z-index:100020;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(0,5,9,.82);backdrop-filter:blur(14px)}' +
+                '.sk-plan-modal{position:fixed;inset:0;z-index:100020;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(0,5,9,.84);backdrop-filter:blur(14px)}' +
                 '.sk-plan-modal.open{display:flex}.sk-plan-shell{position:relative;width:min(900px,100%);max-height:min(780px,calc(100vh - 36px));overflow:auto;padding:31px 30px 30px;background:linear-gradient(180deg,#0d1c28,#08131c);border:1px solid rgba(255,255,255,.13);box-shadow:0 34px 120px rgba(0,0,0,.66);color:#f7fbff}' +
                 '.sk-plan-close{position:absolute;right:13px;top:13px;display:grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid rgba(255,255,255,.13);border-radius:999px;background:#07121b;color:#9fb0bb;font-size:1.05rem;line-height:1;cursor:pointer}.sk-plan-close:hover{color:#fff;border-color:rgba(255,255,255,.3)}' +
-                '.sk-plan-head{text-align:center;max-width:680px;margin:0 auto 24px;padding:0 36px}.sk-plan-head h3{margin:0;color:#fff;font-family:var(--font-display,Arial Black,Impact,sans-serif);font-size:clamp(1.9rem,4vw,3rem);font-weight:900;line-height:.96;text-transform:uppercase}.sk-plan-head p{margin:12px auto 0;color:#9fb0bb;font-size:.9rem;line-height:1.45}' +
-                '.sk-plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch}.sk-plan-card{position:relative;display:flex;flex-direction:column;align-items:center;min-height:470px;padding:25px;border:1px solid rgba(255,255,255,.13);background:#08141d;text-align:center}.sk-plan-card.annual{transform:translateY(-6px);border-color:rgba(44,224,204,.72);background:linear-gradient(180deg,rgba(15,35,43,.99),rgba(7,20,29,.99));box-shadow:0 25px 70px rgba(0,0,0,.35),0 0 36px rgba(44,224,204,.08)}.sk-plan-card.annual:before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,transparent,#2ce0cc,transparent)}' +
-                '.sk-plan-badge{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:6px 10px;border:1px solid rgba(44,224,204,.32);background:rgba(44,224,204,.08);color:#2ce0cc;font-size:.62rem;font-weight:900;letter-spacing:.11em;text-transform:uppercase}' +
-                '.sk-plan-name{margin-top:16px;color:#fff;font-size:.8rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}.sk-plan-card.monthly .sk-plan-name{margin-top:2px}.sk-plan-price{margin-top:8px;color:#fff;font-family:var(--font-display,Arial Black,Impact,sans-serif);font-size:3rem;font-weight:900;line-height:1}.sk-plan-price span{font-family:var(--font-body,Inter,Arial,sans-serif);font-size:.78rem;font-weight:800;color:#9fb0bb}.sk-plan-save{margin-top:9px;color:#2ce0cc;font-size:.78rem;font-weight:900}' +
-                '.sk-plan-list{display:grid;align-content:start;justify-items:stretch;gap:10px;width:min(100%,340px);margin:24px auto;padding:0;list-style:none;color:#cbd6dc;font-size:.8rem;line-height:1.4;text-align:left}.sk-plan-list li{display:grid;grid-template-columns:18px minmax(0,1fr);align-items:start;gap:8px;width:100%;text-align:left}.sk-plan-list li:before{content:"✓";grid-column:1;justify-self:center;color:#2ce0cc;font-weight:900}.sk-plan-list strong{color:#fff}' +
+                '.sk-plan-head{text-align:center;max-width:710px;margin:0 auto 24px;padding:0 36px}.sk-plan-head h3{margin:0;color:#fff;font-family:var(--font-display,Arial Black,Impact,sans-serif);font-size:clamp(1.9rem,4vw,3rem);font-weight:900;line-height:.96;text-transform:uppercase}.sk-plan-head p{margin:12px auto 0;color:#9fb0bb;font-size:.9rem;line-height:1.45}.sk-plan-head strong{color:#fff}' +
+                '.sk-plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch}.sk-plan-card{position:relative;display:flex;flex-direction:column;align-items:center;min-height:430px;padding:25px;border:1px solid rgba(255,255,255,.13);background:#08141d;text-align:center}.sk-plan-card.annual{border-color:rgba(44,224,204,.72);background:linear-gradient(180deg,rgba(15,35,43,.99),rgba(7,20,29,.99));box-shadow:0 25px 70px rgba(0,0,0,.35),0 0 36px rgba(44,224,204,.08)}.sk-plan-card.annual:before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,transparent,#2ce0cc,transparent)}' +
+                '.sk-plan-badge{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:6px 10px;border:1px solid rgba(44,224,204,.32);background:rgba(44,224,204,.08);color:#2ce0cc;font-size:.62rem;font-weight:900;letter-spacing:.11em;text-transform:uppercase}.sk-plan-badge.placeholder{visibility:hidden}' +
+                '.sk-plan-name{margin-top:13px;color:#fff;font-size:.8rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}.sk-plan-price{margin-top:8px;color:#fff;font-family:var(--font-display,Arial Black,Impact,sans-serif);font-size:3rem;font-weight:900;line-height:1}.sk-plan-price span{font-family:var(--font-body,Inter,Arial,sans-serif);font-size:.78rem;font-weight:800;color:#9fb0bb}.sk-plan-save{margin-top:9px;color:#2ce0cc;font-size:.78rem;font-weight:900}' +
+                '.sk-plan-list{display:grid;align-content:start;justify-items:stretch;gap:11px;width:min(100%,340px);margin:23px auto 24px;padding:0;list-style:none;color:#cbd6dc;font-size:.8rem;line-height:1.4;text-align:left}.sk-plan-list li{display:grid;grid-template-columns:18px minmax(0,1fr);align-items:start;gap:8px;width:100%;text-align:left}.sk-plan-list li:before{content:"✓";grid-column:1;justify-self:center;color:#2ce0cc;font-weight:900}.sk-plan-list strong{color:#fff}' +
                 '.sk-plan-action{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;margin-top:auto;padding:0 17px;border:1px solid rgba(255,255,255,.13);background:linear-gradient(135deg,#ff596c,#ff4655);color:#fff!important;font-size:.77rem;font-weight:900;letter-spacing:.05em;text-align:center;text-decoration:none;text-transform:uppercase;box-shadow:0 14px 34px rgba(255,70,85,.18);transition:transform .18s ease,filter .18s ease}.sk-plan-action:hover{transform:translateY(-2px);filter:brightness(1.05)}.sk-plan-card.annual .sk-plan-action{background:linear-gradient(135deg,#23cdbb,#2ce0cc);color:#041014!important;box-shadow:0 14px 34px rgba(44,224,204,.14)}' +
-                '@media(max-width:700px){.sk-plan-modal{align-items:flex-start;padding:8px}.sk-plan-shell{width:100%;max-height:calc(100dvh - 16px);padding:48px 14px 16px}.sk-plan-grid{grid-template-columns:1fr}.sk-plan-card{min-height:0;padding:22px 18px}.sk-plan-card.annual{order:-1;transform:none}.sk-plan-head{padding:0 8px;margin-bottom:18px}.sk-plan-head h3{font-size:clamp(1.8rem,10vw,2.45rem)}.sk-plan-head p{font-size:.82rem}.sk-plan-price{font-size:2.7rem}.sk-plan-list{width:min(100%,320px);margin:20px auto 22px}.sk-plan-action{margin-top:8px}.sk-plan-close{right:10px;top:10px}}';
+                '@media(max-width:700px){.sk-plan-modal{align-items:flex-start;padding:8px}.sk-plan-shell{width:100%;max-height:calc(100dvh - 16px);padding:48px 14px 16px}.sk-plan-grid{grid-template-columns:1fr}.sk-plan-card{min-height:0;padding:22px 18px}.sk-plan-head{padding:0 7px;margin-bottom:18px}.sk-plan-head h3{font-size:clamp(1.8rem,10vw,2.45rem)}.sk-plan-head p{font-size:.82rem}.sk-plan-price{font-size:2.7rem}.sk-plan-list{width:min(100%,320px);margin:20px auto 22px}.sk-plan-action{margin-top:8px}.sk-plan-close{right:10px;top:10px}}';
             document.head.appendChild(styles);
 
             var modal = document.createElement('div');
@@ -149,13 +140,14 @@
                 '<button class="sk-plan-close" type="button" aria-label="Close plan chooser">✕</button>' +
                 '<div class="sk-plan-head">' +
                 '<h3 id="sk-plan-title">How Do You Want To Start?</h3>' +
-                '<p>Monthly gives you the full Dojo. Annual saves two months and adds your personal review.</p>' +
+                '<p><strong>Full Dojo access starts at $19.99/month.</strong> Annual saves two months and starts with your personal mechanics analysis immediately.</p>' +
                 '</div>' +
                 '<div class="sk-plan-grid">' +
                 '<article class="sk-plan-card monthly">' +
+                '<div class="sk-plan-badge placeholder" aria-hidden="true">Complete Dojo</div>' +
                 '<div class="sk-plan-name">Monthly</div>' +
                 '<div class="sk-plan-price">$19.99 <span>/ month</span></div>' +
-                '<ul class="sk-plan-list"><li>100+ lessons + training library</li><li>Aim routines</li><li>Tracker reviews</li><li>Weekly VOD reviews</li><li>Daily coaching + private teams</li><li>7 Day Improvement Routine</li><li>Serious improvement focused community</li></ul>' +
+                '<ul class="sk-plan-list"><li><strong>Complete Dojo access</strong></li><li>7 Day Foundation + structured 90 day roadmap</li><li>VOD reviews, Tracker reviews, coaching, teams, and training</li><li>Personal mechanics analysis as you progress</li></ul>' +
                 '<a class="sk-plan-action" href="' + monthlyCheckout + '" target="_blank" rel="noopener" data-sk-cta="dojo-plan-monthly" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="plan_chooser_monthly" data-sk-plan-direct="true">Join The Dojo</a>' +
                 '</article>' +
                 '<article class="sk-plan-card annual">' +
@@ -163,38 +155,32 @@
                 '<div class="sk-plan-name">Annual</div>' +
                 '<div class="sk-plan-price">$199.99 <span>/ year</span></div>' +
                 '<div class="sk-plan-save">2 months free</div>' +
-                '<ul class="sk-plan-list"><li>Everything in Monthly</li><li>Your gameplay + mechanics personally reviewed by Slayerkey</li><li>Personalized Improvement Plan + custom training routine</li><li>Clear improvement priorities</li></ul>' +
+                '<ul class="sk-plan-list"><li><strong>Everything in Monthly</strong></li><li><strong>Personal mechanics analysis immediately</strong></li><li>Custom routine, drills, resources, and priorities immediately</li><li>Start knowing exactly what to fix mechanically</li></ul>' +
                 '<a class="sk-plan-action" href="' + annualCheckout + '" target="_blank" rel="noopener" data-sk-cta="dojo-plan-annual" data-sk-checkout="true" data-sk-offer="dojo" data-sk-location="plan_chooser_annual" data-sk-plan-direct="true">Get My Improvement Plan</a>' +
                 '</article>' +
                 '</div>' +
                 '</div>';
             document.body.appendChild(modal);
 
-            /* If another cached chooser implementation tries to mount later, keep only this version. */
-            if ('MutationObserver' in window && document.body) {
-                var chooserObserver = new MutationObserver(function () {
-                    Array.prototype.slice.call(document.querySelectorAll('#sk-plan-chooser')).forEach(function (candidate) {
-                        if (candidate !== modal && candidate.parentNode) candidate.parentNode.removeChild(candidate);
-                    });
-                });
-                chooserObserver.observe(document.body, { childList: true, subtree: true });
-            }
-
             var closeButton = modal.querySelector('.sk-plan-close');
             var lastTrigger = null;
 
-            function closeAnyEmailCapture() {
-                ['sk-dojo-ep', 'sk-preview-ep'].forEach(function (id) {
-                    var emailModal = document.getElementById(id);
-                    if (!emailModal) return;
-                    emailModal.classList.remove('open');
-                    emailModal.setAttribute('aria-hidden', 'true');
+            function ensureCurrentChooser() {
+                if (!styles.parentNode && document.head) document.head.appendChild(styles);
+                if (!modal.parentNode && document.body) document.body.appendChild(modal);
+
+                Array.prototype.slice.call(document.querySelectorAll('#sk-plan-chooser')).forEach(function (candidate) {
+                    if (candidate !== modal && candidate.parentNode) candidate.parentNode.removeChild(candidate);
                 });
+                Array.prototype.slice.call(document.querySelectorAll('#dojoPlanChooserStyles')).forEach(function (candidate) {
+                    if (candidate !== styles && candidate.parentNode) candidate.parentNode.removeChild(candidate);
+                });
+                window.SK_openDojoPlanChooser = openChooser;
             }
 
             function openChooser(trigger) {
                 lastTrigger = trigger || document.activeElement;
-                closeAnyEmailCapture();
+                ensureCurrentChooser();
                 modal.classList.add('open');
                 modal.setAttribute('aria-hidden', 'false');
                 document.body.style.overflow = 'hidden';
@@ -216,19 +202,13 @@
                 if (event.key === 'Escape' && modal.classList.contains('open')) closeChooser();
             });
 
-            var pricing = root.querySelector('#pricing');
-            if (pricing) {
-                var monthlyButton = pricing.querySelector('[data-sk-location="pricing_monthly"]');
-                var annualButton = pricing.querySelector('[data-sk-location="pricing_annual"]');
-                var annualCard = annualButton ? annualButton.closest('.dj-price-card') : null;
-                if (monthlyButton) monthlyButton.textContent = 'Join The Dojo';
-                if (annualButton) annualButton.textContent = 'Get My Improvement Plan';
-                if (annualCard) {
-                    var save = annualCard.querySelector('.dj-plan-save');
-                    if (save) save.textContent = '2 Months Free';
-                    var oldBonus = annualCard.querySelector('.dj-annual-bonus');
-                    if (oldBonus && oldBonus.parentNode) oldBonus.parentNode.removeChild(oldBonus);
-                }
+            /* If an older cached implementation appears later, restore this exact chooser instead
+               of inheriting a mixed state or allowing the current UI to disappear. */
+            if ('MutationObserver' in window && document.documentElement) {
+                var chooserObserver = new MutationObserver(function () {
+                    ensureCurrentChooser();
+                });
+                chooserObserver.observe(document.documentElement, { childList: true, subtree: true });
             }
 
             window.SK_openDojoPlanChooser = openChooser;
@@ -239,8 +219,7 @@
             }
         })();
 
-        /* Replace the visible review rail so the inline scroll loop can only touch a detached node.
-           The visible rail uses time modulo cycle width, so there is no accumulated reset delay or pause. */
+        /* One continuous review rail owner. */
         (function installReviewRail() {
             var oldRail = root.querySelector('.dj-review-rail');
             if (!oldRail || !oldRail.parentNode || !window.requestAnimationFrame) return;
@@ -252,8 +231,6 @@
             var track = rail.querySelector('.dj-review-track');
             if (!track) return;
 
-            rail.style.setProperty('scroll-behavior', 'auto', 'important');
-            rail.scrollLeft = 0;
             track.style.setProperty('animation', 'none', 'important');
             track.style.setProperty('transition', 'none', 'important');
             track.style.setProperty('transform', 'translate3d(0,0,0)', 'important');
@@ -284,7 +261,6 @@
                 measure();
                 window.requestAnimationFrame(move);
             });
-
             window.addEventListener('resize', measure, { passive: true });
         })();
 
@@ -292,28 +268,32 @@
         var lightbox = document.getElementById('djLightbox');
         if (lightbox) {
             var lightboxImage = lightbox.querySelector('img');
-            var closeButton = lightbox.querySelector('.dj-lightbox-close');
+            var lightboxClose = lightbox.querySelector('.dj-lightbox-close');
+            var lightboxTrigger = null;
 
             function closeLightbox() {
                 lightbox.classList.remove('open');
                 lightbox.setAttribute('aria-hidden', 'true');
                 if (lightboxImage) lightboxImage.removeAttribute('src');
                 document.body.style.overflow = '';
+                if (lightboxTrigger && typeof lightboxTrigger.focus === 'function') lightboxTrigger.focus();
             }
 
             Array.prototype.slice.call(root.querySelectorAll('[data-proof-src]')).forEach(function (trigger) {
                 trigger.addEventListener('click', function () {
                     if (!lightboxImage) return;
+                    lightboxTrigger = trigger;
                     lightboxImage.src = trigger.getAttribute('data-proof-src');
                     var childImage = trigger.querySelector('img');
-                    lightboxImage.alt = childImage && childImage.alt ? childImage.alt : 'Expanded community proof';
+                    lightboxImage.alt = childImage && childImage.alt ? childImage.alt : 'Expanded proof';
                     lightbox.classList.add('open');
                     lightbox.setAttribute('aria-hidden', 'false');
                     document.body.style.overflow = 'hidden';
+                    window.setTimeout(function () { if (lightboxClose) lightboxClose.focus(); }, 0);
                 });
             });
 
-            if (closeButton) closeButton.addEventListener('click', closeLightbox);
+            if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
             lightbox.addEventListener('click', function (event) {
                 if (event.target === lightbox) closeLightbox();
             });
@@ -321,112 +301,5 @@
                 if (event.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox();
             });
         }
-
-        /* Keep exactly one free lead capture on the Dojo. It is deliberately named differently from
-           the Annual Personalized Improvement Plan so the two offers cannot be confused. */
-        (function installEmailCapture() {
-            var storageKey = 'sk_ep_preview1';
-            var dismissed = false;
-            var subscribed = false;
-            try { dismissed = sessionStorage.getItem(storageKey) === 'dismissed'; } catch (e) {}
-            try { subscribed = !!localStorage.getItem(storageKey + '_subscribed'); } catch (e) {}
-
-            function removeLegacyEmailCapture() {
-                var legacy = document.getElementById('sk-preview-ep');
-                if (legacy && legacy.parentNode) legacy.parentNode.removeChild(legacy);
-            }
-
-            removeLegacyEmailCapture();
-            if ('MutationObserver' in window && document.body) {
-                var legacyObserver = new MutationObserver(removeLegacyEmailCapture);
-                legacyObserver.observe(document.body, { childList: true, subtree: true });
-            }
-
-            if (dismissed || subscribed || document.getElementById('sk-dojo-ep')) return;
-
-            if (!document.getElementById('dojoEmailCaptureStyles')) {
-                var styles = document.createElement('style');
-                styles.id = 'dojoEmailCaptureStyles';
-                styles.textContent = '' +
-                    '.sk-ep{position:fixed;inset:0;z-index:99990;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(0,5,9,.76);backdrop-filter:blur(12px)}' +
-                    '.sk-ep.open{display:flex}.sk-ep-card{width:min(520px,100%);position:relative;padding:34px;background:linear-gradient(180deg,#0d1c28,#08131c);border:1px solid rgba(44,224,204,.28);box-shadow:0 32px 100px rgba(0,0,0,.6);color:#f7fbff}' +
-                    '.sk-ep-kicker{font-size:.68rem;text-transform:uppercase;letter-spacing:.16em;font-weight:900;color:#2ce0cc;margin-bottom:10px}.sk-ep h3{margin:0;font-size:1.8rem;line-height:1.02;text-transform:uppercase}.sk-ep p{margin:12px 0 0;color:#c3d0d8}' +
-                    '.sk-ep-form{display:flex;gap:9px;margin-top:22px}.sk-ep-form input{flex:1;min-width:0;background:#061019;border:1px solid rgba(255,255,255,.16);color:#fff;padding:0 14px;height:50px;outline:none}.sk-ep-form input:focus{border-color:#2ce0cc}' +
-                    '.sk-ep-form .btn{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 18px;border:1px solid rgba(255,255,255,.14);background:linear-gradient(135deg,#ff5267,#ff4059);color:#fff;font-weight:900;font-size:.78rem;letter-spacing:.055em;text-transform:uppercase;cursor:pointer}' +
-                    '.sk-ep-close{position:absolute;right:12px;top:12px;display:grid;place-items:center;width:36px;height:36px;padding:0;border:0;background:transparent;color:#8fa2af;cursor:pointer;font-size:1.15rem;line-height:1}.sk-ep-close:hover{color:#fff}.sk-ep-success{display:none;margin-top:18px;color:#d9fff9;font-weight:800}.sk-ep[data-state="success"] .sk-ep-form{display:none}.sk-ep[data-state="success"] .sk-ep-success{display:block}' +
-                    '@media(max-width:620px){.sk-ep{padding:16px}.sk-ep-card{padding:46px 20px 28px}.sk-ep-form{flex-direction:column}.sk-ep-form .btn{width:100%}}';
-                document.head.appendChild(styles);
-            }
-
-            var modal = document.createElement('div');
-            modal.className = 'sk-ep';
-            modal.id = 'sk-dojo-ep';
-            modal.setAttribute('aria-hidden', 'true');
-            modal.innerHTML = '' +
-                '<div class="sk-ep-card" role="dialog" aria-modal="true" aria-labelledby="sk-ep-title">' +
-                '<button class="sk-ep-close" type="button" aria-label="Close">×</button>' +
-                '<div class="sk-ep-kicker">Before you go</div>' +
-                '<h3 id="sk-ep-title">Get the Free 7 Day Improvement Routine.</h3>' +
-                '<p>A simple routine you can start using right away. Sent to your inbox instantly.</p>' +
-                '<form class="sk-ep-form" action="https://app.convertkit.com/forms/9535572/subscriptions" method="post">' +
-                '<input type="email" name="email_address" autocomplete="email" placeholder="Your email" required>' +
-                '<button class="btn" type="submit">Send My Routine</button>' +
-                '</form>' +
-                '<div class="sk-ep-success">Check your inbox. Your 7 Day Improvement Routine is on the way.</div>' +
-                '</div>';
-            document.body.appendChild(modal);
-
-            var closeModal = modal.querySelector('.sk-ep-close');
-            var form = modal.querySelector('form');
-            var hasShown = false;
-
-            function openModal() {
-                var planChooser = document.getElementById('sk-plan-chooser');
-                if (planChooser && planChooser.classList.contains('open')) return;
-                if (hasShown) return;
-                hasShown = true;
-                modal.classList.add('open');
-                modal.setAttribute('aria-hidden', 'false');
-            }
-
-            function dismissModal() {
-                modal.classList.remove('open');
-                modal.setAttribute('aria-hidden', 'true');
-                try { sessionStorage.setItem(storageKey, 'dismissed'); } catch (e) {}
-            }
-
-            closeModal.addEventListener('click', dismissModal);
-            modal.addEventListener('click', function (event) {
-                if (event.target === modal) dismissModal();
-            });
-            document.addEventListener('keydown', function (event) {
-                if (event.key === 'Escape' && modal.classList.contains('open')) dismissModal();
-            });
-
-            if (window.matchMedia && window.matchMedia('(pointer:fine)').matches) {
-                document.addEventListener('mouseleave', function (event) {
-                    if (event.clientY <= 10) openModal();
-                });
-            } else {
-                window.setTimeout(openModal, 30000);
-            }
-
-            window.SK_openFreePlanPreview = openModal;
-
-            form.addEventListener('submit', function (event) {
-                event.preventDefault();
-                var data = new FormData(form);
-                fetch(form.action, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: data
-                }).then(function () {
-                    modal.setAttribute('data-state', 'success');
-                    try { localStorage.setItem(storageKey + '_subscribed', String(Date.now())); } catch (e) {}
-                }).catch(function () {
-                    modal.setAttribute('data-state', 'success');
-                });
-            });
-        })();
     });
 })();
