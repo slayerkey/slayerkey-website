@@ -55,6 +55,23 @@
             reveals.forEach(function (el) { observer.observe(el); });
         }
 
+        /* The paid Dojo experience must not compete with any automatic free email offer.
+           Remove both the old shared preview modal and the retired Dojo-specific modal if another
+           script injects either one later. */
+        (function suppressAutomaticEmailCapture() {
+            function removeEmailCapture() {
+                ['sk-preview-ep', 'sk-dojo-ep'].forEach(function (id) {
+                    var emailModal = document.getElementById(id);
+                    if (emailModal && emailModal.parentNode) emailModal.parentNode.removeChild(emailModal);
+                });
+            }
+            removeEmailCapture();
+            if ('MutationObserver' in window && document.body) {
+                var emailObserver = new MutationObserver(removeEmailCapture);
+                emailObserver.observe(document.body, { childList: true, subtree: true });
+            }
+        })();
+
         /* Current Dojo VSL: autoplay muted, then make sound opt-in unmistakable. */
         var iframe = document.getElementById('dojoVideo');
         var unmuteButton = document.getElementById('unmuteBtn');
