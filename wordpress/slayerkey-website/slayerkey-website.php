@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.22
+ * Version: 0.1.23
  * Author: Slayerkey
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.22' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.23' );
 define( 'SLAYERKEY_POSTHOG_TOKEN', 'phc_m92yxHMa2BTnSu7KmebGKu8sEitMki4oPhdLTKZzcpMc' );
 define( 'SLAYERKEY_POSTHOG_HOST', 'https://edge.slayerkey.com' );
 define( 'SLAYERKEY_POSTHOG_UI_HOST', 'https://us.posthog.com' );
@@ -29,8 +29,11 @@ function slayerkey_website_preview_map() {
             'file'  => 'previews/system-v3/index.html',
         ),
         'coaching-v3' => array(
-            'title' => 'Coaching v3',
-            'file'  => 'previews/coaching-v3/index.html',
+            'title'       => 'Coaching v3',
+            'file'        => 'previews/coaching-v3/index.html',
+            'theme_shell' => true,
+            'style'       => 'previews/coaching-v3/assets/coaching.css',
+            'script'      => 'previews/coaching-v3/assets/coaching.js',
         ),
     );
 }
@@ -130,6 +133,10 @@ function slayerkey_website_prepare_preview_html( $html, $slug ) {
     );
     $html = str_replace( '__SLAYERKEY_PREVIEW_SHARED__', esc_url( $shared_base ), $html );
 
+    // Pages author live internal links. Point them at the preview routes while previewing.
+    $html = str_replace( 'href="/#pricing"', 'href="/preview/dojo-v3/#pricing"', $html );
+    $html = str_replace( 'href="/terms"', 'href="/preview/terms-v1/"', $html );
+
     // Keep accidental checkout clicks from preview pages out of production campaign attribution.
     return str_replace( 'utm_source=slayerkey_site', 'utm_source=private_preview', $html );
 }
@@ -137,7 +144,10 @@ function slayerkey_website_prepare_preview_html( $html, $slug ) {
 function slayerkey_website_prepare_public_html( $html, $slug ) {
     $html = slayerkey_website_prepare_preview_html( $html, $slug );
 
-    // The same verified source powers preview and production. Restore production attribution on live.
+    // The same verified source powers preview and production. Restore live internal links and attribution.
+    $html = str_replace( 'href="/preview/dojo-v3/#pricing"', 'href="/#pricing"', $html );
+    $html = str_replace( 'href="/preview/terms-v1/"', 'href="/terms"', $html );
+
     return str_replace( 'utm_source=private_preview', 'utm_source=slayerkey_site', $html );
 }
 
