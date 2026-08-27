@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.21
+ * Version: 0.1.22
  * Author: Slayerkey
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.21' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.22' );
 define( 'SLAYERKEY_POSTHOG_TOKEN', 'phc_m92yxHMa2BTnSu7KmebGKu8sEitMki4oPhdLTKZzcpMc' );
 define( 'SLAYERKEY_POSTHOG_HOST', 'https://edge.slayerkey.com' );
 define( 'SLAYERKEY_POSTHOG_UI_HOST', 'https://us.posthog.com' );
@@ -134,11 +134,15 @@ function slayerkey_website_prepare_preview_html( $html, $slug ) {
     return str_replace( 'utm_source=slayerkey_site', 'utm_source=private_preview', $html );
 }
 
-function slayerkey_website_prepare_public_dojo_html( $html ) {
-    $html = slayerkey_website_prepare_preview_html( $html, 'dojo-v3' );
+function slayerkey_website_prepare_public_html( $html, $slug ) {
+    $html = slayerkey_website_prepare_preview_html( $html, $slug );
 
     // The same verified source powers preview and production. Restore production attribution on live.
     return str_replace( 'utm_source=private_preview', 'utm_source=slayerkey_site', $html );
+}
+
+function slayerkey_website_prepare_public_dojo_html( $html ) {
+    return slayerkey_website_prepare_public_html( $html, 'dojo-v3' );
 }
 
 function slayerkey_website_asset_version( $relative_path ) {
