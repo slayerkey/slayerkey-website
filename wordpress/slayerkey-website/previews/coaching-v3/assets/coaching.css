@@ -167,6 +167,7 @@ body.slayerkey-live-coaching .site-main{
 #sk-coaching .ch-rhythm>i{display:grid;place-items:center;padding:0 4px;color:var(--ch-teal);font-size:1.2rem;font-style:normal;font-weight:900;border-left:1px solid var(--ch-line);border-right:1px solid var(--ch-line)}
 #sk-coaching .ch-rhythm small{display:block;color:var(--ch-teal);font-size:.62rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
 #sk-coaching .ch-rhythm strong{display:block;margin-top:6px;color:#fff;font-size:.84rem;line-height:1.35}
+#sk-coaching .ch-mid-cta{text-align:center;margin-top:28px}
 
 /* Pricing */
 #sk-coaching .ch-plan-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch;max-width:1000px;margin:0 auto}
