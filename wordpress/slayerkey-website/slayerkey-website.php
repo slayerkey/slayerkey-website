@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.23
+ * Version: 0.1.24
  * Author: Slayerkey
  */
 
@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.23' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.24' );
 define( 'SLAYERKEY_POSTHOG_TOKEN', 'phc_m92yxHMa2BTnSu7KmebGKu8sEitMki4oPhdLTKZzcpMc' );
 define( 'SLAYERKEY_POSTHOG_HOST', 'https://edge.slayerkey.com' );
 define( 'SLAYERKEY_POSTHOG_UI_HOST', 'https://us.posthog.com' );
@@ -27,6 +27,10 @@ function slayerkey_website_preview_map() {
         'system-v3' => array(
             'title' => 'Improvement System v3',
             'file'  => 'previews/system-v3/index.html',
+        ),
+        'terms-v1' => array(
+            'title' => 'Terms of Sale and Use',
+            'file'  => 'previews/terms-v1/index.html',
         ),
         'coaching-v3' => array(
             'title'       => 'Coaching v3',
