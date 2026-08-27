@@ -1,5 +1,11 @@
+/* Slayerkey Private Mentorship (Coaching v3 rebuild).
+   Static page behavior only: VSL autoplay + unmute, click-to-play testimonial
+   videos, scroll reveals, and the proof lightbox. All copy lives in the HTML. */
 (function () {
   'use strict';
+
+  /* Swap this one constant to change the hero VSL. */
+  var COACHING_VSL_ID = 'JT9v3kR-UQY';
 
   function ready(fn) {
     if (document.readyState === 'loading') {
@@ -13,26 +19,70 @@
     var root = document.getElementById('sk-coaching');
     if (!root) return;
 
+    /* Hero VSL: autoplay muted, then make sound opt-in unmistakable. */
+    var vsl = document.getElementById('coachingVideo');
+    var unmuteButton = document.getElementById('coachingUnmute');
+    if (vsl && unmuteButton) {
+      vsl.src = 'https://www.youtube.com/embed/' + COACHING_VSL_ID + '?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1';
+
+      function post(command) {
+        try {
+          vsl.contentWindow.postMessage(JSON.stringify({ event: 'command', func: command, args: [] }), '*');
+        } catch (e) {}
+      }
+
+      unmuteButton.hidden = false;
+      unmuteButton.addEventListener('click', function () {
+        post('unMute');
+        post('playVideo');
+        unmuteButton.hidden = true;
+        window.setTimeout(function () {
+          if (vsl.src.indexOf('mute=1') !== -1) {
+            vsl.src = vsl.src.replace('mute=1', 'mute=0');
+          }
+        }, 300);
+      });
+    }
+
+    /* Student video testimonials: poster first, iframe only after a click. */
+    Array.prototype.slice.call(root.querySelectorAll('[data-yt]')).forEach(function (poster) {
+      poster.addEventListener('click', function () {
+        var videoId = poster.getAttribute('data-yt');
+        if (!videoId) return;
+        var frameWrap = document.createElement('div');
+        frameWrap.className = 'ch-video-embed';
+        var iframe = document.createElement('iframe');
+        iframe.src = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&rel=0&modestbranding=1&playsinline=1';
+        iframe.title = poster.getAttribute('aria-label') || 'Student video testimonial';
+        iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+        frameWrap.appendChild(iframe);
+        poster.replaceWith(frameWrap);
+      });
+    });
+
+    /* Scroll reveal, matching the live homepage motion. */
     var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var reveals = Array.prototype.slice.call(root.querySelectorAll('.coach-reveal'));
+    var reveals = Array.prototype.slice.call(root.querySelectorAll('.reveal'));
 
     if (reduceMotion || !('IntersectionObserver' in window)) {
-      reveals.forEach(function (el) { el.classList.add('is-visible'); });
+      reveals.forEach(function (el) { el.classList.add('show'); });
     } else {
       var observer = new IntersectionObserver(function (entries, currentObserver) {
         entries.forEach(function (entry) {
           if (!entry.isIntersecting) return;
-          entry.target.classList.add('is-visible');
+          entry.target.classList.add('show');
           currentObserver.unobserve(entry.target);
         });
       }, { threshold: 0.10, rootMargin: '0px 0px -6% 0px' });
       reveals.forEach(function (el) { observer.observe(el); });
     }
 
+    /* Proof image lightbox. */
     var lightbox = document.getElementById('coachingLightbox');
     var image = lightbox && lightbox.querySelector('img');
-    var close = lightbox && lightbox.querySelector('.coaching-lightbox-close');
-    var proofButtons = Array.prototype.slice.call(root.querySelectorAll('[data-proof-src]'));
+    var close = lightbox && lightbox.querySelector('.ch-lightbox-close');
     var lastTrigger = null;
 
     function closeLightbox() {
@@ -44,7 +94,7 @@
       if (lastTrigger) lastTrigger.focus();
     }
 
-    proofButtons.forEach(function (button) {
+    Array.prototype.slice.call(root.querySelectorAll('[data-proof-src]')).forEach(function (button) {
       button.addEventListener('click', function () {
         if (!lightbox || !image) return;
         lastTrigger = button;
