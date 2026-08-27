@@ -4,8 +4,10 @@
 (function () {
   'use strict';
 
-  /* Swap this one constant to change the hero VSL. */
-  var COACHING_VSL_ID = 'JT9v3kR-UQY';
+  /* Swap this one constant to change the hero VSL.
+     Current: "I Coached EVERY Rank in VALORANT" compilation.
+     Alternate considered: Woohoojin breakdown, JT9v3kR-UQY. */
+  var COACHING_VSL_ID = 'E4AXcp7l4YE';
 
   function ready(fn) {
     if (document.readyState === 'loading') {
