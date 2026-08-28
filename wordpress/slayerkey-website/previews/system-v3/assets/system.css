@@ -202,6 +202,22 @@ body.slayerkey-live-system .site-main{
 #sk-system .sy-session-quote figcaption small{color:var(--sy-teal);font-size:.63rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
 #sk-system .sy-session-quote figcaption strong{color:#fff;font-size:.88rem;text-transform:uppercase;font-family:var(--font-display,'Arial Black',Impact,sans-serif);font-weight:400}
 
+/* Review rail: skimmable named quotes, same marquee convention as the Dojo */
+#sk-system .sy-review-head{max-width:920px;margin:0 auto 28px;text-align:center}
+#sk-system .sy-stars{margin:7px 0 13px;color:var(--sy-red);font-size:clamp(2.25rem,4vw,3.8rem);line-height:1;letter-spacing:.08em}
+#sk-system .sy-rating-line{margin-top:13px;color:#93a5b1;font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+#sk-system .sy-rating-line strong{color:#fff}
+#sk-system .sy-review-rail{width:100%;overflow:hidden;padding:2px 0 8px;mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
+#sk-system .sy-review-track{display:flex;gap:14px;width:max-content;will-change:transform;animation:syReviewMarquee 42s linear infinite}
+#sk-system .sy-review-rail:hover .sy-review-track,#sk-system .sy-review-rail:focus-within .sy-review-track{animation-play-state:paused}
+#sk-system .sy-review-track>article{display:flex;flex-direction:column;justify-content:space-between;width:min(365px,78vw);min-height:186px;padding:20px 21px;border:1px solid rgba(255,255,255,.105);background:linear-gradient(180deg,rgba(16,31,43,.88),rgba(8,19,27,.90));box-shadow:0 14px 34px rgba(0,0,0,.18)}
+#sk-system .sy-review-track>article p{color:#d4dde3;font-size:.86rem;line-height:1.55}
+#sk-system .sy-review-author{display:flex;align-items:center;gap:10px;margin-top:16px;padding-top:13px;border-top:1px solid rgba(255,255,255,.09)}
+#sk-system .sy-review-author img{width:26px;height:26px;flex:0 0 auto;object-fit:contain}
+#sk-system .sy-review-author strong{display:block;color:#fff;font-size:.82rem}
+#sk-system .sy-review-author small{display:block;margin-top:2px;color:var(--sy-teal);font-size:.68rem;font-weight:800;letter-spacing:.04em}
+@keyframes syReviewMarquee{from{transform:translate3d(0,0,0)}to{transform:translate3d(calc(-50% - 7px),0,0)}}
+
 /* Product ladder */
 #sk-system .sy-ladder-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch}
 #sk-system .sy-ladder-card{position:relative;display:flex;flex-direction:column;padding:25px 24px 24px;border:1px solid var(--sy-line);background:linear-gradient(180deg,rgba(15,31,43,.9),rgba(8,20,29,.92));box-shadow:0 18px 44px rgba(0,0,0,.18)}
@@ -319,9 +335,12 @@ body.slayerkey-live-system .site-main{
   #sk-system .sy-authority-stat:last-child{border-bottom:0}
   #sk-system .sy-guarantee{grid-template-columns:1fr;justify-items:start}
   #sk-system .sy-unmute{font-size:.74rem;padding:.75rem 1rem}
+  #sk-system .sy-review-track>article{width:min(330px,84vw)}
   #sk-system .sy-final{padding:58px 0 64px}
 }
 @media(prefers-reduced-motion:reduce){
   #sk-system .reveal{opacity:1!important;transform:none!important;filter:none!important;transition:none!important}
   #sk-system .btn,#sk-system .sy-proof-image{transition:none!important}
+  #sk-system .sy-review-track{animation:none!important;transform:none!important}
+  #sk-system .sy-review-rail{overflow-x:auto}
 }
