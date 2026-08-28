@@ -1,13 +1,11 @@
-/* Slayerkey Private Mentorship (Coaching v3 rebuild).
+/* Slayerkey Private Mentorship convergence preview.
    Static page behavior only: VSL autoplay + unmute, click-to-play testimonial
    videos, scroll reveals, and the proof lightbox. All copy lives in the HTML. */
 (function () {
   'use strict';
 
-  /* Swap this one constant to change the hero VSL.
-     Current: "I Coached EVERY Rank in VALORANT" compilation.
-     Alternate considered: Woohoojin breakdown, JT9v3kR-UQY. */
-  var COACHING_VSL_ID = 'E4AXcp7l4YE';
+  /* Exact hero VSL from the legacy live Coaching HTML supplied by the owner. */
+  var COACHING_VSL_ID = 'pEa4AcERI_k';
 
   function ready(fn) {
     if (document.readyState === 'loading') {
