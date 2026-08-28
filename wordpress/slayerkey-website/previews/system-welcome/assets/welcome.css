@@ -1,0 +1,93 @@
+/* Slayerkey Improvement System post-purchase page (/system/welcome).
+   Same visual system as the Dojo, Coaching, and System pages.
+   Scoped under #sk-system-welcome. */
+
+body.slayerkey-preview-system-welcome,
+body.slayerkey-live-system-welcome,
+body.slayerkey-preview-system-welcome .site,
+body.slayerkey-live-system-welcome .site,
+body.slayerkey-preview-system-welcome .site-content,
+body.slayerkey-live-system-welcome .site-content,
+body.slayerkey-preview-system-welcome #content,
+body.slayerkey-live-system-welcome #content,
+body.slayerkey-preview-system-welcome .content-area,
+body.slayerkey-live-system-welcome .content-area,
+body.slayerkey-preview-system-welcome .site-main,
+body.slayerkey-live-system-welcome .site-main{
+  background:#07111a!important;
+}
+body.slayerkey-preview-system-welcome .site-content,
+body.slayerkey-live-system-welcome .site-content,
+body.slayerkey-preview-system-welcome #content,
+body.slayerkey-live-system-welcome #content,
+body.slayerkey-preview-system-welcome .content-area,
+body.slayerkey-live-system-welcome .content-area,
+body.slayerkey-preview-system-welcome .site-main,
+body.slayerkey-live-system-welcome .site-main{
+  margin-top:0!important;
+  padding-top:0!important;
+}
+
+#sk-system-welcome{
+  --sw-bg:#07111a;
+  --sw-ink:#f5f7fa;
+  --sw-muted:#9fb0bb;
+  --sw-red:#ff4655;
+  --sw-teal:#28dfcb;
+  --sw-line:rgba(255,255,255,.10);
+  --sw-ease:cubic-bezier(.22,1,.36,1);
+  position:relative;
+  overflow:hidden;
+  width:100vw;
+  max-width:none;
+  margin-left:calc(50% - 50vw);
+  margin-right:calc(50% - 50vw);
+  overflow-x:clip;
+  box-shadow:0 -31px 0 #0f1923,0 40px 0 #0f1923;
+  background:
+    radial-gradient(circle at 84% 3%,rgba(40,223,203,.075),transparent 27rem),
+    radial-gradient(circle at 10% 12%,rgba(255,70,85,.055),transparent 30rem),
+    var(--sw-bg);
+  color:var(--sw-ink);
+  font-family:Inter,Arial,sans-serif;
+  line-height:1.55;
+  min-height:60vh;
+}
+#sk-system-welcome,#sk-system-welcome *{box-sizing:border-box}
+#sk-system-welcome a{text-decoration:none}
+#sk-system-welcome .container{width:min(920px,calc(100% - 40px));margin-inline:auto}
+#sk-system-welcome .eyebrow{margin:0 0 12px;color:var(--sw-teal);font-size:.7rem;font-weight:900;letter-spacing:.17em;text-transform:uppercase}
+#sk-system-welcome .eyebrow:before{content:'// ';color:var(--sw-red)}
+#sk-system-welcome h1,#sk-system-welcome h2,#sk-system-welcome h3{margin:0;color:var(--sw-ink);font-family:'Arial Black',Impact,sans-serif;font-weight:400;text-transform:uppercase}
+#sk-system-welcome h1{font-size:clamp(2.6rem,5.4vw,4rem);line-height:.96;letter-spacing:-.024em}
+#sk-system-welcome h2{font-size:clamp(1.7rem,3.4vw,2.4rem);line-height:1.02;letter-spacing:-.015em}
+#sk-system-welcome h3{font-size:1.02rem}
+#sk-system-welcome p{margin:0;color:var(--sw-muted)}
+#sk-system-welcome .accent-teal{color:var(--sw-teal)}
+#sk-system-welcome .lead{max-width:620px;margin-top:16px;font-size:1rem;line-height:1.62}
+#sk-system-welcome .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;margin-top:16px;padding:0 24px;border:1px solid rgba(255,255,255,.13);background:linear-gradient(135deg,#ff596c,var(--sw-red));color:#fff!important;box-shadow:0 14px 34px rgba(255,70,85,.20);font-weight:900;font-size:.76rem;letter-spacing:.055em;text-transform:uppercase;cursor:pointer;transition:transform .2s var(--sw-ease),box-shadow .2s ease}
+#sk-system-welcome .btn:hover{transform:translateY(-2px);box-shadow:0 19px 40px rgba(255,70,85,.29)}
+#sk-system-welcome .btn-ghost{background:rgba(12,26,36,.9);border-color:rgba(255,255,255,.2);box-shadow:0 14px 34px rgba(0,0,0,.22)}
+#sk-system-welcome .btn-ghost:hover{border-color:rgba(40,223,203,.4);box-shadow:0 19px 40px rgba(0,0,0,.3)}
+#sk-system-welcome .btn:focus-visible,#sk-system-welcome a:focus-visible{outline:2px solid var(--sw-teal);outline-offset:4px}
+
+#sk-system-welcome .sw-hero{padding:56px 0 40px}
+#sk-system-welcome .sw-section{padding:38px 0 48px;border-top:1px solid var(--sw-line)}
+
+#sk-system-welcome .sw-steps{display:grid;gap:16px}
+#sk-system-welcome .sw-step{display:grid;grid-template-columns:52px minmax(0,1fr);gap:18px;padding:24px 26px;border:1px solid var(--sw-line);background:linear-gradient(180deg,rgba(15,31,43,.9),rgba(8,20,29,.92));box-shadow:0 18px 44px rgba(0,0,0,.18)}
+#sk-system-welcome .sw-step>b{color:var(--sw-red);font-family:'Arial Black',Impact,sans-serif;font-size:1.35rem;font-weight:400}
+#sk-system-welcome .sw-step p{margin-top:8px;font-size:.9rem;line-height:1.62;max-width:640px}
+
+#sk-system-welcome .sw-next-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:26px;align-items:center;padding:30px;border:1px solid rgba(40,223,203,.3);background:linear-gradient(135deg,rgba(40,223,203,.06),rgba(255,70,85,.04))}
+#sk-system-welcome .sw-next-card p{margin-top:12px;font-size:.9rem;line-height:1.62;max-width:620px}
+#sk-system-welcome .sw-next-card .btn{white-space:nowrap}
+
+@media(max-width:700px){
+  #sk-system-welcome{width:100%;margin-left:0;margin-right:0}
+  #sk-system-welcome .container{width:calc(100% - 28px)}
+  #sk-system-welcome .sw-hero{padding:42px 0 32px}
+  #sk-system-welcome .sw-step{grid-template-columns:1fr;gap:8px;padding:20px}
+  #sk-system-welcome .sw-next-card{grid-template-columns:1fr;padding:22px 19px}
+  #sk-system-welcome .btn{width:100%}
+}
