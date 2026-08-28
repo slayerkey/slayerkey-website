@@ -215,6 +215,46 @@ body.slayerkey-live-coaching .site-main{
 #sk-coaching .ch-review-track>article span{margin-top:auto;padding-top:12px;color:var(--ch-teal);font-size:.68rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase}
 @keyframes chReviewMarquee{from{transform:translate3d(0,0,0)}to{transform:translate3d(calc(-50% - 7px),0,0)}}
 
+
+/* Rank climb strip: full width "this is your climb" */
+#sk-coaching .ch-climb{padding:34px 0 40px;border-top:1px solid var(--ch-line)}
+#sk-coaching .ch-climb-title{margin:0 0 20px;text-align:center;color:#fff;font-family:var(--font-display,'Arial Black',Impact,sans-serif);font-size:clamp(1.1rem,2vw,1.6rem);text-transform:uppercase;letter-spacing:.02em}
+#sk-coaching .ch-ranks{position:relative}
+#sk-coaching .ch-climb-track{position:relative;height:6px;background:rgba(255,255,255,.08);overflow:hidden}
+#sk-coaching .ch-climb-fill{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,#7c8388,#eccf56 26%,#59a9b6 50%,#bb3d65 76%,#ffa03f);box-shadow:0 0 22px rgba(255,160,63,.45)}
+#sk-coaching .ch-ranks.show .ch-climb-fill{animation:chClimbFill 2.1s cubic-bezier(.22,1,.36,1) forwards}
+@keyframes chClimbFill{from{width:0}to{width:100%}}
+#sk-coaching .ch-ranks ul{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin:0;padding:14px 0 0;list-style:none}
+#sk-coaching .ch-ranks li{position:relative;padding-top:16px;text-align:center;color:var(--c,#fff);font-size:.72rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase;opacity:0}
+#sk-coaching .ch-ranks.show li{animation:chRankIn .5s var(--ch-ease) forwards}
+#sk-coaching .ch-ranks.show li:nth-child(1){animation-delay:.15s}
+#sk-coaching .ch-ranks.show li:nth-child(2){animation-delay:.55s}
+#sk-coaching .ch-ranks.show li:nth-child(3){animation-delay:.95s}
+#sk-coaching .ch-ranks.show li:nth-child(4){animation-delay:1.35s}
+#sk-coaching .ch-ranks.show li:nth-child(5){animation-delay:1.75s}
+@keyframes chRankIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+#sk-coaching .ch-ranks li:before{content:'';position:absolute;left:50%;top:-6px;width:13px;height:13px;transform:translateX(-50%) rotate(45deg);background:var(--c,#fff);box-shadow:0 0 16px var(--c,#fff)}
+
+/* Problem / solution contrast */
+#sk-coaching .ch-contrast{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+#sk-coaching .ch-contrast-card{padding:28px 26px;border:1px solid var(--ch-line);background:linear-gradient(180deg,rgba(15,31,43,.9),rgba(8,20,29,.92));box-shadow:0 18px 44px rgba(0,0,0,.18)}
+#sk-coaching .ch-contrast-card.is-bad{border-color:rgba(255,70,85,.32)}
+#sk-coaching .ch-contrast-card.is-good{border-color:rgba(40,223,203,.42)}
+#sk-coaching .ch-contrast-card h3{margin-bottom:18px;font-size:1.05rem}
+#sk-coaching .ch-contrast-card.is-bad h3{color:var(--ch-red)}
+#sk-coaching .ch-contrast-card.is-good h3{color:var(--ch-teal)}
+#sk-coaching .ch-point{display:grid;grid-template-columns:24px minmax(0,1fr);gap:12px;align-items:start;padding:10px 0;border-top:1px solid rgba(255,255,255,.07)}
+#sk-coaching .ch-point:first-of-type{border-top:0}
+#sk-coaching .ch-point p{color:#d4dde3;font-size:.88rem;line-height:1.5}
+#sk-coaching .ch-i{display:grid;place-items:center;width:22px;height:22px}
+#sk-coaching .ch-i svg{width:16px;height:16px}
+#sk-coaching .ch-i.bad{color:var(--ch-red)}
+#sk-coaching .ch-i.good{color:var(--ch-teal)}
+
+/* Discord avatar on review cards */
+#sk-coaching .ch-review-track>article span{display:flex;align-items:center;gap:8px}
+#sk-coaching .ch-review-track>article span img{width:20px;height:20px;border-radius:50%;flex:0 0 auto}
+
 /* Video lightbox */
 #sk-coaching .ch-video-lightbox{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(0,4,8,.94);backdrop-filter:blur(10px)}
 #sk-coaching .ch-video-lightbox.open{display:flex}
@@ -311,6 +351,9 @@ body.slayerkey-live-coaching .site-main{
   #sk-coaching .ch-plan-options{grid-template-columns:1fr;gap:14px}
   #sk-coaching .ch-price-card{min-height:0;max-width:430px;margin-inline:auto;width:100%}
   #sk-coaching .ch-review-track>article{width:min(300px,84vw)}
+  #sk-coaching .ch-contrast{grid-template-columns:1fr}
+  #sk-coaching .ch-ranks ul{grid-template-columns:repeat(5,minmax(0,1fr))}
+  #sk-coaching .ch-ranks li{font-size:.58rem;letter-spacing:.06em}
   #sk-coaching .ch-unmute{font-size:.74rem;padding:.75rem 1rem}
   #sk-coaching .ch-final{padding:58px 0 64px}
 }
@@ -318,4 +361,6 @@ body.slayerkey-live-coaching .site-main{
   #sk-coaching .reveal{opacity:1!important;transform:none!important;filter:none!important;transition:none!important}
   #sk-coaching .btn,#sk-coaching .ch-proof-image,#sk-coaching .ch-video-poster img{transition:none!important}
   #sk-coaching .ch-review-track{animation:none!important;transform:none!important}
+  #sk-coaching .ch-ranks.show .ch-climb-fill{animation:none!important;width:100%}
+  #sk-coaching .ch-ranks li,#sk-coaching .ch-ranks.show li{animation:none!important;opacity:1}
 }

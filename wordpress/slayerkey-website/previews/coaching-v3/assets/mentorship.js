@@ -97,7 +97,7 @@
 
     /* Scroll reveal, matching the live homepage motion. */
     var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var reveals = Array.prototype.slice.call(root.querySelectorAll('.reveal'));
+    var reveals = Array.prototype.slice.call(root.querySelectorAll('.reveal, .ch-ranks'));
 
     if (reduceMotion || !('IntersectionObserver' in window)) {
       reveals.forEach(function (el) { el.classList.add('show'); });

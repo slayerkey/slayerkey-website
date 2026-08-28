@@ -1,0 +1,860 @@
+<!-- SK Home v17.0 "PROTOCOL" - Valorant-native redesign. Paste into Elementor HTML block on / -->
+<main id="main">
+  <!-- Page-scoped styles; global system lives in the header snippet -->
+  <style id="home-v17">
+    /* ===== Hero ===== */
+    #hero{padding:56px 0 30px}
+    #hero .hero-inner{max-width:920px;margin:0 auto;text-align:center}
+    #hero h1{font-size:clamp(2.8rem,1.5rem + 6vw,5.2rem);line-height:1.02;margin:14px 0 6px;color:#fff}
+    #hero .h1-top,#hero .h1-bot{display:block;font-size:.55em;letter-spacing:.05em}
+
+    /* Rotator: baseline-locked, width follows the active word */
+    #rotateWrap{
+      display:inline-block;position:relative;white-space:nowrap;
+      line-height:inherit;vertical-align:baseline;padding-right:.15ch;
+      width:var(--w,auto);transition:width .28s ease;
+    }
+    #rotateWrap::after{content:attr(data-word);visibility:hidden;white-space:nowrap}
+    /* Words snap in fast from the left; quick cuts read as urgency.
+       !important beats Elementor's reduced-motion transition reset. */
+    #rotateWrap{transition:width .2s ease!important}
+    #rotateWrap>span{
+      position:absolute;left:0;top:0;white-space:nowrap;line-height:inherit;
+      opacity:0;transform:translateX(-.45em);
+      transition:opacity .14s ease-out,transform .16s cubic-bezier(.2,.9,.3,1)!important;letter-spacing:0;
+    }
+    #rotateWrap>span.active{opacity:1;transform:translateX(0)}
+
+    /* Hero video */
+    #hero .vsl-wrap{position:relative;width:100%;max-width:860px;margin:22px auto 0}
+    #hero .wb-embed{width:100%;aspect-ratio:16/9;overflow:hidden;background:#000;border:1px solid var(--line)}
+    #hero .wb-embed iframe{width:100%;height:100%;border:0;display:block}
+    .unmute-btn{
+      position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;
+      background:rgba(10,17,25,.82);border:1px solid rgba(236,232,225,.4);color:#fff;
+      padding:1rem 2.1rem;font-family:var(--font-body);font-weight:800;font-size:1.05rem;
+      letter-spacing:.08em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(8px);
+      clip-path:polygon(0 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%);
+      transition:background .15s,border-color .15s;white-space:nowrap;
+    }
+    .unmute-btn:hover{background:rgba(255,70,85,.8);border-color:var(--red)}
+    @media(max-width:600px){.unmute-btn{padding:.7rem 1.3rem;font-size:.85rem}}
+
+    #hero .cta-row{display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center;margin-top:22px}
+    #hero .under-cta{margin-top:14px}
+    #hero .stats-row{margin-top:26px}
+
+    /* ===== Results showcase ===== */
+    .fullwidth-showcase{width:100%;max-width:none;padding-top:64px}
+    #showcase .results-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:18px;margin-top:8px;align-items:start}
+    #showcase .result-card{margin:0;border:1px solid var(--line);border-radius:2px;overflow:hidden;background:linear-gradient(180deg,rgba(17,28,39,.9),rgba(17,28,39,.55));transition:border-color .2s,transform .2s}
+    #showcase .result-card:hover{border-color:rgba(255,70,85,.45);transform:translateY(-3px)}
+    #showcase .result-card.rank img{display:block;width:100%;height:auto;cursor:zoom-in;border-bottom:1px solid var(--line)}
+    #showcase .video-thumb{width:100%;aspect-ratio:16/9;position:relative;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--line)}
+    #showcase .video-thumb::after{content:"";position:absolute;inset:0;background:rgba(10,17,25,.4);transition:background .15s}
+    #showcase .result-card.video:hover .video-thumb::after{background:rgba(10,17,25,.12)}
+    #showcase .play-btn{
+      position:relative;z-index:1;width:60px;height:60px;background:var(--red);color:#fff;
+      display:flex;align-items:center;justify-content:center;font-size:1.35rem;padding-left:4px;
+      clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%);
+      box-shadow:0 14px 34px rgba(255,70,85,.5);transition:transform .15s;
+    }
+    #showcase .result-card.video{cursor:pointer}
+    #showcase .result-card.video:hover .play-btn{transform:scale(1.08)}
+    #showcase .result-card figcaption{padding:12px 14px;font-weight:800;font-size:.92rem;letter-spacing:.03em;color:var(--ink)}
+    #showcase .result-card figcaption::before{content:"// ";color:var(--red);font-weight:800}
+
+    /* Vertical video testimonials: cards are previews, clicking opens a large
+       lightbox player (bigger player = YouTube serves higher resolution) */
+    #showcase .shorts-row{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+    #showcase .shorts-row .result-card{width:min(270px,100%)}
+    #showcase .shorts-row .video-thumb{aspect-ratio:9/16}
+
+    /* Video lightbox: a big 16:9 player matching the actual uploads, full
+       YouTube controls. The vertical content sits centered inside the frame. */
+    #vid-lb{display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.93);align-items:center;justify-content:center;padding:1rem}
+    #vid-lb.open{display:flex}
+    #vid-lb .vid-lb-frame{
+      width:min(92vw, calc(86vh * 16 / 9), 1100px);
+      aspect-ratio:16/9;background:#000;border:1px solid var(--line);
+    }
+    #vid-lb iframe{width:100%;height:100%;border:0;display:block}
+    #vid-lb-close{
+      position:absolute;top:14px;right:18px;
+      background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);
+      color:#fff;font-size:1.3rem;cursor:pointer;
+      border-radius:2px;width:36px;height:36px;
+      display:flex;align-items:center;justify-content:center;
+      transition:background .15s;
+    }
+    #vid-lb-close:hover{background:rgba(255,70,85,.5)}
+
+    /* ===== Discord proof wall: 2-up and readable, each screenshot fades in ===== */
+    #proof-wall{padding:48px 0;position:relative}
+    /* Masonry columns: each screenshot sits right under the previous one,
+       no row-alignment gaps */
+    .screenshot-mosaic{columns:2;column-gap:18px}
+    @media (max-width:860px){.screenshot-mosaic{columns:1;max-width:640px;margin:0 auto}}
+    .screenshot-mosaic img{
+      width:100%;height:auto;margin:0 0 18px;break-inside:avoid;
+      border-radius:2px;border:1px solid var(--line);cursor:zoom-in;
+    }
+    .screenshot-mosaic img.reveal{transition:opacity .6s ease,transform .6s ease,border-color .15s ease}
+    .screenshot-mosaic img:hover{border-color:rgba(45,226,197,.5)}
+
+    /* ===== Problem / Solution ===== */
+    #psmr .contrast-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch;grid-auto-rows:1fr}
+    @media (max-width:900px){#psmr .contrast-grid{grid-template-columns:1fr}}
+    #psmr .contrast-card{
+      height:100%;display:flex;flex-direction:column;border-radius:2px;box-sizing:border-box;
+      border:1px solid var(--line);padding:24px;
+      background:linear-gradient(180deg,rgba(17,28,39,.92),rgba(17,28,39,.6));
+    }
+    #psmr .contrast-card.is-bad{box-shadow:inset 0 2px 0 var(--red)}
+    #psmr .contrast-card.is-good{box-shadow:inset 0 2px 0 var(--teal)}
+    #psmr .contrast-card h3{margin:0 0 .8rem;font-family:var(--font-display);font-weight:400;font-size:1.35rem;letter-spacing:.04em;text-transform:uppercase}
+    #psmr .contrast-card.is-bad h3{color:#ff8791}
+    #psmr .contrast-card.is-good h3{color:var(--teal)}
+    #psmr .point{display:flex;gap:.65rem;align-items:flex-start;margin:.45rem 0}
+    #psmr .point p{margin:0;color:var(--ink);line-height:1.55}
+
+    .i.good,.i.bad{
+      display:inline-grid;place-items:center;width:22px;height:22px;min-width:22px;flex:0 0 22px;
+      border-radius:2px;line-height:0;box-sizing:border-box;
+    }
+    .i.good svg,.i.bad svg{width:14px;height:14px;display:block}
+
+    /* ===== About: journey timeline ===== */
+    #about .journey{max-width:560px}
+    #about .jstep{position:relative;padding:0 0 26px 36px}
+    #about .jstep::after{content:"";position:absolute;left:5px;top:14px;bottom:-8px;width:2px;background:rgba(236,232,225,.12)}
+    #about .jstep:last-child::after{display:none}
+    #about .jstep::before{
+      content:"";position:absolute;left:0;top:8px;width:12px;height:12px;
+      transform:rotate(45deg);background:var(--c,#7c8388);box-shadow:0 0 12px var(--c,#7c8388);
+    }
+    #about .jrank{font-family:var(--font-display);font-weight:400;font-size:1.2rem;letter-spacing:.04em;text-transform:uppercase;color:var(--c,#fff);line-height:1.1}
+    #about .jstep p{margin:.35rem 0 0;color:var(--ink);line-height:1.65;font-size:.97rem}
+
+    /* Media: the two rank screenshots side by side (before / after) */
+    #about .about-media{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+    #about .about-media img{width:100%;border:1px solid var(--line);border-radius:2px;cursor:zoom-in}
+    @media (max-width:600px){#about .about-media{grid-template-columns:1fr}}
+
+    /* ===== How it works ===== */
+    @media(min-width:981px){
+      #how .process{gap:26px}
+      #how .stepx:not(:last-child)::after{
+        content:"\203A";position:absolute;right:-21px;top:50%;transform:translateY(-50%);
+        font-family:var(--font-display);font-size:1.6rem;color:var(--red);opacity:.8;
+      }
+    }
+
+    /* ===== Reviews rail ===== */
+    #reviews .loop{display:flex;gap:0;will-change:transform}
+    #reviews .seg{display:flex;gap:18px;flex:0 0 auto}
+    #reviews .seg + .seg{margin-left:18px}
+    #reviews .review-card{
+      width:clamp(260px,28vw,340px);min-height:120px;
+      padding:14px;border-radius:4px;color:#fff;border:1px solid rgba(255,255,255,.14);
+      box-shadow:0 24px 60px rgba(0,0,0,.25);
+      display:flex;flex-direction:column;justify-content:space-between;
+    }
+    #reviews .review-card p{
+      margin:0;line-height:1.5;
+      display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;
+    }
+    #reviews .review-card .author{margin-top:12px;font-weight:800;opacity:.95;display:flex;gap:.35rem;align-items:center}
+    #reviews .review-card .author img{width:16px;height:16px}
+
+    /* ===== Pricing ===== */
+    #coaching-pricing .pricing-grid{
+      display:grid;grid-template-columns:repeat(2,minmax(0,360px));
+      gap:22px;justify-content:center;align-items:stretch;
+    }
+    @media(max-width:760px){#coaching-pricing .pricing-grid{grid-template-columns:minmax(0,420px)}}
+    #coaching-pricing .price-card{
+      position:relative;display:flex;flex-direction:column;
+      border:1px solid var(--line);border-radius:2px;padding:28px 24px;
+      background:linear-gradient(180deg,rgba(17,28,39,.92),rgba(17,28,39,.6));
+    }
+    #coaching-pricing .price-card.featured{
+      border-color:rgba(255,70,85,.6);
+      box-shadow:0 18px 50px rgba(255,70,85,.18),inset 0 2px 0 var(--red);
+    }
+    #coaching-pricing .price-flag{
+      position:absolute;top:-13px;left:50%;transform:translateX(-50%);
+      background:var(--red);color:#fff;
+      font-weight:800;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+      padding:.35rem .8rem;white-space:nowrap;
+      clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);
+    }
+    #coaching-pricing .price-card h3{margin:.2rem 0 .5rem;font-family:var(--font-display);font-weight:400;font-size:1.35rem;letter-spacing:.03em;text-transform:uppercase}
+    #coaching-pricing .price{display:flex;align-items:baseline;gap:.4rem;margin-bottom:.5rem}
+    #coaching-pricing .price .amount{font-family:var(--font-display);font-size:2.7rem;font-weight:400;color:#fff}
+    #coaching-pricing .price .per{font-size:.92rem;color:var(--muted);letter-spacing:.04em}
+    #coaching-pricing .price-sub{margin:0 0 1rem;color:var(--muted);line-height:1.55;font-size:.95rem}
+    #coaching-pricing .price-list{list-style:none;margin:0 0 1.4rem;padding:0;display:flex;flex-direction:column;gap:.6rem;flex:1}
+    #coaching-pricing .price-list li{display:flex;gap:.6rem;align-items:flex-start;color:var(--ink);line-height:1.45;font-size:.95rem}
+    #coaching-pricing .price-card .btn{justify-content:center;text-align:center;margin-top:auto}
+    #coaching-pricing .upgrade-note{margin:.7rem 0 0;text-align:center;font-size:.8rem;color:var(--muted);line-height:1.5}
+    #coaching-pricing .alt-path{text-align:center;margin:22px 0 0;color:var(--muted);font-size:.95rem}
+
+    /* ===== FAQ hover cleanup ===== */
+    .faq-trigger{outline:none!important;border:none!important;background:var(--card);-webkit-tap-highlight-color:transparent}
+    .faq-trigger:hover{background:rgba(255,70,85,.06)}
+  </style>
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="container hero-inner">
+      <h1>
+        <span class="h1-top">Stop Losing</span>
+        <span id="rotateWrap"></span>
+        <span class="h1-bot">You Should Be Winning</span>
+      </h1>
+
+      <!-- VSL + unmute overlay -->
+      <div class="vsl-wrap sk-frame">
+        <div class="wb-embed">
+          <iframe
+            id="heroVideo"
+            title="All-In-One Improvement System"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
+        </div>
+        <button id="unmuteBtn" class="unmute-btn" type="button">🔊 Click for sound</button>
+      </div>
+
+      <!-- CTAs -->
+      <div class="cta-row">
+        <a class="btn" href="#coaching-pricing">Book Coaching</a>
+      </div>
+      <div class="under-cta">
+        <a class="sk-textlink" href="#reviews">See 480+ five-star reviews</a>
+      </div>
+
+      <!-- Proof stats -->
+      <div class="stats-row">
+        <div class="sk-stats reveal">
+          <div class="sk-stat"><div class="n">2,192<em>+</em></div><div class="l">Players Coached</div></div>
+          <div class="sk-stat"><div class="n">1M<em>+</em></div><div class="l">RR Gained</div></div>
+          <div class="sk-stat"><div class="n">480<em>+</em></div><div class="l">5-Star Reviews</div></div>
+        </div>
+      </div>
+
+      <!-- Rank climb strip (decorative). To use real rank badges instead of the
+           CSS diamonds: upload the icons to WordPress, then change each li to
+           <li class="icon" style="--c:..."><img src="...iron.png" alt="">Iron</li> -->
+      <div class="sk-ranks reveal" aria-hidden="true">
+        <div class="track"><span class="fill"></span></div>
+        <ul>
+          <li style="--c:#7c8388">Iron</li>
+          <li style="--c:#eccf56">Gold</li>
+          <li style="--c:#59a9b6">Plat</li>
+          <li style="--c:#bb3d65">Immortal</li>
+          <li style="--c:#ffa03f">Radiant</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS: rank climbs + video testimonials -->
+  <section id="showcase" class="fullwidth-showcase">
+    <div class="container">
+      <div class="section-head" style="justify-content:center"><div style="text-align:center"><div class="eyebrow">Real Students</div><h2>Real Climbs, Real Proof</h2></div></div>
+
+      <div class="results-grid reveal">
+
+        <figure class="result-card rank">
+          <img class="zoomable" loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/c-lazy-plat2radiant.jpg" alt="Lazy rank progression, Plat to Radiant">
+          <figcaption>Lazy • Plat to Radiant, 795 RR</figcaption>
+        </figure>
+
+        <figure class="result-card rank">
+          <img class="zoomable" loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/c-aidn-plat2asc.jpg" alt="aidNbsns rank progression, Plat to Ascendant 2">
+          <figcaption>aidNbsns • Plat to Ascendant 2</figcaption>
+        </figure>
+
+        <figure class="result-card rank">
+          <img class="zoomable" loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/c-rohit-plat2imm.jpg" alt="Rohit rank progression, Plat to Immortal">
+          <figcaption>Rohit • Plat to Immortal</figcaption>
+        </figure>
+
+      </div>
+
+      <!-- Video testimonials (YouTube Shorts, vertical) -->
+      <div class="shorts-row reveal d1">
+
+        <figure class="result-card video" data-yt="xank6Q4xGVE" role="button" tabindex="0" aria-label="Play Levi video testimonial">
+          <div class="video-thumb" style="background-image:url('https://i.ytimg.com/vi/xank6Q4xGVE/maxresdefault.jpg'),url('https://i.ytimg.com/vi/xank6Q4xGVE/hqdefault.jpg')"><span class="play-btn" aria-hidden="true">&#9654;</span></div>
+          <figcaption>Levi • Video testimonial</figcaption>
+        </figure>
+
+        <figure class="result-card video" data-yt="2-ZQWKZq0Fs" role="button" tabindex="0" aria-label="Play Rohit video testimonial">
+          <div class="video-thumb" style="background-image:url('https://i.ytimg.com/vi/2-ZQWKZq0Fs/maxresdefault.jpg'),url('https://i.ytimg.com/vi/2-ZQWKZq0Fs/hqdefault.jpg')"><span class="play-btn" aria-hidden="true">&#9654;</span></div>
+          <figcaption>Rohit • Video testimonial</figcaption>
+        </figure>
+
+      </div>
+    </div>
+
+    <!-- Video lightbox: plays testimonials big so YouTube serves high quality -->
+    <div id="vid-lb" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Video testimonial player">
+      <button id="vid-lb-close" type="button" aria-label="Close video">&#x2715;</button>
+      <div class="vid-lb-frame"></div>
+    </div>
+
+    <script>
+    (function(){
+      var vlb = document.getElementById('vid-lb');
+      var frame = vlb && vlb.querySelector('.vid-lb-frame');
+      var closeBtn = document.getElementById('vid-lb-close');
+      if(!vlb || !frame) return;
+
+      function openVid(id){
+        frame.innerHTML = '<iframe src="https://www.youtube.com/embed/' + id +
+          '?autoplay=1&rel=0&playsinline=1" title="Video testimonial"' +
+          ' allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
+        vlb.classList.add('open');
+        vlb.setAttribute('aria-hidden','false');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeVid(){
+        vlb.classList.remove('open');
+        vlb.setAttribute('aria-hidden','true');
+        frame.innerHTML = '';
+        document.body.style.overflow = '';
+      }
+
+      document.querySelectorAll('#showcase .result-card.video').forEach(function(card){
+        function play(){ openVid(card.getAttribute('data-yt')); }
+        card.addEventListener('click', play);
+        card.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); play(); } });
+      });
+
+      vlb.addEventListener('click', function(e){ if(e.target === vlb) closeVid(); });
+      closeBtn.addEventListener('click', closeVid);
+      document.addEventListener('keydown', function(e){
+        if(e.key === 'Escape' && vlb.classList.contains('open')) closeVid();
+      });
+    })();
+    </script>
+  </section>
+
+  <!-- PRICING -->
+  <section id="coaching-pricing">
+    <div class="container">
+      <div class="section-head"><div style="text-align:center;width:100%"><div class="eyebrow">Coaching</div><h2>Work With Me 1:1</h2></div></div>
+
+      <div class="pricing-grid">
+        <!-- Single Session -->
+        <article class="price-card featured reveal">
+          <span class="price-flag">Start Here</span>
+          <h3>Single Session</h3>
+          <div class="price"><span class="amount">$150</span><span class="per">one-time</span></div>
+          <p class="price-sub">A focused 1:1 VOD review and coaching session. Book directly, no application.</p>
+          <ul class="price-list">
+            <li><span class="i good" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></span><span>Personalized VOD review</span></li>
+            <li><span class="i good" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></span><span>Clear, actionable fixes</span></li>
+            <li><span class="i good" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></span><span>Book a time that works for you</span></li>
+          </ul>
+          <!-- Cal.com popup trigger (a button, not a link, so the modal never
+               double-opens a new tab alongside itself) -->
+          <button class="btn" type="button"
+             data-cal-link="slayerkey/mentorship-booking"
+             data-cal-namespace="mentorship-booking"
+             data-cal-config='{"layout":"month_view","theme":"dark"}'>Book a Session</button>
+          <p class="upgrade-note">Credits toward the full program if you upgrade within 14 days.</p>
+        </article>
+
+        <!-- Performance Mentorship -->
+        <article class="price-card reveal d1">
+          <h3>Performance Mentorship</h3>
+          <div class="price"><span class="amount">$870</span><span class="per">one-time</span></div>
+          <p class="price-sub">A complete, structured program to rebuild your game from the ground up.</p>
+          <ul class="price-list">
+            <li><span class="i good" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></span><span>6 private 1:1 sessions over 90 days, from full diagnostic to long-term plan</span></li>
+            <li><span class="i good" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></span><span>A custom improvement roadmap built around your exact weaknesses</span></li>
+            <li><span class="i good" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></span><span>Personalized VOD reviews that turn every game into specific, fixable mistakes</span></li>
+            <li><span class="i good" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></span><span>Your own agent &amp; map playbook, built around how you actually play</span></li>
+            <li><span class="i good" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></span><span>Direct voice-note access between sessions, so you're never stuck waiting</span></li>
+            <li><span class="i good" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></span><span><strong>Full Improvement System included ($197 value)</strong> + private student community</span></li>
+          </ul>
+          <a class="btn" href="https://ko-fi.com/s/cd324493ce" target="_blank" rel="noopener">Start the Program</a>
+        </article>
+      </div>
+
+      <p class="alt-path reveal">Prefer self-paced training? <a class="sk-textlink" href="/system">Try the Improvement System, $197 one-time</a></p>
+    </div>
+  </section>
+
+  <!-- DISCORD PROOF WALL -->
+  <section id="proof-wall">
+    <div class="container">
+      <div class="reveal" style="text-align:center;margin-bottom:24px">
+        <p style="font-size:.95rem;color:var(--muted);max-width:60ch;margin:0 auto">What students are saying in Discord</p>
+      </div>
+      <div class="screenshot-mosaic">
+        <img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/c-lunar.jpg" alt="Student review: Lunar" class="zoomable reveal">
+        <img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/c-vibez.jpg" alt="Student review: Vibez" class="zoomable reveal d1">
+        <img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/c-tortol.jpg" alt="Student review: Tortol" class="zoomable reveal">
+        <img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/c-penut.jpg" alt="Student review: Penut" class="zoomable reveal d1">
+        <img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/c-aidn.jpg" alt="Student review: aidNbsns" class="zoomable reveal">
+        <img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/c-tecz.jpg" alt="Student review: Tecz" class="zoomable reveal d1">
+        <img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/c-3brain.jpg" alt="Student review: 3Brain" class="zoomable reveal">
+        <img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/c-tako.jpg" alt="Student review: Tako" class="zoomable reveal d1">
+        <img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/c-vanjoe.jpg" alt="Student review: vanjoe" class="zoomable reveal">
+        <img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/c-uzi.jpg" alt="Student review: Uzi" class="zoomable reveal d1">
+        <img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/c-three.jpg" alt="Student review: three" class="zoomable reveal">
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM / SOLUTION -->
+  <section id="psmr">
+    <div class="container">
+      <div class="section-head"><div><div class="eyebrow">Why You're Stuck</div><h2>Problem / Solution</h2></div></div>
+      <div class="contrast-grid">
+        <article class="contrast-card is-bad reveal">
+          <h3>Why You're Stuck</h3>
+
+          <div class="point">
+            <span class="i bad" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M18.3 5.71 12 12l6.3 6.29-1.41 1.42L10.59 13.4 4.29 19.71 2.88 18.29 9.17 12 2.88 5.71 4.29 4.29l6.3 6.31 6.3-6.31z"/>
+              </svg>
+            </span>
+            <p>You watch guides but don't improve</p>
+          </div>
+
+          <div class="point">
+            <span class="i bad" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M18.3 5.71 12 12l6.3 6.29-1.41 1.42L10.59 13.4 4.29 19.71 2.88 18.29 9.17 12 2.88 5.71 4.29 4.29l6.3 6.31 6.3-6.31z"/>
+              </svg>
+            </span>
+            <p>You grind but see no progress</p>
+          </div>
+
+          <div class="point">
+            <span class="i bad" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M18.3 5.71 12 12l6.3 6.29-1.41 1.42L10.59 13.4 4.29 19.71 2.88 18.29 9.17 12 2.88 5.71 4.29 4.29l6.3 6.31 6.3-6.31z"/>
+              </svg>
+            </span>
+            <p>You lose fights but don't know why</p>
+          </div>
+
+          <div class="point">
+            <span class="i bad" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M18.3 5.71 12 12l6.3 6.29-1.41 1.42L10.59 13.4 4.29 19.71 2.88 18.29 9.17 12 2.88 5.71 4.29 4.29l6.3 6.31 6.3-6.31z"/>
+              </svg>
+            </span>
+            <p>You tilt after bad rounds</p>
+          </div>
+
+          <div class="point">
+            <span class="i bad" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M18.3 5.71 12 12l6.3 6.29-1.41 1.42L10.59 13.4 4.29 19.71 2.88 18.29 9.17 12 2.88 5.71 4.29 4.29l6.3 6.31 6.3-6.31z"/>
+              </svg>
+            </span>
+            <p>You lack confidence in clutch moments</p>
+          </div>
+
+          <div class="point">
+            <span class="i bad" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M18.3 5.71 12 12l6.3 6.29-1.41 1.42L10.59 13.4 4.29 19.71 2.88 18.29 9.17 12 2.88 5.71 4.29 4.29l6.3 6.31 6.3-6.31z"/>
+              </svg>
+            </span>
+            <p>You're overwhelmed by conflicting advice</p>
+          </div>
+        </article>
+
+        <article class="contrast-card is-good reveal d1">
+          <h3>What Changes</h3>
+
+          <div class="point">
+            <span class="i good" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
+              </svg>
+            </span>
+            <p>You know exactly what to practice</p>
+          </div>
+
+          <div class="point">
+            <span class="i good" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
+              </svg>
+            </span>
+            <p>You win more fights confidently</p>
+          </div>
+
+          <div class="point">
+            <span class="i good" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
+              </svg>
+            </span>
+            <p>You stay calm and focused</p>
+          </div>
+
+          <div class="point">
+            <span class="i good" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
+              </svg>
+            </span>
+            <p>You build consistent performance streaks</p>
+          </div>
+
+          <div class="point">
+            <span class="i good" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
+              </svg>
+            </span>
+            <p>You get role-specific feedback</p>
+          </div>
+
+          <div class="point">
+            <span class="i good" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
+              </svg>
+            </span>
+            <p>You have accountability that drives progress</p>
+          </div>
+        </article>
+      </div>
+
+      <div class="cta-band reveal" style="margin-top:18px">
+        <h3>Ready to stop guessing and start climbing?</h3>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+          <a class="btn" href="#coaching-pricing">Book Coaching</a>
+          <a class="btn secondary" href="#reviews">See Reviews</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="container">
+      <div class="section-head" style="justify-content:center"><div style="text-align:center"><div class="eyebrow">How It Works</div><h2>Step-By-Step Process</h2></div></div>
+      <div class="process">
+        <div class="stepx reveal"><div class="num">01</div><div class="title">Book</div><p>Choose a time that works for you and share your goals.</p></div>
+        <div class="stepx reveal d1"><div class="num">02</div><div class="title">Review</div><p>We break down your game to find what's holding you back.</p></div>
+        <div class="stepx reveal d2"><div class="num">03</div><div class="title">Practice</div><p>Get clear, actionable notes that build skill and confidence.</p></div>
+        <div class="stepx reveal d3"><div class="num">04</div><div class="title">Climb</div><p>See steady progress with a process that sticks. Reach your goals.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DISCORD REVIEWS -->
+  <section id="reviews">
+    <div class="container">
+      <div class="reviews-head">
+        <div class="eyebrow reveal" style="margin-bottom:6px">Reviews</div>
+        <h2 class="reveal">Hear From Players Like You</h2>
+        <div class="stars reveal" aria-label="Average rating 4.9 out of 5 stars">
+          <svg viewBox="0 0 24 24"><path d="m12 .587 3.668 7.431 8.2 1.193-5.934 5.787 1.402 8.172L12 18.896l-7.336 3.874 1.402-8.172L.132 9.21l8.2-1.193z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="m12 .587 3.668 7.431 8.2 1.193-5.934 5.787 1.402 8.172L12 18.896l-7.336 3.874 1.402-8.172L.132 9.21l8.2-1.193z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="m12 .587 3.668 7.431 8.2 1.193-5.934 5.787 1.402 8.172L12 18.896l-7.336 3.874 1.402-8.172L.132 9.21l8.2-1.193z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="m12 .587 3.668 7.431 8.2 1.193-5.934 5.787 1.402 8.172L12 18.896l-7.336 3.874 1.402-8.172L.132 9.21l8.2-1.193z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="m12 .587 3.668 7.431 8.2 1.193-5.934 5.787 1.402 8.172L12 18.896l-7.336 3.874 1.402-8.172L.132 9.21l8.2-1.193z"/></svg>
+        </div>
+        <div class="reveal" style="opacity:.85;letter-spacing:.08em;font-weight:800;text-transform:uppercase">
+          Average Rating of <strong>4.9/5</strong>
+        </div>
+      </div>
+
+      <div class="reviews-rail reveal d1">
+        <div class="loop">
+          <article class="review-card grad-gold"><p>"Plat 1 to Asc 2 in two weeks. 80% win rate."</p><div class="author"><img src="https://slayerkey.com/wp-content/uploads/2025/08/discord.png" alt="">Darkblood</div></article>
+
+          <article class="review-card grad-blue"><p>"Confidence in my aim restored."</p><div class="author"><img src="https://slayerkey.com/wp-content/uploads/2025/08/discord.png" alt="">Kirin</div></article>
+
+          <article class="review-card grad-orange"><p>"First session, instant improvement. Worth every dollar."</p><div class="author"><img src="https://slayerkey.com/wp-content/uploads/2025/08/discord.png" alt="">Flame970</div></article>
+
+          <article class="review-card grad-green"><p>"Teaches you how to think, not just tips."</p><div class="author"><img src="https://slayerkey.com/wp-content/uploads/2025/08/discord.png" alt="">noctylusproject</div></article>
+
+          <article class="review-card grad-purple"><p>"Catching mistakes every round. Left notes to look back on."</p><div class="author"><img src="https://slayerkey.com/wp-content/uploads/2025/08/discord.png" alt="">romey</div></article>
+
+          <article class="review-card grad-blue"><p>"Straightforward. Spotted my weaknesses and exactly how to fix them."</p><div class="author"><img src="https://slayerkey.com/wp-content/uploads/2025/08/discord.png" alt="">Adams</div></article>
+
+          <article class="review-card grad-gold"><p>"Ranked up twice after just a few sessions."</p><div class="author"><img src="https://slayerkey.com/wp-content/uploads/2025/08/discord.png" alt="">UziOnGod</div></article>
+
+          <article class="review-card grad-orange"><p>"Best feedback I've gotten. Picked out every flaw."</p><div class="author"><img src="https://slayerkey.com/wp-content/uploads/2025/08/discord.png" alt="">three</div></article>
+
+          <article class="review-card grad-green"><p>"First ever coaching. Clear and concise. Know how to improve."</p><div class="author"><img src="https://slayerkey.com/wp-content/uploads/2025/08/discord.png" alt="">vanjoe</div></article>
+
+          <article class="review-card grad-purple"><p>"Prepped team plays before a tourney. We absolutely crushed."</p><div class="author"><img src="https://slayerkey.com/wp-content/uploads/2025/08/discord.png" alt="">KEY Tool</div></article>
+        </div>
+      </div>
+
+      <div id="reviews-cta" class="reveal" style="margin-top:16px;text-align:center">
+        <a class="btn" href="#coaching-pricing">Book Coaching</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="container">
+      <div class="section-head"><div><div class="eyebrow">About Me</div><h2>My Journey: Bronze 2 to Coach</h2></div></div>
+      <div class="about-grid">
+        <div class="journey reveal">
+          <div class="jstep" style="--c:#c9976a">
+            <div class="jrank">Bronze 2</div>
+            <p>Where I started. No plan, no structure, just the ranked grind like everyone else.</p>
+          </div>
+          <div class="jstep" style="--c:#cf9ff0">
+            <div class="jrank">Hardstuck Diamond 1</div>
+            <p>Years of grinding got me here, then nothing. I played constantly. I cared. I tried to fix things. Nothing stuck, and I had no idea what was actually holding me back.</p>
+          </div>
+          <div class="jstep" style="--c:#2de2c5">
+            <div class="jrank">First Coaching Session</div>
+            <p>Getting coached changed everything. There were layers to the game I had never considered: decision patterns that were obvious once explained, mistakes no YouTube video had ever pointed out.</p>
+          </div>
+          <div class="jstep" style="--c:#ef6a8e">
+            <div class="jrank">Immortal 3, Top #568</div>
+            <p>That shift took me to my peak. The climb was never about grinding harder. It was clarity.</p>
+          </div>
+          <div class="jstep" style="--c:#ffa03f">
+            <div class="jrank">Coach</div>
+            <p>I started coaching collegiate teams and random players on Discord completely for free. Four years and 2,000+ players later, my role is still simple. Remove confusion. Build clarity.</p>
+          </div>
+        </div>
+        <div class="about-media reveal d1">
+          <img class="zoomable" loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2025/01/beta-bronze-Copy.png" alt="Bronze 2 placement, where the climb started">
+          <img class="zoomable" loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2025/01/top600career-copy2.png" alt="Peak rank and match history, Immortal Top #568">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="container faq-wrap">
+      <h2 class="faq-title">Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false">
+            <span class="faq-left"><span class="faq-chevron">&#9656;</span><span>What if I feel like I've already tried everything?</span></span>
+          </button>
+          <div class="faq-body"><div class="faq-body-inner">Most players have tried more effort. Few have tried structured clarity. The difference is not grinding harder. It is knowing what actually matters at your level.</div></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false">
+            <span class="faq-left"><span class="faq-chevron">&#9656;</span><span>How is this different from watching guides?</span></span>
+          </button>
+          <div class="faq-body"><div class="faq-body-inner">Guides give information. Performance development gives prioritization. Knowing what to ignore is just as important as knowing what to train.</div></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false">
+            <span class="faq-left"><span class="faq-chevron">&#9656;</span><span>Will this work even if I'm already high level?</span></span>
+          </button>
+          <div class="faq-body"><div class="faq-body-inner">Yes. The framework scales. Whether you are rebuilding fundamentals or refining high level decision making, the process adapts to your competitive demands.</div></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false">
+            <span class="faq-left"><span class="faq-chevron">&#9656;</span><span>What if I'm inconsistent?</span></span>
+          </button>
+          <div class="faq-body"><div class="faq-body-inner">Inconsistency is usually structural. Once you understand your patterns and train with intention, stability follows.</div></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false">
+            <span class="faq-left"><span class="faq-chevron">&#9656;</span><span>Who is this for?</span></span>
+          </button>
+          <div class="faq-body"><div class="faq-body-inner">Players who care deeply about performing well and are willing to approach improvement seriously.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section id="final-cta">
+    <div class="container">
+      <div class="cta-band reveal">
+        <h3>Your climb starts with one session</h3>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+          <a class="btn" href="#coaching-pricing">Book Coaching</a>
+          <a class="btn secondary" href="#free-plan" data-ep-open>Get the Free Plan</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Lightbox (rank cards, Discord screenshots) -->
+<div id="lightbox" aria-hidden="true"><img alt="Zoomed result"></div>
+
+<script>
+/* Hero video: defer YouTube load until the page has finished loading (faster LCP) */
+(function(){
+  var iframe = document.getElementById('heroVideo');
+  var unmuteBtn = document.getElementById('unmuteBtn');
+  if (!iframe || !unmuteBtn) return;
+
+  function loadVideo(){
+    iframe.src = 'https://www.youtube.com/embed/pEa4AcERI_k?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1';
+  }
+  if (document.readyState === 'complete') loadVideo();
+  else window.addEventListener('load', loadVideo);
+
+  function post(cmd){
+    try{
+      iframe.contentWindow.postMessage(JSON.stringify({event:'command',func:cmd,args:[]}), '*');
+    }catch(e){}
+  }
+  unmuteBtn.addEventListener('click', function(){
+    post('unMute');
+    post('playVideo');
+    unmuteBtn.style.display='none';
+    setTimeout(function(){
+      if (iframe.src.includes('mute=1')) iframe.src = iframe.src.replace('mute=1','mute=0');
+    }, 300);
+  });
+})();
+
+/* Lightbox */
+(function(){
+  const box=document.getElementById('lightbox'); if(!box) return;
+  const big=box.querySelector('img');
+  document.querySelectorAll('.zoomable, .grid-2x2 img').forEach(img=>{
+    img.addEventListener('click',()=>{big.src=img.src;box.classList.add('show');document.body.style.overflow='hidden';});
+  });
+  box.addEventListener('click',()=>{box.classList.remove('show');document.body.style.overflow='';});
+  document.addEventListener('keydown',(e)=>{if(e.key==='Escape'){box.classList.remove('show');document.body.style.overflow='';}});
+})();
+
+/* Rotating word */
+(function(){
+  const wrap = document.getElementById('rotateWrap'); if(!wrap) return;
+  const words = ['Ranks','Games','Duels','Rounds','Gunfights'];
+  wrap.innerHTML = words.map(w => `<span class="gradient-text">${w}</span>`).join('');
+  const spans = [...wrap.children];
+  let i = 0;
+
+  function activate(n){
+    spans.forEach(s => s.classList.remove('active'));
+    const s = spans[n]; s.classList.add('active');
+    wrap.setAttribute('data-word', s.textContent);
+    requestAnimationFrame(() => {
+      wrap.style.setProperty('--w', s.offsetWidth + 'px');
+    });
+  }
+
+  activate(0);
+  /* Re-measure once the display font finishes loading (Anton is wider than the fallback) */
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => activate(i));
+  setInterval(() => { i = (i + 1) % spans.length; activate(i); }, 2400);
+})();
+
+/* Cal.com element-click embed: opens the booking modal from the
+   [data-cal-link] "Book a Session" button in #coaching-pricing */
+(function (C, A, L) { let p = function (a, ar) { a.q.push(ar); }; let d = C.document; C.Cal = C.Cal || function () { let cal = C.Cal; let ar = arguments; if (!cal.loaded) { cal.ns = {}; cal.q = cal.q || []; d.head.appendChild(d.createElement("script")).src = A; cal.loaded = true; } if (ar[0] === L) { const api = function () { p(api, arguments); }; const namespace = ar[1]; api.q = api.q || []; if(typeof namespace === "string"){cal.ns[namespace] = cal.ns[namespace] || api;p(cal.ns[namespace], ar);p(cal, ["initNamespace", namespace]);} else p(cal, ar); return;} p(cal, ar); }; })(window, "https://app.cal.com/embed/embed.js", "init");
+Cal("init", "mentorship-booking", {origin:"https://app.cal.com"});
+Cal.config = Cal.config || {};
+Cal.config.forwardQueryParams = true;
+Cal.ns["mentorship-booking"]("ui", {"theme":"dark","hideEventTypeDetails":false,"layout":"month_view"});
+
+/* Marquee helper: steady motion; exact-width wrap; 3+ segments coverage */
+function marquee(track, opts){
+  if(!track || track.dataset.marqInit) return;
+
+  const GAP   = opts.gap   ?? 18;
+  const SPEED = opts.speed ?? 16;   // px/s
+  const MIN   = opts.minSegs ?? 3;
+
+  const original = [...track.children];
+
+  track.innerHTML = '';
+  const makeSeg = () => {
+    const seg = document.createElement('div'); seg.className = 'seg';
+    original.forEach(c => seg.appendChild(c.cloneNode(true)));
+    return seg;
+  };
+
+  const base = makeSeg(); track.appendChild(base);
+  let total = base.scrollWidth + GAP, count = 1;
+  const need = () => track.clientWidth * 2.6;
+
+  while (count < MIN || total < need()){
+    const cl = base.cloneNode(true);
+    track.appendChild(cl);
+    total += cl.scrollWidth + GAP;
+    count++;
+  }
+
+  let x = 0, last = performance.now(), paused = false;
+  const segW = () => base.scrollWidth + GAP;
+
+  const apply = () => {
+    const w = segW();
+    while (-x >= w) x += w;
+    while (x > 0) x -= w;
+    track.style.transform = `translate3d(${x}px,0,0)`;
+  };
+
+  /* Pause on hover so reviews can actually be read */
+  track.addEventListener('mouseenter', () => { paused = true; });
+  track.addEventListener('mouseleave', () => { paused = false; });
+
+  /* Touch: drag to scrub, resumes shortly after release */
+  let dragX = null, resumeTimer = null;
+  track.addEventListener('touchstart', (e) => {
+    paused = true; clearTimeout(resumeTimer);
+    dragX = e.touches[0].clientX;
+  }, {passive:true});
+  track.addEventListener('touchmove', (e) => {
+    if (dragX === null) return;
+    x += e.touches[0].clientX - dragX;
+    dragX = e.touches[0].clientX;
+    apply();
+  }, {passive:true});
+  track.addEventListener('touchend', () => {
+    dragX = null;
+    resumeTimer = setTimeout(() => { paused = false; }, 1600);
+  });
+
+  function step(now){
+    const dt = (now - last) / 1000; last = now;
+    if (!paused){
+      x -= SPEED * dt;
+      apply();
+    }
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+
+  track.dataset.marqInit = '1';
+}
+
+marquee(document.querySelector('#reviews .loop'), { speed: 24, gap: 18, minSegs: 3 });
+
+/* Icon fallback: inject SVG if anything wipes the inline icons */
+(function(){
+  const TICK  = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>';
+  const CROSS = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18.3 5.71 12 12l6.3 6.29-1.41 1.42L10.59 13.4 4.29 19.71 2.88 18.29 9.17 12 2.88 5.71 4.29 4.29l6.3 6.31 6.3-6.31z"/></svg>';
+
+  function inject(){
+    document.querySelectorAll('#psmr .i.good, #psmr .i.bad').forEach(el=>{
+      if(!el.querySelector('svg')) el.innerHTML = el.classList.contains('good') ? TICK : CROSS;
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inject);
+  } else {
+    inject();
+  }
+})();
+</script>
