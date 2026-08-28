@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.25
+ * Version: 0.1.26
  * Author: Slayerkey
  */
 
@@ -10,7 +10,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.25' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.26' );
+
+// Flip to true to replace the legacy Elementor /system page with the GitHub managed System v4.
+// /system/welcome (the Stripe post-purchase page) and the native /terms route are always on;
+// /terms only takes effect once the Redirection plugin rule pointing at the Google Doc is removed.
+define( 'SLAYERKEY_PUBLIC_SYSTEM_ENABLED', false );
 define( 'SLAYERKEY_POSTHOG_TOKEN', 'phc_m92yxHMa2BTnSu7KmebGKu8sEitMki4oPhdLTKZzcpMc' );
 define( 'SLAYERKEY_POSTHOG_HOST', 'https://edge.slayerkey.com' );
 define( 'SLAYERKEY_POSTHOG_UI_HOST', 'https://us.posthog.com' );
@@ -25,8 +30,18 @@ function slayerkey_website_preview_map() {
             'script'      => 'previews/dojo-v3/dojo.js',
         ),
         'system-v3' => array(
-            'title' => 'Improvement System v3',
-            'file'  => 'previews/system-v3/index.html',
+            'title'       => 'Improvement System v4',
+            'file'        => 'previews/system-v3/index.html',
+            'theme_shell' => true,
+            'style'       => 'previews/system-v3/assets/system.css',
+            'script'      => 'previews/system-v3/assets/system.js',
+        ),
+        'system-welcome' => array(
+            'title'       => 'Improvement System Welcome',
+            'file'        => 'previews/system-welcome/index.html',
+            'theme_shell' => true,
+            'style'       => 'previews/system-welcome/assets/welcome.css',
+            'script'      => 'previews/system-welcome/assets/welcome.js',
         ),
         'terms-v1' => array(
             'title' => 'Terms of Sale and Use',
@@ -344,6 +359,177 @@ function slayerkey_website_render_public_work() {
 }
 add_action( 'template_redirect', 'slayerkey_website_render_public_work', 1 );
 
+function slayerkey_website_public_request_path() {
+    if ( empty( $_SERVER['REQUEST_URI'] ) ) {
+        return null;
+    }
+
+    $path = wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH );
+
+    if ( ! is_string( $path ) ) {
+        return null;
+    }
+
+    $path = untrailingslashit( $path );
+
+    return '' === $path ? '/' : $path;
+}
+
+function slayerkey_website_is_public_system_request() {
+    if ( ! SLAYERKEY_PUBLIC_SYSTEM_ENABLED || is_admin() || slayerkey_website_is_private_preview_request() ) {
+        return false;
+    }
+
+    return '/system' === slayerkey_website_public_request_path();
+}
+
+function slayerkey_website_is_public_system_welcome_request() {
+    if ( is_admin() || slayerkey_website_is_private_preview_request() ) {
+        return false;
+    }
+
+    return '/system/welcome' === slayerkey_website_public_request_path();
+}
+
+function slayerkey_website_is_public_terms_request() {
+    if ( is_admin() || slayerkey_website_is_private_preview_request() ) {
+        return false;
+    }
+
+    return '/terms' === slayerkey_website_public_request_path();
+}
+
+function slayerkey_website_public_system_body_classes( $classes ) {
+    if ( slayerkey_website_is_public_system_request() ) {
+        $classes[] = 'slayerkey-live-system';
+        $classes[] = 'slayerkey-live-system-v3';
+    }
+
+    if ( slayerkey_website_is_public_system_welcome_request() ) {
+        $classes[] = 'slayerkey-live-system-welcome';
+    }
+
+    return array_values( array_unique( $classes ) );
+}
+add_filter( 'body_class', 'slayerkey_website_public_system_body_classes' );
+
+// Shared renderer for GitHub managed theme-shell pages served on public URLs.
+// Mirrors slayerkey_website_render_public_dojo(), which stays untouched.
+function slayerkey_website_render_public_theme_page( $slug, $marker ) {
+    $previews = slayerkey_website_preview_map();
+
+    if ( ! isset( $previews[ $slug ] ) ) {
+        return false;
+    }
+
+    $preview = $previews[ $slug ];
+    $preview_file = plugin_dir_path( __FILE__ ) . $preview['file'];
+
+    if ( ! is_readable( $preview_file ) ) {
+        return false;
+    }
+
+    $html = file_get_contents( $preview_file );
+
+    if ( false === $html ) {
+        return false;
+    }
+
+    $html = slayerkey_website_prepare_public_html( $html, $slug );
+
+    if ( ! empty( $preview['style'] ) ) {
+        wp_enqueue_style(
+            'slayerkey-live-' . $slug,
+            plugin_dir_url( __FILE__ ) . $preview['style'],
+            array(),
+            slayerkey_website_asset_version( $preview['style'] )
+        );
+    }
+
+    if ( ! empty( $preview['script'] ) ) {
+        wp_enqueue_script(
+            'slayerkey-live-' . $slug,
+            plugin_dir_url( __FILE__ ) . $preview['script'],
+            array(),
+            slayerkey_website_asset_version( $preview['script'] ),
+            true
+        );
+    }
+
+    global $wp_query;
+    if ( $wp_query instanceof WP_Query ) {
+        $wp_query->is_404 = false;
+        $wp_query->is_page = true;
+    }
+
+    status_header( 200 );
+    get_header();
+    echo "\n<!-- " . esc_html( $marker ) . " -->\n";
+    echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    get_footer();
+    exit;
+}
+
+function slayerkey_website_render_public_system() {
+    if ( ! slayerkey_website_is_public_system_request() ) {
+        return;
+    }
+
+    slayerkey_website_render_public_theme_page( 'system-v3', 'Slayerkey live System v4' );
+}
+add_action( 'template_redirect', 'slayerkey_website_render_public_system', 1 );
+
+function slayerkey_website_render_public_system_welcome() {
+    if ( ! slayerkey_website_is_public_system_welcome_request() ) {
+        return;
+    }
+
+    // Post-purchase page: never indexed, never cached.
+    nocache_headers();
+    header( 'X-Robots-Tag: noindex, nofollow, noarchive', true );
+
+    slayerkey_website_render_public_system_welcome_meta_hook();
+    slayerkey_website_render_public_theme_page( 'system-welcome', 'Slayerkey System welcome' );
+}
+add_action( 'template_redirect', 'slayerkey_website_render_public_system_welcome', 1 );
+
+function slayerkey_website_render_public_system_welcome_meta_hook() {
+    add_action(
+        'wp_head',
+        function () {
+            echo '<meta name="robots" content="noindex,nofollow,noarchive">' . "\n";
+        },
+        2
+    );
+}
+
+function slayerkey_website_render_public_terms() {
+    if ( ! slayerkey_website_is_public_terms_request() ) {
+        return;
+    }
+
+    $previews = slayerkey_website_preview_map();
+    $preview = $previews['terms-v1'];
+    $preview_file = plugin_dir_path( __FILE__ ) . $preview['file'];
+
+    if ( ! is_readable( $preview_file ) ) {
+        return;
+    }
+
+    $html = file_get_contents( $preview_file );
+
+    if ( false === $html ) {
+        return;
+    }
+
+    // The Terms page is a complete standalone document with its own head.
+    status_header( 200 );
+    header( 'Content-Type: text/html; charset=' . get_option( 'blog_charset' ) );
+    echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    exit;
+}
+add_action( 'template_redirect', 'slayerkey_website_render_public_terms', 1 );
+
 function slayerkey_website_version_marker() {
     if ( is_admin() ) {
         return;
@@ -386,6 +572,9 @@ function slayerkey_website_health_response() {
             'tracking_asset' => plugin_dir_url( __FILE__ ) . 'assets/js/tracking.js',
             'private_previews_enabled' => true,
             'public_dojo_enabled' => true,
+            'public_system_enabled' => SLAYERKEY_PUBLIC_SYSTEM_ENABLED,
+            'public_system_welcome_enabled' => true,
+            'public_terms_enabled' => true,
             'public_work_enabled' => false,
             'public_work_archived' => true,
             'dojo_assets' => array(
@@ -394,12 +583,21 @@ function slayerkey_website_health_response() {
                 'css_sha256' => slayerkey_website_file_sha256( 'previews/dojo-v3/dojo.css' ),
                 'contains_derek' => false !== $dojo_index && false !== strpos( $dojo_index, 'std-derekvictory.png' ),
             ),
+            'system_assets' => array(
+                'index_sha256' => slayerkey_website_file_sha256( 'previews/system-v3/index.html' ),
+                'js_sha256' => slayerkey_website_file_sha256( 'previews/system-v3/assets/system.js' ),
+                'css_sha256' => slayerkey_website_file_sha256( 'previews/system-v3/assets/system.css' ),
+                'welcome_index_sha256' => slayerkey_website_file_sha256( 'previews/system-welcome/index.html' ),
+            ),
             'hooks' => array(
                 'version_marker_registered' => false !== has_action( 'wp_head', 'slayerkey_website_version_marker' ),
                 'posthog_snippet_registered' => false !== has_action( 'wp_head', 'slayerkey_website_posthog_snippet' ),
                 'tracking_enqueue_registered' => false !== has_action( 'wp_enqueue_scripts', 'slayerkey_website_enqueue_tracking' ),
                 'private_preview_registered' => false !== has_action( 'template_redirect', 'slayerkey_website_render_private_preview' ),
                 'public_dojo_registered' => false !== has_action( 'template_redirect', 'slayerkey_website_render_public_dojo' ),
+                'public_system_registered' => false !== has_action( 'template_redirect', 'slayerkey_website_render_public_system' ),
+                'public_system_welcome_registered' => false !== has_action( 'template_redirect', 'slayerkey_website_render_public_system_welcome' ),
+                'public_terms_registered' => false !== has_action( 'template_redirect', 'slayerkey_website_render_public_terms' ),
                 'public_work_registered' => false !== has_action( 'template_redirect', 'slayerkey_website_render_public_work' ),
             ),
         )

@@ -1,0 +1,64 @@
+<!--
+  Slayerkey Improvement System post-purchase page (/system/welcome).
+  Theme-shell fragment. Stripe's payment link redirects here after a
+  successful checkout. Fires the system_purchase_success PostHog event once.
+
+  OWNER TODO: when the direct Notion access URL is supplied, add a primary
+  access button inside #sw-access (see the HTML comment there). Until then the
+  page points buyers at the Stripe confirmation screen and emailed receipt,
+  which carry the access link.
+-->
+<main id="sk-system-welcome" data-page-variant="system_welcome_v1">
+
+  <section class="sw-hero">
+    <div class="container">
+      <div class="eyebrow">Payment Confirmed</div>
+      <h1>You Own The <span class="accent-teal">System.</span></h1>
+      <p class="lead">Your purchase went through. From here on, "what should I work on?" is a question the System answers for you. Three steps and you're inside.</p>
+    </div>
+  </section>
+
+  <section class="sw-section" id="sw-access">
+    <div class="container">
+      <div class="sw-steps">
+        <article class="sw-step">
+          <b>01</b>
+          <div>
+            <h3>Open Your Access Link</h3>
+            <p>Your access link to the Improvement System is on the Stripe confirmation screen you just came from, and in the receipt Stripe emailed you. Keep that email. It's your permanent way in.</p>
+            <!-- OWNER TODO: replace this comment with the direct access button once the Notion URL is confirmed:
+            <a class="btn" href="NOTION_ACCESS_URL" data-sk-cta="system-welcome-open" data-sk-offer="improvement_system" data-sk-location="welcome_access">Open The System</a>
+            -->
+          </div>
+        </article>
+        <article class="sw-step">
+          <b>02</b>
+          <div>
+            <h3>Join The Discord</h3>
+            <p>The community is where wins get posted, questions get answered, and System updates are announced. Introduce yourself when you land.</p>
+            <a class="btn btn-ghost" href="https://discord.gg/nSfjkEXXKp" data-sk-cta="system-welcome-discord" data-sk-offer="improvement_system" data-sk-location="welcome_discord">Join The Discord</a>
+          </div>
+        </article>
+        <article class="sw-step">
+          <b>03</b>
+          <div>
+            <h3>Start With The Onboarding</h3>
+            <p>Don't browse. Open the guided onboarding and the Starter Sheet first. Your first session is already decided for you, and it's also the first step toward the 30 day guarantee.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="sw-section sw-next" id="sw-mentorship">
+    <div class="container sw-next-card">
+      <div>
+        <div class="eyebrow">Whenever You're Ready</div>
+        <h2>You Own The Method. <span class="accent-teal">He Can Apply It With You.</span></h2>
+        <p>The System is built to work on its own, and for most players it's enough. If you ever want Slayerkey personally applying it to your gameplay, finding the mistakes you can't see yourself, the Private Mentorship is the next level. No pressure, no deadline. It'll be there when you want it.</p>
+      </div>
+      <a class="btn btn-ghost" href="/coaching/" data-sk-cta="system-welcome-mentorship" data-sk-offer="coaching_mentorship" data-sk-location="welcome_upsell">See The Mentorship</a>
+    </div>
+  </section>
+
+</main>
