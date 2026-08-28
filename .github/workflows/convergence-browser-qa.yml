@@ -1,0 +1,207 @@
+name: Convergence Browser QA
+
+on:
+  push:
+    paths:
+      - '.github/workflows/convergence-browser-qa.yml'
+      - 'wordpress/slayerkey-website/previews/convergence/system-convergence-v4/**'
+      - 'wordpress/slayerkey-website/previews/convergence/coaching-convergence-v4/**'
+      - 'wordpress/slayerkey-website/previews/convergence/system-v3/**'
+      - 'wordpress/slayerkey-website/previews/convergence/coaching-v3/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for exact EasyWP deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 36); do
+            DEPLOYED=$(curl -fsSL --max-time 12 'https://slayerkey.com/wp-json/slayerkey/v1/health' | python -c "import json,sys; print(json.load(sys.stdin).get('deployed_commit') or '')" || true)
+            echo "Attempt $i deployed=$DEPLOYED target=$GITHUB_SHA"
+            if [ "$DEPLOYED" = "$GITHUB_SHA" ]; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo 'Exact deployment did not become visible in time.' >&2
+          exit 1
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install chromium
+
+      - name: Run deployed desktop and mobile QA
+        shell: bash
+        run: |
+          mkdir -p qa-artifacts
+          cat > /tmp/convergence-qa.js <<'NODE'
+          const { chromium } = require('playwright');
+          const fs = require('fs');
+
+          const pages = {
+            system: 'https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/convergence/system-convergence-v4/index.html',
+            coaching: 'https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/convergence/coaching-convergence-v4/index.html'
+          };
+          const viewports = {
+            desktop: { width: 1440, height: 900 },
+            mobile: { width: 390, height: 844 }
+          };
+          const expected = {
+            systemStripe: 'https://buy.stripe.com/28EbJ04MV4ege3j8VH04804',
+            coachingFull: 'https://buy.stripe.com/00w28q3IR4eg8IZ8VH04806',
+            coachingPlan: 'https://buy.stripe.com/4gM00i3IR4eg3oF0pb04805'
+          };
+
+          function assert(condition, message, failures) {
+            if (!condition) failures.push(message);
+          }
+
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const report = { sha: process.env.GITHUB_SHA, results: [] };
+            let failed = false;
+
+            for (const [pageName, url] of Object.entries(pages)) {
+              for (const [mode, viewport] of Object.entries(viewports)) {
+                const context = await browser.newContext({ viewport, reducedMotion: 'no-preference' });
+                const page = await context.newPage();
+                const consoleErrors = [];
+                const pageErrors = [];
+                page.on('console', msg => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
+                page.on('pageerror', err => pageErrors.push(String(err)));
+
+                const response = await page.goto(url + '?qa=' + Date.now(), { waitUntil: 'networkidle', timeout: 90000 });
+                const failures = [];
+                assert(response && response.status() === 200, `HTTP status was ${response && response.status()}`, failures);
+
+                await page.waitForTimeout(1200);
+                const root = pageName === 'system' ? '#sk-system' : '#sk-coaching';
+                const rootExists = await page.locator(root).count();
+                assert(rootExists === 1, 'Expected page root not found', failures);
+
+                const computed = rootExists ? await page.locator(root).evaluate(el => {
+                  const cs = getComputedStyle(el);
+                  const h1 = el.querySelector('h1');
+                  const hs = h1 ? getComputedStyle(h1) : null;
+                  return {
+                    background: cs.backgroundColor,
+                    color: cs.color,
+                    fontFamily: cs.fontFamily,
+                    h1FontSize: hs ? hs.fontSize : null,
+                    h1Transform: hs ? hs.textTransform : null
+                  };
+                }) : {};
+                assert(computed.h1FontSize && parseFloat(computed.h1FontSize) > 30, 'Sales page CSS does not appear to be applied to H1', failures);
+                assert(computed.h1Transform === 'uppercase', 'Expected display typography was not applied', failures);
+
+                const overflow = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth }));
+                assert(overflow.scrollWidth <= overflow.clientWidth + 2, `Horizontal overflow ${overflow.scrollWidth} > ${overflow.clientWidth}`, failures);
+
+                const images = await page.locator(`${root} img`).evaluateAll(imgs => imgs.map(img => ({ src: img.currentSrc || img.src, complete: img.complete, width: img.naturalWidth, height: img.naturalHeight })));
+                const brokenImages = images.filter(x => !x.complete || !x.width || !x.height);
+                assert(brokenImages.length === 0, `Broken images: ${brokenImages.map(x => x.src).join(', ')}`, failures);
+
+                const bodyText = await page.locator(root).innerText();
+                for (const stale of ['$197', '$870', '$150', 'ko-fi.com', 'tally.so']) {
+                  assert(!bodyText.includes(stale), `Stale legacy content present: ${stale}`, failures);
+                }
+                assert(!bodyText.toLowerCase().includes('usage guarantee'), 'Old usage guarantee wording is present', failures);
+                assert(!bodyText.toLowerCase().includes('no outcome is guaranteed'), 'Defensive outcome language is present', failures);
+
+                const heroText = await page.locator(`${root} section:first-of-type`).innerText();
+                assert(!heroText.includes('$249') && !heroText.includes('$1,200') && !heroText.includes('$325'), 'Price appears in hero', failures);
+
+                const sections = await page.locator(`${root} section`).evaluateAll(nodes => nodes.map(n => n.id || n.className));
+
+                if (pageName === 'system') {
+                  const src = await page.locator('#systemVideo').getAttribute('src');
+                  assert(src && src.includes('DspVHi5gi88'), `Wrong System VSL src: ${src}`, failures);
+                  const stripeLinks = await page.locator(`a[href^="${expected.systemStripe}"]`).count();
+                  assert(stripeLinks >= 3, `Expected System Stripe CTAs, found ${stripeLinks}`, failures);
+                  assert(sections.indexOf('proof') > 0 && sections.indexOf('why') > sections.indexOf('proof') && sections.indexOf('how') > sections.indexOf('why') && sections.indexOf('inside') > sections.indexOf('how') && sections.indexOf('pricing') > sections.indexOf('inside'), `Unexpected System section order: ${sections.join(' > ')}`, failures);
+
+                  const proof = page.locator('[data-proof-src]').first();
+                  await proof.click();
+                  await page.waitForTimeout(200);
+                  assert(await page.locator('#systemLightbox').evaluate(el => el.classList.contains('open')), 'System proof lightbox did not open', failures);
+                  await page.keyboard.press('Escape');
+                } else {
+                  const src = await page.locator('#coachingVideo').getAttribute('src');
+                  assert(src && src.includes('pEa4AcERI_k'), `Wrong Coaching VSL src: ${src}`, failures);
+                  assert(await page.locator(`a[href^="${expected.coachingFull}"]`).count() === 1, 'Paid in full Stripe CTA missing or duplicated', failures);
+                  assert(await page.locator(`a[href^="${expected.coachingPlan}"]`).count() === 1, 'Four payment Stripe CTA missing or duplicated', failures);
+                  assert(sections.indexOf('proof') > 0 && sections.indexOf('why') > sections.indexOf('proof') && sections.indexOf('mentorship') > sections.indexOf('why') && sections.indexOf('students') > sections.indexOf('mentorship') && sections.indexOf('pricing') > sections.indexOf('students'), `Unexpected Coaching section order: ${sections.join(' > ')}`, failures);
+
+                  const track = page.locator('.ch-review-track');
+                  const before = await track.evaluate(el => getComputedStyle(el).transform);
+                  await page.waitForTimeout(1300);
+                  const after = await track.evaluate(el => getComputedStyle(el).transform);
+                  assert(before !== after && after !== 'none', `Review rail did not move: before=${before} after=${after}`, failures);
+
+                  await page.locator('[data-yt]').first().click();
+                  await page.waitForTimeout(800);
+                  const videoBoxOpen = await page.locator('#coachingVideoLightbox').evaluate(el => el.classList.contains('open'));
+                  assert(videoBoxOpen, 'Coaching testimonial lightbox did not open', failures);
+                  const frameBox = await page.locator('.ch-video-frame').boundingBox();
+                  if (frameBox) {
+                    const ratio = frameBox.width / frameBox.height;
+                    assert(ratio > 1.70 && ratio < 1.82, `Testimonial modal is not 16:9, ratio=${ratio}`, failures);
+                  } else {
+                    failures.push('Testimonial frame has no bounding box');
+                  }
+                  await page.keyboard.press('Escape');
+
+                  const proof = page.locator('[data-proof-src]').first();
+                  await proof.click();
+                  await page.waitForTimeout(200);
+                  assert(await page.locator('#coachingLightbox').evaluate(el => el.classList.contains('open')), 'Coaching proof lightbox did not open', failures);
+                  await page.keyboard.press('Escape');
+                }
+
+                const hero = await page.locator(`${root} section:first-of-type`).boundingBox();
+                const pricing = await page.locator(`${root} #pricing`).boundingBox();
+                const metrics = {
+                  viewport,
+                  scrollHeight: await page.evaluate(() => document.documentElement.scrollHeight),
+                  heroHeight: hero && Math.round(hero.height),
+                  pricingTop: pricing && Math.round(pricing.y),
+                  imageCount: images.length,
+                  sectionOrder: sections,
+                  css: computed,
+                  consoleErrors: consoleErrors.filter(x => !x.includes('ERR_BLOCKED_BY_CLIENT')),
+                  pageErrors
+                };
+                assert(metrics.pageErrors.length === 0, `Page errors: ${metrics.pageErrors.join(' | ')}`, failures);
+
+                await page.screenshot({ path: `qa-artifacts/${pageName}-${mode}.png`, fullPage: true });
+                report.results.push({ page: pageName, mode, failures, metrics });
+                if (failures.length) failed = true;
+                await context.close();
+              }
+            }
+
+            await browser.close();
+            fs.writeFileSync('qa-artifacts/report.json', JSON.stringify(report, null, 2));
+            console.log(JSON.stringify(report, null, 2));
+            if (failed) process.exit(1);
+          })().catch(err => { console.error(err); process.exit(1); });
+          NODE
+          node /tmp/convergence-qa.js
+
+      - name: Upload screenshots and QA report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: convergence-browser-qa-${{ github.sha }}
+          path: qa-artifacts
+          if-no-files-found: warn
