@@ -44,7 +44,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p qa-artifacts
-          cat > /tmp/convergence-qa.js <<'NODE'
+          cat > convergence-qa.js <<'NODE'
           const { chromium } = require('playwright');
           const fs = require('fs');
 
@@ -196,7 +196,7 @@ jobs:
             if (failed) process.exit(1);
           })().catch(err => { console.error(err); process.exit(1); });
           NODE
-          node /tmp/convergence-qa.js
+          node convergence-qa.js
 
       - name: Upload screenshots and QA report
         if: always()
