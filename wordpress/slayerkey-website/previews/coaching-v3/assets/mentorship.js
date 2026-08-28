@@ -46,22 +46,53 @@
       });
     }
 
-    /* Student video testimonials: poster first, iframe only after a click. */
+    /* Student video testimonials: open in a lightbox so short form video gets
+       a proper portrait frame instead of playing inside a small card. */
+    var videoBox = document.getElementById('coachingVideoLightbox');
+    var videoFrame = videoBox && videoBox.querySelector('.ch-video-frame');
+    var videoClose = videoBox && videoBox.querySelector('.ch-video-close');
+    var lastVideoTrigger = null;
+
+    function closeVideo() {
+      if (!videoBox || !videoFrame) return;
+      videoBox.classList.remove('open');
+      videoBox.setAttribute('aria-hidden', 'true');
+      var existing = videoFrame.querySelector('iframe');
+      if (existing) existing.remove();
+      document.body.style.overflow = '';
+      if (lastVideoTrigger) lastVideoTrigger.focus();
+    }
+
     Array.prototype.slice.call(root.querySelectorAll('[data-yt]')).forEach(function (poster) {
       poster.addEventListener('click', function () {
         var videoId = poster.getAttribute('data-yt');
-        if (!videoId) return;
-        var frameWrap = document.createElement('div');
-        frameWrap.className = 'ch-video-embed';
+        if (!videoId || !videoBox || !videoFrame) return;
+        lastVideoTrigger = poster;
+        var existing = videoFrame.querySelector('iframe');
+        if (existing) existing.remove();
+        videoFrame.classList.toggle('is-wide', poster.getAttribute('data-yt-wide') === 'true');
         var iframe = document.createElement('iframe');
         iframe.src = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&rel=0&modestbranding=1&playsinline=1';
         iframe.title = poster.getAttribute('aria-label') || 'Student video testimonial';
         iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
         iframe.setAttribute('allowfullscreen', '');
         iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
-        frameWrap.appendChild(iframe);
-        poster.replaceWith(frameWrap);
+        videoFrame.appendChild(iframe);
+        videoBox.classList.add('open');
+        videoBox.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        if (videoClose) videoClose.focus();
       });
+    });
+
+    if (videoClose) videoClose.addEventListener('click', closeVideo);
+    if (videoBox) {
+      videoBox.addEventListener('click', function (event) {
+        if (event.target === videoBox) closeVideo();
+      });
+    }
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && videoBox && videoBox.classList.contains('open')) closeVideo();
     });
 
     /* Scroll reveal, matching the live homepage motion. */
