@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Slayerkey Private Mentorship v5</title>
+  <link rel="stylesheet" href="../coaching-v3/assets/mentorship.css">
+  <style>
+    html,body{margin:0;background:#07111a;color:#f5f7fa}body{font-family:Inter,Arial,sans-serif}
+    #sk-coaching .ch-hero{padding-top:42px}
+    #sk-coaching .ch-hero .lead{max-width:610px;font-size:1.08rem}
+    #sk-coaching .ch-vsl-caption{display:none}
+    #sk-coaching .ch-hero .ch-proofline{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;font-size:.74rem}
+
+    #sk-coaching .ch-proof-summary{display:none}
+    #sk-coaching .ch-result-card{border:1px solid rgba(255,255,255,.11);background:#09151f;box-shadow:0 20px 50px rgba(0,0,0,.24);overflow:hidden}
+    #sk-coaching .ch-result-card.featured{border-color:rgba(40,223,203,.32)}
+    #sk-coaching .ch-result-caption{padding:18px 18px 20px;text-align:center;border-top:1px solid rgba(255,255,255,.09)}
+    #sk-coaching .ch-result-caption small{display:block;margin-bottom:6px;color:var(--ch-teal);font-size:.64rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
+    #sk-coaching .ch-result-caption strong{display:block;color:#fff;font-family:var(--font-display,'Arial Black',Impact,sans-serif);font-size:clamp(1.04rem,1.7vw,1.42rem);font-weight:400;line-height:1.16;text-transform:uppercase;text-wrap:balance}
+    #sk-coaching .ch-result-caption span{display:block;margin-top:7px;color:#d9e3e8;font-size:.85rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+    #sk-coaching .ch-proof-three .ch-result-caption{padding-inline:12px}
+
+    #sk-coaching .ch-diagnosis{max-width:1050px;margin:0 auto}
+    #sk-coaching .ch-diagnosis .ch-method-grid{margin-top:28px}
+
+    #sk-coaching .ch-mentorship-panel{max-width:1040px;margin:0 auto;border:1px solid rgba(255,255,255,.11);background:linear-gradient(180deg,rgba(15,31,43,.94),rgba(8,20,29,.96));box-shadow:0 24px 64px rgba(0,0,0,.24);padding:30px}
+    #sk-coaching .ch-mentorship-top{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:38px;align-items:start}
+    #sk-coaching .ch-mentorship-lead h3{font-size:1.35rem}
+    #sk-coaching .ch-mentorship-lead p{margin-top:12px;font-size:.92rem;line-height:1.62}
+    #sk-coaching .ch-mentorship-list{list-style:none;padding:0;margin:0;display:grid;gap:13px}
+    #sk-coaching .ch-mentorship-list li{position:relative;padding-left:24px;color:#d9e3e8;font-size:.9rem;line-height:1.48}
+    #sk-coaching .ch-mentorship-list li:before{content:'✓';position:absolute;left:0;color:var(--ch-teal);font-weight:900}
+    #sk-coaching .ch-mentorship-list strong{color:#fff}
+    #sk-coaching .ch-rhythm{margin-top:26px}
+    #sk-coaching .ch-mentorship-cta{margin-top:24px;text-align:center}
+
+    #sk-coaching .ch-video-grid{max-width:620px;grid-template-columns:repeat(2,minmax(0,260px));justify-content:center;gap:22px}
+    #sk-coaching .ch-video-poster{aspect-ratio:9/16;overflow:hidden}
+    #sk-coaching .ch-video-poster img{width:100%;height:100%;aspect-ratio:auto;object-fit:cover;object-position:center}
+    #sk-coaching .ch-video-frame{width:min(1100px,94vw)!important;aspect-ratio:16/9!important;max-height:88vh}
+    #sk-coaching .ch-video-caption{justify-content:center}
+    #sk-coaching .ch-review-track{animation:none!important}
+
+    #sk-coaching .ch-plan-options{max-width:820px;margin-inline:auto;align-items:stretch}
+    #sk-coaching .ch-price-card-plain{min-height:300px!important;padding:26px 28px}
+    #sk-coaching .ch-price-card-plain .ch-per{min-height:18px}
+    #sk-coaching .ch-price-card-plain .ch-per.ch-save{color:var(--ch-teal)}
+    #sk-coaching .ch-price-card-plain .ch-plan-value{max-width:34ch;margin:15px auto 0;padding:0;border:0;background:transparent;color:#9fb0bb;font-size:.8rem;line-height:1.5;text-align:center}
+    #sk-coaching .ch-price-card-plain .ch-pricing-list{display:none}
+    #sk-coaching .ch-price-card-plain .btn{margin-top:auto}
+    #sk-coaching .ch-pricing-fineprint{max-width:700px;margin:16px auto 0;text-align:center;font-size:.78rem}
+
+    #sk-coaching .ch-journey{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);max-width:1080px;gap:38px;align-items:center}
+    #sk-coaching .ch-journey-proof{align-self:center}
+    #sk-coaching .ch-faq-wrap{max-width:900px}
+
+    @media(max-width:900px){
+      #sk-coaching .ch-hero .ch-proofline{grid-template-columns:1fr}
+      #sk-coaching .ch-result-caption strong{font-size:1rem}
+      #sk-coaching .ch-mentorship-top{grid-template-columns:1fr;gap:22px}
+      #sk-coaching .ch-journey{grid-template-columns:1fr;max-width:720px;gap:24px}
+    }
+    @media(max-width:620px){
+      #sk-coaching .ch-hero{padding-top:28px}
+      #sk-coaching .ch-hero .lead{font-size:.98rem;line-height:1.56}
+      #sk-coaching .ch-hero .ch-proofline{gap:7px;margin-top:18px;padding-top:14px}
+      #sk-coaching .ch-result-caption{padding:14px 10px 16px}
+      #sk-coaching .ch-result-caption strong{font-size:.9rem}
+      #sk-coaching .ch-result-caption span{font-size:.72rem}
+      #sk-coaching .ch-mentorship-panel{padding:23px 17px}
+      #sk-coaching .ch-video-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+      #sk-coaching .ch-video-caption{padding:10px 8px;display:block;text-align:center}
+      #sk-coaching .ch-video-caption small{display:block;margin-bottom:3px;font-size:.55rem}
+      #sk-coaching .ch-video-caption strong{font-size:.82rem}
+      #sk-coaching .ch-price-card-plain{min-height:270px!important;padding:24px 20px}
+    }
+  </style>
+</head>
+<body class="slayerkey-preview-coaching-v3">
+<main id="sk-coaching" data-page-variant="coaching_convergence_v5">
+
+<section class="ch-hero" id="top">
+  <div class="container ch-hero-grid">
+    <div class="ch-hero-copy reveal">
+      <div class="eyebrow">Private Valorant Mentorship</div>
+      <h1>Stop Losing Games <span class="accent-red">You Should Be Winning.</span></h1>
+      <p class="lead">I watch your actual games, find what is really holding you back, and stay involved while you fix it.</p>
+      <div class="ch-actions"><a class="btn" href="#mentorship">See The Mentorship</a></div>
+      <div class="ch-proofline">
+        <span><strong>2,000+</strong> players coached</span>
+        <span><strong>1,000,000+</strong> RR gained by players helped</span>
+        <span><strong>300+</strong> five star reviews</span>
+      </div>
+    </div>
+    <div class="ch-vsl reveal d1">
+      <div class="ch-vsl-embed"><iframe id="coachingVideo" title="Slayerkey private Valorant coaching" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe><button id="coachingUnmute" class="ch-unmute" type="button" hidden>🔊 Click for sound</button></div>
+    </div>
+  </div>
+</section>
+
+<section class="ch-section" id="proof">
+  <div class="container">
+    <div class="ch-section-head centered reveal"><div class="eyebrow">Student Results</div><h2>What Players Have Done <span class="accent-teal">With The Right Help.</span></h2></div>
+    <div class="ch-proof-stack">
+      <article class="ch-result-card featured reveal">
+        <button class="ch-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/lazy-site.png"><img loading="eager" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/lazy-site.png" alt="Lazy documented Valorant rank progression"></button>
+        <div class="ch-result-caption"><small>Lazy</small><strong>Diamond 1 → Radiant #91 NA</strong><span>+1,395 RR · Under 2 Months</span></div>
+      </article>
+      <div class="ch-proof-three">
+        <article class="ch-result-card reveal d1"><button class="ch-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/dark-site.png"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/dark-site.png" alt="Darkblood documented Valorant rank progression"></button><div class="ch-result-caption"><small>Darkblood</small><strong>Plat 2 → Immortal 3</strong><span>+1,000 RR · Just Over A Month</span></div></article>
+        <article class="ch-result-card reveal d2"><button class="ch-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/chrake-site.png"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/chrake-site.png" alt="Chrake documented Valorant rank progression"></button><div class="ch-result-caption"><small>Chrake</small><strong>Plat 2 → Ascendant 3</strong><span>+700 RR · 10 Days</span></div></article>
+        <article class="ch-result-card reveal d3"><button class="ch-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/g09-site.png"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/g09-site.png" alt="G09 documented Valorant rank progression"></button><div class="ch-result-caption"><small>G09</small><strong>Gold 2 → Diamond 1</strong><span>+500 RR · Just Over A Month</span></div></article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="ch-section ch-argument" id="why">
+  <div class="container ch-diagnosis">
+    <div class="ch-section-head centered reveal">
+      <div class="eyebrow">Why Coaching Helps</div>
+      <h2>You Can Spot Mistakes And Still <span class="accent-red">Fix The Wrong One.</span></h2>
+      <p class="ch-kicker-copy">The value is not another opinion on your VOD. It is knowing which pattern actually deserves the next week of work.</p>
+    </div>
+    <div class="ch-method-grid reveal d1">
+      <article class="ch-method-step"><b>01</b><h3>Watch</h3><p>Your real games, decisions, mechanics, habits, and recurring patterns.</p></article>
+      <article class="ch-method-step"><b>02</b><h3>Prioritize</h3><p>Reduce everything we see into the one or two changes that matter most.</p></article>
+      <article class="ch-method-step"><b>03</b><h3>Fix</h3><p>Turn the diagnosis into clear notes, routines, and deliberate reps.</p></article>
+      <article class="ch-method-step"><b>04</b><h3>Review</h3><p>Check what changed before moving to the next problem.</p></article>
+    </div>
+  </div>
+</section>
+
+<section class="ch-section" id="mentorship">
+  <div class="container">
+    <div class="ch-section-head centered reveal"><div class="eyebrow">Four Month Private Mentorship</div><h2>I Stay In The Loop <span class="accent-teal">While You Improve.</span></h2></div>
+    <div class="ch-mentorship-panel reveal d1">
+      <div class="ch-mentorship-top">
+        <div class="ch-mentorship-lead">
+          <h3>Eight Private Sessions Across Four Months</h3>
+          <p>Normally two sessions per month. Enough time to find the first problem, apply the correction, see what changed, and keep going when the next bottleneck appears.</p>
+        </div>
+        <ul class="ch-mentorship-list">
+          <li><strong>Personalized VOD analysis</strong> from your actual ranked games</li>
+          <li><strong>Personal improvement priorities</strong> so you know what deserves the work now</li>
+          <li><strong>Priority direct message support</strong> while you are applying the changes</li>
+          <li><strong>Improvement System + Training Dojo access</strong> included with the current offer</li>
+        </ul>
+      </div>
+      <div class="ch-rhythm"><div><small>Session</small><strong>Find the priority</strong></div><i>›</i><div><small>You Play</small><strong>Apply it in ranked</strong></div><i>›</i><div><small>Between</small><strong>Ask while applying it</strong></div><i>›</i><div><small>Next Session</small><strong>Review what changed</strong></div></div>
+      <div class="ch-mentorship-cta"><a class="btn" href="#pricing">Start Your Mentorship</a></div>
+    </div>
+  </div>
+</section>
+
+<section class="ch-section" id="students">
+  <div class="container">
+    <div class="ch-section-head centered reveal"><div class="eyebrow">In Their Own Words</div><div class="ch-stars" aria-label="Five stars">★★★★★</div><h2>What Working Together <span class="accent-teal">Actually Felt Like.</span></h2></div>
+    <div class="ch-video-grid reveal d1">
+      <article class="ch-video-card"><button class="ch-video-poster" type="button" data-yt="xank6Q4xGVE" data-yt-wide="true" aria-label="Play Levi's full video testimonial"><img loading="lazy" decoding="async" src="https://i.ytimg.com/vi/xank6Q4xGVE/hqdefault.jpg" alt="Levi video testimonial preview"><span class="ch-play">▶</span></button><div class="ch-video-caption"><small>Video Testimonial</small><strong>Levi</strong></div></article>
+      <article class="ch-video-card"><button class="ch-video-poster" type="button" data-yt="2-ZQWKZq0Fs" data-yt-wide="true" aria-label="Play Rohit's full video testimonial"><img loading="lazy" decoding="async" src="https://i.ytimg.com/vi/2-ZQWKZq0Fs/hqdefault.jpg" alt="Rohit video testimonial preview"><span class="ch-play">▶</span></button><div class="ch-video-caption"><small>Video Testimonial</small><strong>Rohit</strong></div></article>
+    </div>
+  </div>
+  <div class="ch-review-rail reveal d2" aria-label="Coaching reviews"><div class="ch-review-track">
+    <article><div>★★★★★</div><p>“Plat 1 to Asc 2 in two weeks. 80% win rate.”</p><span>Darkblood</span></article>
+    <article><div>★★★★★</div><p>“First session, instant improvement. Worth every dollar.”</p><span>Flame970</span></article>
+    <article><div>★★★★★</div><p>“Teaches you how to think, not just tips.”</p><span>noctylusproject</span></article>
+    <article><div>★★★★★</div><p>“Catching mistakes every round. Left notes to look back on.”</p><span>romey</span></article>
+    <article><div>★★★★★</div><p>“Straightforward. Spotted my weaknesses and exactly how to fix them.”</p><span>Adams</span></article>
+    <article><div>★★★★★</div><p>“Ranked up twice after just a few sessions.”</p><span>UziOnGod</span></article>
+    <article><div>★★★★★</div><p>“Best feedback I've gotten. Picked out every flaw.”</p><span>three</span></article>
+    <article><div>★★★★★</div><p>“First ever coaching. Clear and concise. Know how to improve.”</p><span>vanjoe</span></article>
+  </div></div>
+</section>
+
+<section class="ch-section" id="pricing">
+  <div class="container">
+    <div class="ch-section-head centered reveal"><div class="eyebrow">Private Mentorship</div><h2>Four Months. <span class="accent-teal">Two Ways To Pay.</span></h2></div>
+    <div class="ch-plan-options reveal d1">
+      <aside class="ch-price-card ch-price-card-premium ch-price-card-plain">
+        <div class="ch-per ch-save">Save $100</div>
+        <div class="ch-price">$1,200</div>
+        <div class="ch-price-sub">one payment</div>
+        <p class="ch-plan-value">The complete four month Mentorship above.</p>
+        <a class="btn" href="https://buy.stripe.com/00w28q3IR4eg8IZ8VH04806?utm_source=slayerkey_site&utm_medium=coaching_convergence_v5&utm_campaign=private_mentorship&utm_content=pricing_full">Start Your Mentorship</a>
+      </aside>
+      <aside class="ch-price-card ch-price-card-plain">
+        <div class="ch-per" aria-hidden="true">&nbsp;</div>
+        <div class="ch-price">$325</div>
+        <div class="ch-price-sub">4 monthly payments · $1,300 total</div>
+        <p class="ch-plan-value">The same four month Mentorship, split across four payments.</p>
+        <a class="btn" href="https://buy.stripe.com/4gM00i3IR4eg3oF0pb04805?utm_source=slayerkey_site&utm_medium=coaching_convergence_v5&utm_campaign=private_mentorship&utm_content=pricing_monthly">Start Your Mentorship</a>
+      </aside>
+    </div>
+    <p class="ch-pricing-fineprint reveal d2">Same Mentorship either way. The four payment option is one fixed purchase split across four monthly payments. <a href="/terms">Terms &amp; Conditions</a>.</p>
+  </div>
+</section>
+
+<section class="ch-section" id="story">
+  <div class="container">
+    <div class="ch-section-head reveal"><div class="eyebrow">Why I Coach This Way</div><h2>My Journey: <span class="accent-red">Bronze 2 To Coach.</span></h2></div>
+    <div class="ch-journey">
+      <ol class="ch-timeline reveal">
+        <li class="ch-tl-bronze"><h3>Bronze 2</h3><p>No plan. Just ranked.</p></li>
+        <li class="ch-tl-diamond"><h3>Hardstuck Diamond 1</h3><p>More effort was not creating more progress, and I could not see what was actually holding me back.</p></li>
+        <li class="ch-tl-coached"><h3>Got Coached</h3><p>Someone else made the blind spots visible.</p></li>
+        <li class="ch-tl-peak"><h3>Immortal 3, Top #568</h3><p>The climb was never about grinding harder. It was clarity.</p></li>
+        <li class="ch-tl-coach"><h3>Coach</h3><p>Thousands of players later, the job is still the same: find what matters and make the next priority clear.</p></li>
+      </ol>
+      <div class="ch-journey-proof reveal d1"><button class="ch-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2025/01/beta-bronze-Copy.png"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2025/01/beta-bronze-Copy.png" alt="Slayerkey Bronze 2 placement screenshot"></button><button class="ch-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2025/01/top600career-copy2.png"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2025/01/top600career-copy2.png" alt="Slayerkey Immortal 3 top 568 screenshot"></button></div>
+    </div>
+  </div>
+</section>
+
+<section class="ch-section" id="faq">
+  <div class="container ch-faq-wrap">
+    <div class="ch-section-head centered reveal"><div class="eyebrow">Still Deciding?</div><h2>The Questions That <span class="accent-teal">Actually Matter.</span></h2></div>
+    <div class="ch-faq reveal d1">
+      <details><summary>Is this useful if I am already Diamond, Ascendant, or Immortal?</summary><p>Yes. Higher level mistakes are often smaller and harder to self diagnose. The coaching comes from your gameplay rather than a generic rank curriculum.</p></details>
+      <details><summary>What happens after I pay?</summary><p>You receive the purchase confirmation and next steps for scheduling your first private session and accessing the included products.</p></details>
+      <details><summary>What if life gets busy during the four months?</summary><p>The current Terms allow one approved pause of up to three weeks for travel, emergencies, health, or similar circumstances.</p></details>
+      <details><summary>Can I stop the four payment option whenever I want?</summary><p>No. It is one fixed four month purchase split across four payments, not a cancel anytime monthly subscription.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="ch-final"><div class="container centered reveal"><div class="eyebrow">Your Next Four Months</div><h2>Stop Trying To <span class="accent-red">Coach Yourself Blind.</span></h2><p>Bring me the games. I will help you decide what actually deserves the work.</p><a class="btn" href="#pricing">Start Your Mentorship</a></div></section>
+
+<div class="ch-video-lightbox" id="coachingVideoLightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Student video testimonial"><button type="button" class="ch-video-close" aria-label="Close video">✕</button><div class="ch-video-frame"></div></div>
+<div class="ch-lightbox" id="coachingLightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Expanded proof image"><button type="button" class="ch-lightbox-close" aria-label="Close image">✕</button><img src="" alt="Expanded proof"></div>
+</main>
+<script src="../coaching-v3/assets/mentorship.js" defer></script>
+<script>
+(function(){
+  function initRail(){
+    var track=document.querySelector('#sk-coaching .ch-review-track');
+    if(!track||track.dataset.liveMarquee) return;
+    var originals=[].slice.call(track.children);
+    if(!originals.length) return;
+    var gap=14;
+    originals.forEach(function(card){track.appendChild(card.cloneNode(true));});
+    var originalWidth=0;
+    originals.forEach(function(card,index){originalWidth+=card.getBoundingClientRect().width;if(index<originals.length-1)originalWidth+=gap;});
+    originalWidth+=gap;
+    var x=0,last=performance.now(),paused=false,speed=24;
+    function draw(){while(-x>=originalWidth)x+=originalWidth;while(x>0)x-=originalWidth;track.style.transform='translate3d('+x+'px,0,0)';}
+    track.addEventListener('mouseenter',function(){paused=true;});
+    track.addEventListener('mouseleave',function(){paused=false;});
+    var drag=null,timer=null;
+    track.addEventListener('touchstart',function(e){paused=true;clearTimeout(timer);drag=e.touches[0].clientX;},{passive:true});
+    track.addEventListener('touchmove',function(e){if(drag===null)return;x+=e.touches[0].clientX-drag;drag=e.touches[0].clientX;draw();},{passive:true});
+    track.addEventListener('touchend',function(){drag=null;timer=setTimeout(function(){paused=false;},1500);});
+    function frame(now){var dt=(now-last)/1000;last=now;if(!paused){x-=speed*dt;draw();}requestAnimationFrame(frame);}
+    requestAnimationFrame(frame);
+    track.dataset.liveMarquee='1';
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initRail);else initRail();
+})();
+</script>
+</body>
+</html>
