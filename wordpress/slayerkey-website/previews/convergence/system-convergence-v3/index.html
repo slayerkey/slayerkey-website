@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Slayerkey Improvement System v3</title>
+  <link rel="stylesheet" href="../system-v3/assets/system.css">
+  <style>
+    html,body{margin:0;background:#07111a;color:#f5f7fa}body{font-family:Inter,Arial,sans-serif}
+    #sk-system .sy-hero{padding-top:42px}
+    #sk-system .sy-hero h1{max-width:13ch}
+    #sk-system .sy-hero .lead{max-width:620px;font-size:1.08rem}
+    #sk-system .sy-vsl-caption{display:none}
+    #sk-system .sy-proofline{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;font-size:.74rem}
+    #sk-system .sy-proofline span:before{content:'✓';margin-right:7px;color:var(--sy-teal)}
+
+    /* Use the same proof treatment already approved on the Dojo. */
+    #sk-system .sy-proof-summary{display:none}
+    #sk-system .sy-result-card{border:1px solid rgba(255,255,255,.11);background:#09151f;box-shadow:0 20px 50px rgba(0,0,0,.24);overflow:hidden}
+    #sk-system .sy-result-card.featured{border-color:rgba(40,223,203,.32)}
+    #sk-system .sy-result-caption{padding:18px 18px 20px;text-align:center;border-top:1px solid rgba(255,255,255,.09)}
+    #sk-system .sy-result-caption small{display:block;margin-bottom:6px;color:var(--sy-teal);font-size:.64rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
+    #sk-system .sy-result-caption strong{display:block;color:#fff;font-family:var(--font-display,'Arial Black',Impact,sans-serif);font-size:clamp(1.04rem,1.7vw,1.42rem);font-weight:400;line-height:1.16;text-transform:uppercase;text-wrap:balance}
+    #sk-system .sy-result-caption span{display:block;margin-top:7px;color:#d9e3e8;font-size:.85rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+    #sk-system .sy-proof-three .sy-result-caption{padding-inline:12px}
+
+    /* Product specific owner proof should lead with the result, not internal labels. */
+    #sk-system .sy-owner-card figcaption{display:block;text-align:center;padding:14px 14px 15px;border-top:1px solid rgba(255,255,255,.09);border-bottom:0}
+    #sk-system .sy-owner-card figcaption small{display:block;margin-bottom:5px;color:var(--sy-teal)}
+    #sk-system .sy-owner-card figcaption strong{display:block;font-size:1rem;line-height:1.2}
+    #sk-system .sy-owner-card figcaption span{display:block;margin-top:5px;color:#d9e3e8;font-size:.76rem;font-weight:900;text-transform:uppercase}
+    #sk-system .sy-owner-card .sy-proof-image{order:-1}
+    #sk-system .sy-owner-card figure{display:flex;flex-direction:column}
+    #sk-system .sy-owner-note{display:none}
+
+    /* A shorter, less inventory heavy product section. */
+    #sk-system .sy-inside-rows{max-width:1000px;margin-inline:auto}
+    #sk-system .sy-inside-row{grid-template-columns:150px 1fr}
+    #sk-system .sy-inside-row p{max-width:66ch}
+
+    #sk-system .sy-value-grid{align-items:start}
+    #sk-system .sy-guarantee{max-width:900px;margin:24px auto 0}
+    #sk-system .sy-alt-path{max-width:760px;margin:24px auto 0;text-align:center;color:#8ea0ac;font-size:.83rem}
+    #sk-system .sy-alt-path a{color:var(--sy-teal);font-weight:900}
+
+    @media(max-width:900px){
+      #sk-system .sy-proofline{grid-template-columns:1fr}
+      #sk-system .sy-result-caption strong{font-size:1rem}
+      #sk-system .sy-inside-row{grid-template-columns:1fr}
+    }
+    @media(max-width:620px){
+      #sk-system .sy-result-caption{padding:14px 10px 16px}
+      #sk-system .sy-result-caption strong{font-size:.9rem}
+      #sk-system .sy-result-caption span{font-size:.72rem}
+    }
+  </style>
+</head>
+<body class="slayerkey-preview-system-v3">
+<main id="sk-system" data-page-variant="system_convergence_v3">
+
+<section class="sy-hero" id="top">
+  <div class="container sy-hero-grid">
+    <div class="sy-hero-copy reveal">
+      <div class="eyebrow">The Improvement System</div>
+      <h1>Know Exactly <span class="accent-teal">What To Improve Next.</span></h1>
+      <p class="lead">Stop bouncing between aim, movement, positioning, agents, maps, mentality, and whatever guide you watched this week. Use one process to decide what matters now, work on it, review it, then move on.</p>
+      <div class="sy-actions">
+        <a class="btn" href="https://buy.stripe.com/28EbJ04MV4ege3j8VH04804?utm_source=slayerkey_site&utm_medium=system_convergence_v3&utm_campaign=improvement_system&utm_content=hero">Get The System</a>
+        <a class="btn btn-ghost" href="#inside">See What's Inside</a>
+      </div>
+      <div class="sy-proofline">
+        <span><strong>One time purchase</strong></span>
+        <span><strong>Lifetime access</strong></span>
+        <span><strong>30 day guarantee</strong></span>
+      </div>
+    </div>
+    <div class="sy-vsl reveal d1">
+      <div class="sy-vsl-embed"><iframe id="systemVideo" title="Inside Slayerkey's Improvement System" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe><button id="systemUnmute" class="sy-unmute" type="button" hidden>🔊 Click for sound</button></div>
+    </div>
+  </div>
+</section>
+
+<section class="sy-section" id="proof">
+  <div class="container">
+    <div class="sy-section-head centered reveal">
+      <div class="eyebrow">Real Players</div>
+      <h2>A Better Process Has To <span class="accent-teal">Show Up In Ranked.</span></h2>
+      <p class="sy-kicker-copy">Results from players Slayerkey has coached, trained, and helped improve.</p>
+    </div>
+    <div class="sy-proof-stack">
+      <article class="sy-result-card featured reveal">
+        <button class="sy-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/lazy-site.png"><img loading="eager" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/lazy-site.png" alt="Lazy documented Valorant rank progression"></button>
+        <div class="sy-result-caption"><small>Lazy</small><strong>Diamond 1 → Radiant #91 NA</strong><span>+1,395 RR · Under 2 Months</span></div>
+      </article>
+      <div class="sy-proof-three">
+        <article class="sy-result-card reveal d1"><button class="sy-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/dark-site.png"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/dark-site.png" alt="Darkblood documented Valorant rank progression"></button><div class="sy-result-caption"><small>Darkblood</small><strong>Plat 2 → Immortal 3</strong><span>+1,000 RR · Just Over A Month</span></div></article>
+        <article class="sy-result-card reveal d2"><button class="sy-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/chrake-site.png"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/chrake-site.png" alt="Chrake documented Valorant rank progression"></button><div class="sy-result-caption"><small>Chrake</small><strong>Plat 2 → Ascendant 3</strong><span>+700 RR · 10 Days</span></div></article>
+        <article class="sy-result-card reveal d3"><button class="sy-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/g09-site.png"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/g09-site.png" alt="G09 documented Valorant rank progression"></button><div class="sy-result-caption"><small>G09</small><strong>Gold 2 → Diamond 1</strong><span>+500 RR · Just Over A Month</span></div></article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sy-section sy-argument" id="why">
+  <div class="container sy-two-col">
+    <div class="reveal">
+      <div class="eyebrow">Why You're Still Stuck</div>
+      <h2>You Already Know A Lot. <span class="accent-red">You Still Don't Know What Matters Today.</span></h2>
+      <p class="sy-body-copy">You save guides, change routines, review your VODs, and still load into ranked without a clear priority.</p>
+      <p class="sy-callout">The problem is not more information. It is deciding what deserves the work now.</p>
+    </div>
+    <div class="sy-reason-list reveal d1">
+      <div class="sy-reason"><b>01</b><div><strong>You change the diagnosis every week.</strong><p>Aim, then movement, then game sense, then your agent. Nothing gets enough focused reps to stick.</p></div></div>
+      <div class="sy-reason"><b>02</b><div><strong>Your VOD review becomes a list.</strong><p>Finding mistakes is easy. Choosing the one that matters most is the useful part.</p></div></div>
+      <div class="sy-reason"><b>03</b><div><strong>Your good games feel accidental.</strong><p>You cannot repeat what worked because there was no stable process behind it.</p></div></div>
+      <div class="sy-reason"><b>04</b><div><strong>You spend practice time searching.</strong><p>Every new guide gives you another thing to try instead of another rep on the same priority.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sy-section" id="how">
+  <div class="container">
+    <div class="sy-section-head centered reveal"><div class="eyebrow">The Improvement Loop</div><h2>Find. Train. Apply. <span class="accent-teal">Review.</span></h2><p class="sy-kicker-copy">You are not trying to finish a course. You are trying to keep solving the highest value problem in your game.</p></div>
+    <div class="sy-method-grid reveal d1">
+      <article class="sy-method-step"><b>01</b><h3>Find</h3><p>Identify the bottleneck that matters most right now.</p></article>
+      <article class="sy-method-step"><b>02</b><h3>Train</h3><p>Use the resource built for that problem and practice it deliberately.</p></article>
+      <article class="sy-method-step"><b>03</b><h3>Apply</h3><p>Queue with one focus so ranked becomes real reps instead of autopilot.</p></article>
+      <article class="sy-method-step"><b>04</b><h3>Review</h3><p>Check whether the change stuck, then choose the next bottleneck.</p></article>
+    </div>
+  </div>
+</section>
+
+<section class="sy-section" id="inside">
+  <div class="container">
+    <div class="sy-section-head centered reveal"><div class="eyebrow">Inside The System</div><h2>The Tools You Need <span class="accent-teal">When You Need Them.</span></h2></div>
+    <article class="sy-proof-featured reveal d1" style="max-width:980px;margin:0 auto 24px"><button class="sy-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/04/CnP_28042026_144928.png"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/04/CnP_28042026_144928.png" alt="Slayerkey Improvement System full content overview"></button></article>
+    <div class="sy-inside-rows reveal d2">
+      <div class="sy-inside-row"><small>Direction</small><div><h3>6 Month Improvement Plan</h3><p>A long term structure so you know what this phase of improvement is actually for.</p></div></div>
+      <div class="sy-inside-row"><small>Fundamentals + Mechanics</small><div><h3>Guide To Immortal, Aim Routines, Aim Masterclass</h3><p>Use the training that matches the mechanical or fundamental problem you are actually trying to solve.</p></div></div>
+      <div class="sy-inside-row"><small>Agents + Maps</small><div><h3>Agent Masterclasses, Map Masterclasses, Main Agent Worksheet</h3><p>Build repeatable plans instead of improvising every round.</p></div></div>
+      <div class="sy-inside-row"><small>Review + Study</small><div><h3>VOD Template, Weekly Reviews, Quest List, Seminars, Pros To Watch, AI Coach</h3><p>Turn mistakes from your own games into the next thing you practice, then use the right examples when you need help applying it.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sy-section" id="owners">
+  <div class="container">
+    <div class="sy-section-head centered reveal"><div class="eyebrow">From System Owners</div><h2>What Happened After They <span class="accent-teal">Actually Used It.</span></h2></div>
+    <div class="sy-owner-grid reveal d1">
+      <div class="sy-owner-col">
+        <article class="sy-owner-card"><figure><button class="sy-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/07/s-deputy.jpg"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/s-deputy.jpg" alt="DeputySanders Improvement System review"></button><figcaption><small>DeputySanders</small><strong>Gold 1 → Platinum 1</strong><span>21 Days</span></figcaption></figure></article>
+        <article class="sy-owner-card"><figure><button class="sy-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/07/s-eternity.jpg"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/s-eternity.jpg" alt="Eternity Improvement System review"></button><figcaption><small>Eternity</small><strong>Diamond 1 → Ascendant 1</strong></figcaption></figure></article>
+      </div>
+      <div class="sy-owner-col">
+        <article class="sy-owner-card"><figure><button class="sy-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/07/s-g09-gold2dia.jpg"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/s-g09-gold2dia.jpg" alt="G09 Improvement System rank progression"></button><figcaption><small>G09</small><strong>Gold 2 → Diamond 1</strong><span>Just Over A Month</span></figcaption></figure></article>
+        <article class="sy-owner-card"><figure><button class="sy-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/07/s-ruin.jpg"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/s-ruin.jpg" alt="Ruin Improvement System review"></button><figcaption><small>Ruin</small><strong>Ascendant → Radiant</strong></figcaption></figure></article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sy-section" id="session">
+  <div class="container">
+    <div class="sy-section-head centered reveal"><div class="eyebrow">For Players With Limited Time</div><h2>You Have 90 Minutes. <span class="accent-red">Don't Spend 30 Searching.</span></h2></div>
+    <div class="sy-session-flow reveal d1"><div><small>Open</small><strong>Your current focus</strong><p>No search rabbit hole.</p></div><i>›</i><div><small>Train</small><strong>The matching problem</strong><p>Use the right resource.</p></div><i>›</i><div><small>Queue</small><strong>With one focus</strong><p>Turn ranked into reps.</p></div><i>›</i><div><small>Review</small><strong>What changed</strong><p>Keep or replace the priority.</p></div></div>
+  </div>
+</section>
+
+<section class="sy-section" id="pricing">
+  <div class="container">
+    <div class="sy-value-grid">
+      <div class="reveal"><div class="eyebrow">One Time Purchase</div><h2>Own The Complete System. <span class="accent-teal">$249. Once.</span></h2><p class="sy-body-copy">No monthly schedule to keep up with. Come back whenever a different problem becomes the bottleneck.</p><div class="sy-checks"><span>Complete self directed Improvement System</span><span>Lifetime access to the purchased System</span><span>Training library, playbooks, templates, seminars, and tools</span><span>30 day guarantee</span></div></div>
+      <aside class="sy-price-card reveal d1"><div class="sy-per">Improvement System</div><div class="sy-price">$249</div><div class="sy-price-sub">one time</div><ul class="sy-pricing-list"><li><span><strong>Complete Improvement System</strong></span></li><li>All current training, playbooks, templates, and tools</li><li>Guided onboarding so you know where to start</li><li>Lifetime access to the purchased System</li></ul><a class="btn" href="https://buy.stripe.com/28EbJ04MV4ege3j8VH04804?utm_source=slayerkey_site&utm_medium=system_convergence_v3&utm_campaign=improvement_system&utm_content=pricing">Get The System</a><p class="sy-price-note">Secure checkout through Stripe. Full access and guarantee terms are in the <a href="/terms">Terms &amp; Conditions</a>.</p></aside>
+    </div>
+    <div class="sy-guarantee reveal d2"><div class="sy-guarantee-badge"><div><strong>30</strong>Day<br>Guarantee</div></div><div><h3>Use It. See If It Helps.</h3><p>Use the System for the full 30 days. If it is not helping you improve, you can request a refund under the published guarantee terms.</p></div></div>
+    <p class="sy-alt-path reveal d2">Want more personal involvement? <a href="/coaching/">See Private Mentorship</a>. Want ongoing coaching and community? <a href="/">See the Training Dojo</a>.</p>
+  </div>
+</section>
+
+<section class="sy-section" id="faq">
+  <div class="container sy-faq-wrap">
+    <div class="sy-section-head centered reveal"><div class="eyebrow">Questions Before You Buy</div><h2>Know What You're <span class="accent-teal">Getting.</span></h2></div>
+    <div class="sy-faq reveal d1">
+      <details><summary>Will this work at my rank?</summary><p>The process stays the same while the priority changes. A lower rank player and a high rank player should not be training the same thing just because they own the same product.</p></details>
+      <details><summary>Why pay when YouTube is free?</summary><p>YouTube gives you information. The System gives you a way to decide what applies to you now, turn it into a priority, and review whether it actually changed.</p></details>
+      <details><summary>Is this a subscription?</summary><p>No. The current offer is a one time $249 purchase with lifetime access to the purchased System as defined in the Terms.</p></details>
+      <details><summary>Do I need private coaching too?</summary><p>No. The System is built for the player who wants to execute the framework independently. Private Mentorship is for someone who wants Slayerkey personally involved in the diagnosis.</p></details>
+      <details><summary>How does the 30 day guarantee work?</summary><p>Use the System for the full 30 day period and follow the published guarantee requirements. Eligible purchasers can then request a refund within the request window in the <a href="/terms">Terms</a>.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="sy-final"><div class="container centered reveal"><div class="eyebrow">Your Next Session</div><h2>Know What To Work On <span class="accent-red">Before You Queue.</span></h2><p>You do the work. The System gives the work an order.</p><a class="btn" href="https://buy.stripe.com/28EbJ04MV4ege3j8VH04804?utm_source=slayerkey_site&utm_medium=system_convergence_v3&utm_campaign=improvement_system&utm_content=final">Get The System</a></div></section>
+
+<div class="sy-lightbox" id="systemLightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Expanded proof image"><button type="button" class="sy-lightbox-close" aria-label="Close image">✕</button><img src="" alt="Expanded proof"></div>
+</main>
+<script src="../system-v3/assets/system.js" defer></script>
+</body>
+</html>
