@@ -1,11 +1,9 @@
-name: Convergence v6 Experience QA
+name: Convergence v7 Experience QA
 
 on:
   push:
     paths:
       - '.github/workflows/convergence-v6-experience-qa.yml'
-      - 'wordpress/slayerkey-website/previews/convergence/coaching-convergence-v6/**'
-      - 'wordpress/slayerkey-website/previews/convergence/system-convergence-v6/**'
   workflow_dispatch:
 
 permissions:
@@ -17,15 +15,15 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
-      - name: Wait for deployed commit
+      - name: Wait for deployed commit and v7 previews
         shell: bash
         run: |
           set -euo pipefail
           for i in $(seq 1 48); do
             D=$(curl -fsSL --max-time 12 -H 'Cache-Control: no-cache' "https://slayerkey.com/wp-json/slayerkey/v1/health?cb=$GITHUB_SHA" | python -c "import json,sys; print(json.load(sys.stdin).get('deployed_commit') or '')" || true)
-            C=$(curl -fsSL --max-time 12 -H 'Cache-Control: no-cache' "https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/convergence/coaching-convergence-v6/index.html?cb=$GITHUB_SHA" || true)
-            S=$(curl -fsSL --max-time 12 -H 'Cache-Control: no-cache' "https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/convergence/system-convergence-v6/index.html?cb=$GITHUB_SHA" || true)
-            if [ "$D" = "$GITHUB_SHA" ] && grep -q 'coaching_convergence_v6' <<<"$C" && grep -q 'system_convergence_v6' <<<"$S"; then exit 0; fi
+            C=$(curl -fsSL --max-time 12 "https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/convergence/coaching-convergence-v7/index.html" || true)
+            S=$(curl -fsSL --max-time 12 "https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/convergence/system-convergence-v7/index.html" || true)
+            if [ "$D" = "$GITHUB_SHA" ] && grep -q 'coaching_convergence_v7' <<<"$C" && grep -q 'system_convergence_v7' <<<"$S"; then exit 0; fi
             sleep 5
           done
           exit 1
@@ -33,79 +31,41 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install chromium
-      - name: Capture buyer experience
+      - name: Render and verify buyer experience
         shell: bash
         run: |
-          mkdir -p v6-qa
-          cat > v6-qa.js <<'NODE'
+          mkdir -p v7-qa
+          cat > v7-qa.js <<'NODE'
           const { chromium } = require('playwright');
           const fs = require('fs');
-          const urls = {
-            coaching:'https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/convergence/coaching-convergence-v6/index.html',
-            system:'https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/convergence/system-convergence-v6/index.html'
-          };
+          const urls={coaching:'https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/convergence/coaching-convergence-v7/index.html',system:'https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/convergence/system-convergence-v7/index.html'};
           const sizes={desktop:{width:1440,height:900},mobile:{width:390,height:844}};
-          async function scrollAll(page,h){
-            const total=await page.evaluate(()=>document.documentElement.scrollHeight);
-            for(let y=0;y<total;y+=Math.max(330,Math.floor(h*.7))){await page.evaluate(v=>scrollTo(0,v),y);await page.waitForTimeout(110)}
-            await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(300);
-          }
-          (async()=>{
-            const browser=await chromium.launch({headless:true});
-            const report=[]; let failed=false;
-            for(const [name,url] of Object.entries(urls)) for(const [mode,viewport] of Object.entries(sizes)){
-              const ctx=await browser.newContext({viewport,reducedMotion:'no-preference'});const page=await ctx.newPage();
-              const errors=[];const failures=[];page.on('pageerror',e=>errors.push(String(e)));
-              const r=await page.goto(url+'?qa='+process.env.GITHUB_SHA,{waitUntil:'domcontentloaded',timeout:90000});await page.waitForTimeout(800);await scrollAll(page,viewport.height);
-              const root=name==='coaching'?'#sk-coaching':'#sk-system';
-              const variant=await page.locator(root).getAttribute('data-page-variant');
-              const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
-              const pricing=await page.locator('#pricing').boundingBox();
-              const hero=await page.locator(`${root} section:first-of-type`).boundingBox();
-              if(!r||r.status()!==200) failures.push('HTTP not 200');
-              if(overflow>2) failures.push('horizontal overflow');
-              if(errors.length) failures.push('page errors');
-              let details={};
+          async function scrollAll(page,h){const total=await page.evaluate(()=>document.documentElement.scrollHeight);for(let y=0;y<total;y+=Math.max(330,Math.floor(h*.7))){await page.evaluate(v=>scrollTo(0,v),y);await page.waitForTimeout(100)}await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(250)}
+          (async()=>{const browser=await chromium.launch({headless:true});const report=[];let failed=false;
+            for(const [name,url] of Object.entries(urls))for(const [mode,viewport] of Object.entries(sizes)){
+              const ctx=await browser.newContext({viewport,reducedMotion:'no-preference'});const page=await ctx.newPage();const errors=[];const failures=[];page.on('pageerror',e=>errors.push(String(e)));
+              const r=await page.goto(url,{waitUntil:'domcontentloaded',timeout:90000});await page.waitForTimeout(800);await scrollAll(page,viewport.height);
+              const root=name==='coaching'?'#sk-coaching':'#sk-system';const variant=await page.locator(root).getAttribute('data-page-variant');const order=await page.locator(`${root} section`).evaluateAll(n=>n.map(x=>x.id||x.className));const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);const pricing=await page.locator('#pricing').boundingBox();const hero=await page.locator(`${root} section:first-of-type`).boundingBox();
+              if(!r||r.status()!==200)failures.push('HTTP not 200');if(overflow>2)failures.push('horizontal overflow');if(errors.length)failures.push('page errors');if(variant!==`${name}_convergence_v7`)failures.push('wrong variant '+variant);
+              let details={order};
               if(name==='coaching'){
-                const order=await page.locator(`${root} section`).evaluateAll(n=>n.map(x=>x.id||x.className));
-                if(!(order.indexOf('proof')<order.indexOf('pricing')&&order.indexOf('pricing')<order.indexOf('more-results'))) failures.push('Coaching price is not between featured and remaining proof');
-                if(await page.locator('#proof .ch-result-card').count()!==1) failures.push('Featured proof section should contain exactly one result');
-                const cta=page.locator(`${root} section:first-of-type a[href="#pricing"]`).first();
-                const href=await cta.getAttribute('href');
-                await cta.click();await page.waitForTimeout(350);
-                const pricingViewportY=(await page.locator('#pricing').boundingBox()).y;
-                const benefitCount=await page.locator('.ch-offer-list li').count();
-                const priceText=await page.locator('#pricing').innerText();
-                const offerBox=await page.locator('.ch-offer-wrap').boundingBox();
-                if(href!=='#pricing') failures.push('hero CTA does not target pricing');
-                if(benefitCount<5) failures.push('pricing does not contain full benefits');
-                if(!priceText.includes('$1,200')||!priceText.includes('4 × $325')) failures.push('pricing options missing');
-                details={href,pricingViewportY,benefitCount,offerHeight:Math.round(offerBox.height),priceText,order};
+                if(!(order.indexOf('proof')<order.indexOf('pricing')&&order.indexOf('pricing')<order.indexOf('more-results')))failures.push('price is not between featured and remaining proof');
+                if(await page.locator('#proof .ch-result-card').count()!==1)failures.push('featured proof count is not one');
+                const cta=page.locator(`${root} section:first-of-type a[href="#pricing"]`).first();if(await cta.count()!==1)failures.push('hero mentorship CTA missing');else{await cta.click();await page.waitForTimeout(300);const y=(await page.locator('#pricing').boundingBox()).y;if(Math.abs(y)>2)failures.push('hero CTA does not land on pricing top');details.pricingViewportY=y;}
+                const priceText=await page.locator('#pricing').innerText();const benefits=await page.locator('.ch-offer-list li').count();if(benefits!==5)failures.push('pricing benefit count '+benefits);if(!priceText.includes('$1,200')||!priceText.includes('4 × $325')||!priceText.includes('8 private sessions'))failures.push('pricing not self contained');details.benefitCount=benefits;details.offerHeight=Math.round((await page.locator('.ch-offer-wrap').boundingBox()).height);
               }else{
-                const order=await page.locator(`${root} section`).evaluateAll(n=>n.map(x=>x.id||x.className));
-                if(!(order.indexOf('proof')<order.indexOf('how')&&order.indexOf('how')<order.indexOf('pricing')&&order.indexOf('pricing')<order.indexOf('inside'))) failures.push('System price is not after mechanism and before deeper contents');
-                const compactCount=await page.locator('.sy-inside-compact > div').count();
-                const inside=await page.locator('#inside').boundingBox();
-                const pricingText=await page.locator('#pricing').innerText();
-                const body=await page.locator(root).innerText();
-                if(await page.locator('img[src*="CnP_28042026_144928.png"]').count()) failures.push('oversized rank chart visual still present');
-                if(body.includes('Diamond 1 → Ascendant 1')) failures.push('unsupported Eternity rank claim present');
-                if(body.includes('6 Month Improvement Plan')) failures.push('six month checklist copy present');
-                details={compactCount,insideHeight:Math.round(inside.height),pricingText,order};
+                if(!(order.indexOf('proof')<order.indexOf('pricing')&&order.indexOf('pricing')<order.indexOf('how')&&order.indexOf('how')<order.indexOf('owner-voices')&&order.indexOf('owner-voices')<order.indexOf('inside')))failures.push('System buyer order wrong');
+                const body=await page.locator(root).innerText();if(body.includes('Diamond 1 → Ascendant 1'))failures.push('unsupported Eternity rank claim');if(body.includes('6 Month Improvement Plan'))failures.push('six month checklist still visible');if(await page.locator('img[src*="CnP_28042026_144928.png"]').count())failures.push('rank chart image still visible');details.insideHeight=Math.round((await page.locator('#inside').boundingBox()).height);details.compactCount=await page.locator('.sy-inside-compact > div').count();
               }
-              await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(250);
-              await page.screenshot({path:`v6-qa/${name}-${mode}.png`,fullPage:true});
-              report.push({name,mode,status:r&&r.status(),variant,overflow,heroHeight:Math.round(hero.height),pricingTop:Math.round(pricing.y),pageHeight:await page.evaluate(()=>document.documentElement.scrollHeight),errors,failures,details});
-              if(failures.length) failed=true;
-              await ctx.close();
+              await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(200);await page.screenshot({path:`v7-qa/${name}-${mode}.png`,fullPage:true});report.push({name,mode,status:r&&r.status(),variant,overflow,heroHeight:Math.round(hero.height),pricingTop:Math.round(pricing.y),pageHeight:await page.evaluate(()=>document.documentElement.scrollHeight),errors,failures,details});if(failures.length)failed=true;await ctx.close();
             }
-            await browser.close();fs.writeFileSync('v6-qa/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));if(failed)process.exit(1);
+            await browser.close();fs.writeFileSync('v7-qa/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));if(failed)process.exit(1);
           })().catch(e=>{console.error(e);process.exit(1)});
           NODE
-          node v6-qa.js
-      - name: Upload screenshots
+          node v7-qa.js
+      - name: Upload v7 screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: convergence-v6-experience-${{ github.sha }}
-          path: v6-qa
+          name: convergence-v7-experience-${{ github.sha }}
+          path: v7-qa
