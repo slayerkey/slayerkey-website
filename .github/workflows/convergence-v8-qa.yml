@@ -1,0 +1,131 @@
+name: Convergence v8 QA
+
+on:
+  push:
+    paths:
+      - '.github/workflows/convergence-v8-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for exact v8 deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 60); do
+            D=$(curl -fsSL --max-time 12 -H 'Cache-Control: no-cache' "https://slayerkey.com/wp-json/slayerkey/v1/health?cb=$GITHUB_SHA" | python -c "import json,sys; print(json.load(sys.stdin).get('deployed_commit') or '')" || true)
+            C=$(curl -fsSL --max-time 12 -H 'Cache-Control: no-cache' "https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/convergence/coaching-convergence-v8/index.html?cb=$GITHUB_SHA" || true)
+            S=$(curl -fsSL --max-time 12 -H 'Cache-Control: no-cache' "https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/convergence/system-convergence-v8/index.html?cb=$GITHUB_SHA" || true)
+            if [ "$D" = "$GITHUB_SHA" ] && grep -q 'coaching_convergence_v8' <<<"$C" && grep -q 'system_convergence_v8' <<<"$S"; then exit 0; fi
+            sleep 5
+          done
+          exit 1
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install chromium
+      - name: Render and verify v8
+        shell: bash
+        run: |
+          mkdir -p v8-qa
+          cat > v8-qa.js <<'NODE'
+          const { chromium } = require('playwright');
+          const fs = require('fs');
+          const base='https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/convergence/';
+          const pages={coaching:base+'coaching-convergence-v8/index.html',system:base+'system-convergence-v8/index.html'};
+          const sizes={desktop:{width:1440,height:900},tablet:{width:900,height:1000},mobile:{width:390,height:844}};
+          async function scrollAll(page,h){
+            const total=await page.evaluate(()=>document.documentElement.scrollHeight);
+            for(let y=0;y<total;y+=Math.max(320,Math.floor(h*.68))){await page.evaluate(v=>scrollTo(0,v),y);await page.waitForTimeout(110)}
+            await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(350);
+          }
+          async function firstPartyBroken(page){
+            return await page.locator('img[src*="slayerkey.com"]').evaluateAll(imgs=>imgs.filter(i=>!i.complete||i.naturalWidth===0).map(i=>i.src));
+          }
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const report=[]; let failed=false;
+            for(const [name,url] of Object.entries(pages)) for(const [mode,viewport] of Object.entries(sizes)){
+              const ctx=await browser.newContext({viewport,reducedMotion:'no-preference'});const page=await ctx.newPage();
+              const errors=[];const failures=[];page.on('pageerror',e=>errors.push(String(e)));
+              const r=await page.goto(url+'?qa='+process.env.GITHUB_SHA,{waitUntil:'domcontentloaded',timeout:90000});await page.waitForTimeout(900);await scrollAll(page,viewport.height);
+              const root=name==='coaching'?'#sk-coaching-v8':'#sk-system-v8';
+              const expected=name+'_convergence_v8';
+              const variant=await page.locator(root).getAttribute('data-page-variant');
+              const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+              const broken=await firstPartyBroken(page);
+              if(!r||r.status()!==200) failures.push('HTTP not 200');
+              if(variant!==expected) failures.push('wrong v8 variant');
+              if(overflow>2) failures.push('horizontal page overflow');
+              if(errors.length) failures.push('page errors');
+              if(broken.length) failures.push('broken first party images: '+broken.join(','));
+              let details={};
+              if(name==='coaching'){
+                const body=await page.locator(root).innerText();
+                const heroCta=page.locator('#top a[href="#pricing"]').first();
+                const vsl=await page.locator('#coachingVsl').getAttribute('src');
+                if(!vsl.includes('pEa4AcERI_k')) failures.push('wrong Coaching VSL');
+                if(!body.includes('$1,200')||!body.includes('4 × $325')||!body.includes('8 Sessions')) failures.push('core Mentorship offer missing');
+                if(await page.locator('#pricing .offer-list li').count()!==6) failures.push('pricing does not contain six benefits');
+                if(body.includes('$870')||body.includes('$150')||body.includes('Ko-fi')||body.includes('Tally')) failures.push('stale Coaching offer present');
+                const proofY=(await page.locator('#proof').boundingBox()).y, priceY=(await page.locator('#pricing').boundingBox()).y, moreY=(await page.locator('#more-results').boundingBox()).y;
+                if(!(proofY<priceY&&priceY<moreY)) failures.push('Coaching buyer order wrong');
+                await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(250);
+                if(await page.locator('#coachingSticky').evaluate(e=>e.classList.contains('show'))) failures.push('Coaching sticky visible before price');
+                await heroCta.click();await page.waitForTimeout(800);
+                const priceViewportY=(await page.locator('#pricing').boundingBox()).y;
+                if(Math.abs(priceViewportY)>8) failures.push('hero CTA does not land at pricing top');
+                if(!(await page.locator('#coachingSticky').evaluate(e=>e.classList.contains('show')))) failures.push('Coaching sticky not visible after pricing');
+                const stickyHref=await page.locator('#coachingSticky a').getAttribute('href');
+                if(!stickyHref.includes('00w28q3IR4eg8IZ8VH04806')) failures.push('wrong Coaching sticky checkout');
+                const proofButton=page.locator('[data-proof]').first();await proofButton.click();await page.waitForTimeout(150);if(!(await page.locator('#proofLightbox').evaluate(e=>e.classList.contains('open')))) failures.push('proof lightbox failed');await page.locator('#proofLightbox .close').click();
+                const videoButton=page.locator('[data-video="xank6Q4xGVE"]');await videoButton.click();await page.waitForTimeout(250);const vb=await page.locator('.video-box').boundingBox();const vif=await page.locator('.video-box iframe').getAttribute('src');if(!vif.includes('xank6Q4xGVE')) failures.push('testimonial video wrong');if(Math.abs(vb.width/vb.height-16/9)>.05) failures.push('testimonial modal not 16:9');await page.locator('#videoLightbox .close').click();
+                if(await page.locator('#story .stage').count()!==5) failures.push('Bronze to Coach timeline incomplete');
+                if(mode==='mobile'){const grid=page.locator('#more-results .result-grid');const dims=await grid.evaluate(e=>({sw:e.scrollWidth,cw:e.clientWidth,overflow:getComputedStyle(e).overflowX}));if(!(dims.sw>dims.cw&&['auto','scroll'].includes(dims.overflow))) failures.push('mobile transformation carousel not horizontally scrollable');details.carousel=dims}
+                details={...details,proofY:Math.round(proofY),pricingY:Math.round(priceY),moreY:Math.round(moreY),priceViewportY,stickyHref};
+                await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(250);
+                if(mode==='desktop'){await page.locator('#pricing').screenshot({path:'v8-qa/coaching-pricing-desktop.png'});await page.locator('#story').screenshot({path:'v8-qa/coaching-story-desktop.png'})}
+                if(mode==='mobile'){await page.locator('#pricing').screenshot({path:'v8-qa/coaching-pricing-mobile.png'});await page.locator('#story').screenshot({path:'v8-qa/coaching-story-mobile.png'})}
+              }else{
+                const body=await page.locator(root).innerText();
+                const vsl=await page.locator('#systemVsl').getAttribute('src');
+                if(!vsl.includes('DspVHi5gi88')) failures.push('wrong System VSL');
+                if(!body.includes('$249')||!body.includes('Lifetime access')||!body.includes('30 day guarantee')) failures.push('core System offer missing');
+                if(body.includes('$197')||body.includes('6 Month Improvement Plan')||body.includes('Diamond 1 → Ascendant 1')||body.includes('Stripe sends')||body.includes('Ko-fi')) failures.push('forbidden System copy present');
+                if(body.includes('+')&&body.includes('Ruin')&&body.includes('Radiant')&&/Ruin[\s\S]{0,160}\+\d/.test(body)) failures.push('fake Ruin RR present');
+                if(await page.locator('img[src*="CnP_28042026_144928.png"]').count()) failures.push('giant System spreadsheet visual present');
+                const proofY=(await page.locator('#proof').boundingBox()).y, priceY=(await page.locator('#pricing').boundingBox()).y, howY=(await page.locator('#how').boundingBox()).y;
+                if(!(proofY<priceY&&priceY<howY)) failures.push('System price not early enough');
+                if(await page.locator('.loop-node').count()!==4||await page.locator('.loop-center').count()!==1) failures.push('signature loop incomplete');
+                await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(250);if(await page.locator('#systemSticky').evaluate(e=>e.classList.contains('show'))) failures.push('System sticky visible before price');
+                await page.locator('#pricing').scrollIntoViewIfNeeded();await page.waitForTimeout(350);if(!(await page.locator('#systemSticky').evaluate(e=>e.classList.contains('show')))) failures.push('System sticky not visible after pricing');
+                const stickyHref=await page.locator('#systemSticky a').getAttribute('href');if(!stickyHref.includes('28EbJ04MV4ege3j8VH04804')) failures.push('wrong System sticky checkout');
+                const proofButton=page.locator('[data-proof]').first();await proofButton.click();await page.waitForTimeout(150);if(!(await page.locator('#proofLightbox').evaluate(e=>e.classList.contains('open')))) failures.push('System proof lightbox failed');await page.locator('#proofLightbox .close').click();
+                details={proofY:Math.round(proofY),pricingY:Math.round(priceY),howY:Math.round(howY),pricingFraction:+(priceY/(await page.evaluate(()=>document.documentElement.scrollHeight))).toFixed(3),stickyHref};
+                await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(250);
+                if(mode==='desktop'){await page.locator('#pricing').screenshot({path:'v8-qa/system-pricing-desktop.png'});await page.locator('#how').screenshot({path:'v8-qa/system-loop-desktop.png'})}
+                if(mode==='mobile'){await page.locator('#pricing').screenshot({path:'v8-qa/system-pricing-mobile.png'});await page.locator('#how').screenshot({path:'v8-qa/system-loop-mobile.png'})}
+              }
+              await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(250);await page.screenshot({path:`v8-qa/${name}-${mode}.png`,fullPage:true});
+              report.push({name,mode,status:r&&r.status(),variant,overflow,broken,errors,failures,pageHeight:await page.evaluate(()=>document.documentElement.scrollHeight),details});if(failures.length)failed=true;await ctx.close();
+            }
+            for(const [name,url] of Object.entries(pages)){
+              const ctx=await browser.newContext({viewport:{width:1200,height:800},reducedMotion:'reduce'});const page=await ctx.newPage();await page.goto(url+'?reduced='+process.env.GITHUB_SHA,{waitUntil:'domcontentloaded',timeout:90000});await page.waitForTimeout(600);const root=name==='coaching'?'#sk-coaching-v8':'#sk-system-v8';const opacity=await page.locator(root+' .reveal').first().evaluate(e=>getComputedStyle(e).opacity);if(opacity!=='1'){failed=true;report.push({name,mode:'reduced-motion',failures:['reveals hidden under reduced motion']})}if(name==='coaching'){const anim=await page.locator('.rail-track').evaluate(e=>getComputedStyle(e).animationName);if(anim!=='none'){failed=true;report.push({name,mode:'reduced-motion',failures:['review rail still animates']})}}await ctx.close();
+            }
+            await browser.close();fs.writeFileSync('v8-qa/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));if(failed)process.exit(1);
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+          node v8-qa.js
+      - name: Upload v8 screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: convergence-v8-qa-${{ github.sha }}
+          path: v8-qa
