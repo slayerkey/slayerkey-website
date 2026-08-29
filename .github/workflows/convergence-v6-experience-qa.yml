@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - '.github/workflows/convergence-v6-experience-qa.yml'
+      - 'wordpress/slayerkey-website/previews/convergence/coaching-convergence-v6/**'
+      - 'wordpress/slayerkey-website/previews/convergence/system-convergence-v6/**'
   workflow_dispatch:
 
 permissions:
@@ -50,43 +52,59 @@ jobs:
           }
           (async()=>{
             const browser=await chromium.launch({headless:true});
-            const report=[];
+            const report=[]; let failed=false;
             for(const [name,url] of Object.entries(urls)) for(const [mode,viewport] of Object.entries(sizes)){
               const ctx=await browser.newContext({viewport,reducedMotion:'no-preference'});const page=await ctx.newPage();
-              const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+              const errors=[];const failures=[];page.on('pageerror',e=>errors.push(String(e)));
               const r=await page.goto(url+'?qa='+process.env.GITHUB_SHA,{waitUntil:'domcontentloaded',timeout:90000});await page.waitForTimeout(800);await scrollAll(page,viewport.height);
               const root=name==='coaching'?'#sk-coaching':'#sk-system';
               const variant=await page.locator(root).getAttribute('data-page-variant');
               const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
               const pricing=await page.locator('#pricing').boundingBox();
               const hero=await page.locator(`${root} section:first-of-type`).boundingBox();
+              if(!r||r.status()!==200) failures.push('HTTP not 200');
+              if(overflow>2) failures.push('horizontal overflow');
+              if(errors.length) failures.push('page errors');
               let details={};
               if(name==='coaching'){
+                const order=await page.locator(`${root} section`).evaluateAll(n=>n.map(x=>x.id||x.className));
+                if(!(order.indexOf('proof')<order.indexOf('pricing')&&order.indexOf('pricing')<order.indexOf('more-results'))) failures.push('Coaching price is not between featured and remaining proof');
+                if(await page.locator('#proof .ch-result-card').count()!==1) failures.push('Featured proof section should contain exactly one result');
                 const cta=page.locator(`${root} section:first-of-type a[href="#pricing"]`).first();
                 const href=await cta.getAttribute('href');
                 await cta.click();await page.waitForTimeout(350);
-                const scrollY=await page.evaluate(()=>scrollY);
-                const pricingAfter=await page.locator('#pricing').boundingBox();
+                const pricingViewportY=(await page.locator('#pricing').boundingBox()).y;
                 const benefitCount=await page.locator('.ch-offer-list li').count();
                 const priceText=await page.locator('#pricing').innerText();
                 const offerBox=await page.locator('.ch-offer-wrap').boundingBox();
-                details={href,scrollY,pricingViewportY:pricingAfter.y-scrollY,benefitCount,offerHeight:Math.round(offerBox.height),priceText};
+                if(href!=='#pricing') failures.push('hero CTA does not target pricing');
+                if(benefitCount<5) failures.push('pricing does not contain full benefits');
+                if(!priceText.includes('$1,200')||!priceText.includes('4 × $325')) failures.push('pricing options missing');
+                details={href,pricingViewportY,benefitCount,offerHeight:Math.round(offerBox.height),priceText,order};
               }else{
+                const order=await page.locator(`${root} section`).evaluateAll(n=>n.map(x=>x.id||x.className));
+                if(!(order.indexOf('proof')<order.indexOf('how')&&order.indexOf('how')<order.indexOf('pricing')&&order.indexOf('pricing')<order.indexOf('inside'))) failures.push('System price is not after mechanism and before deeper contents');
                 const compactCount=await page.locator('.sy-inside-compact > div').count();
                 const inside=await page.locator('#inside').boundingBox();
                 const pricingText=await page.locator('#pricing').innerText();
-                details={compactCount,insideHeight:Math.round(inside.height),pricingText};
+                const body=await page.locator(root).innerText();
+                if(await page.locator('img[src*="CnP_28042026_144928.png"]').count()) failures.push('oversized rank chart visual still present');
+                if(body.includes('Diamond 1 → Ascendant 1')) failures.push('unsupported Eternity rank claim present');
+                if(body.includes('6 Month Improvement Plan')) failures.push('six month checklist copy present');
+                details={compactCount,insideHeight:Math.round(inside.height),pricingText,order};
               }
               await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(250);
               await page.screenshot({path:`v6-qa/${name}-${mode}.png`,fullPage:true});
-              report.push({name,mode,status:r&&r.status(),variant,overflow,heroHeight:Math.round(hero.height),pricingTop:Math.round(pricing.y),pageHeight:await page.evaluate(()=>document.documentElement.scrollHeight),errors,details});
+              report.push({name,mode,status:r&&r.status(),variant,overflow,heroHeight:Math.round(hero.height),pricingTop:Math.round(pricing.y),pageHeight:await page.evaluate(()=>document.documentElement.scrollHeight),errors,failures,details});
+              if(failures.length) failed=true;
               await ctx.close();
             }
-            await browser.close();fs.writeFileSync('v6-qa/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
+            await browser.close();fs.writeFileSync('v6-qa/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));if(failed)process.exit(1);
           })().catch(e=>{console.error(e);process.exit(1)});
           NODE
           node v6-qa.js
       - name: Upload screenshots
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: convergence-v6-experience-${{ github.sha }}
