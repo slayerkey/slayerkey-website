@@ -1,0 +1,291 @@
+name: Build Live Refresh Candidates
+
+on:
+  push:
+    paths:
+      - '.github/workflows/build-live-refresh-candidates.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install parser
+        run: python -m pip install --quiet requests beautifulsoup4
+
+      - name: Fetch live pages and build conservative refresh candidates
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          from urllib.parse import urljoin
+          import requests
+          from bs4 import BeautifulSoup, NavigableString
+
+          ROOT = Path('wordpress/slayerkey-website/previews/live-refresh')
+          ROOT.mkdir(parents=True, exist_ok=True)
+
+          SYSTEM_CHECKOUT = 'https://buy.stripe.com/28EbJ04MV4ege3j8VH04804'
+          COACHING_FULL = 'https://buy.stripe.com/00w28q3IR4eg8IZ8VH04806'
+          COACHING_FOUR = 'https://buy.stripe.com/4gM00i3IR4eg3oF0pb04805'
+
+          session = requests.Session()
+          session.headers['User-Agent'] = 'Mozilla/5.0 SlayerkeyLiveRefresh/1.0'
+
+          def fetch(url):
+              r = session.get(url, timeout=45)
+              r.raise_for_status()
+              return r.text
+
+          def text_replace(soup, old, new):
+              hits = 0
+              for node in list(soup.find_all(string=True)):
+                  if node.parent and node.parent.name in ('script','style'):
+                      continue
+                  if old in str(node):
+                      node.replace_with(NavigableString(str(node).replace(old, new)))
+                      hits += 1
+              return hits
+
+          def exact_text_replace(soup, old, new):
+              hits = 0
+              for node in list(soup.find_all(string=True)):
+                  if node.parent and node.parent.name in ('script','style'):
+                      continue
+                  if str(node).strip() == old:
+                      lead = str(node)[:len(str(node))-len(str(node).lstrip())]
+                      trail = str(node)[len(str(node).rstrip()):]
+                      node.replace_with(NavigableString(lead + new + trail))
+                      hits += 1
+              return hits
+
+          def anchors(soup, contains):
+              out=[]
+              for a in soup.find_all('a'):
+                  if contains.lower() in a.get_text(' ', strip=True).lower():
+                      out.append(a)
+              return out
+
+          def set_anchor(a, href=None, text=None):
+              if href is not None:
+                  a['href'] = href
+                  a['target'] = '_self'
+              if text is not None:
+                  # Preserve nested Elementor span if present.
+                  leaf = None
+                  for s in a.find_all(string=True):
+                      if s.strip():
+                          leaf = s
+                          break
+                  if leaf is not None:
+                      leaf.replace_with(NavigableString(text))
+                  else:
+                      a.string = text
+
+          def normalize_urls(soup, page_url):
+              for tag in soup.find_all(True):
+                  for attr in ('href','src','action','poster'):
+                      val = tag.get(attr)
+                      if not val or not isinstance(val, str):
+                          continue
+                      low = val.lower()
+                      if val.startswith('//'):
+                          tag[attr] = 'https:' + val
+                      elif val.startswith('/') or val.startswith('#') or low.startswith(('http://','https://','mailto:','tel:','javascript:','data:')):
+                          pass
+                      else:
+                          tag[attr] = urljoin(page_url, val)
+                  if tag.has_attr('srcset'):
+                      parts=[]
+                      for item in str(tag['srcset']).split(','):
+                          item=item.strip()
+                          if not item: continue
+                          bits=item.split()
+                          u=bits[0]
+                          if u.startswith('//'): u='https:'+u
+                          elif not u.startswith('/') and not u.lower().startswith(('http://','https://','data:')):
+                              u=urljoin(page_url,u)
+                          parts.append(' '.join([u]+bits[1:]))
+                      tag['srcset']=', '.join(parts)
+
+          def set_img_by_alt(soup, alt_contains, src, alt, caption_old=None, caption_new=None):
+              changed = 0
+              for img in soup.find_all('img'):
+                  if alt_contains.lower() in (img.get('alt') or '').lower():
+                      img['src'] = src
+                      img['alt'] = alt
+                      for attr in list(img.attrs):
+                          if attr in ('srcset','sizes','data-lazy-src','data-src','data-srcset'):
+                              del img.attrs[attr]
+                      changed += 1
+              if caption_old and caption_new:
+                  text_replace(soup, caption_old, caption_new)
+              return changed
+
+          def insert_anchor_before_heading(soup, heading_text, anchor_id):
+              for tag in soup.find_all(['h1','h2','h3','h4','div','span']):
+                  if tag.get_text(' ', strip=True) == heading_text:
+                      marker = soup.new_tag('div', id=anchor_id)
+                      marker['style'] = 'position:relative;top:-24px;height:0;overflow:hidden;'
+                      tag.insert_before(marker)
+                      return True
+              return False
+
+          def add_marker(soup, value):
+              if soup.head:
+                  meta=soup.new_tag('meta')
+                  meta['name']='slayerkey-candidate'
+                  meta['content']=value
+                  soup.head.append(meta)
+
+          # ---------------- COACHING ----------------
+          coaching_url = 'https://slayerkey.com/coaching/'
+          raw = fetch(coaching_url)
+          base = ROOT / 'coaching-live-baseline-20260828'
+          base.mkdir(parents=True, exist_ok=True)
+          (base/'index.html').write_text(raw, encoding='utf-8')
+
+          soup = BeautifulSoup(raw, 'html.parser')
+          normalize_urls(soup, coaching_url)
+          add_marker(soup, 'coaching-live-refresh-v1')
+
+          # Fix the visibly broken live headline only.
+          exact_text_replace(soup, 'Stop Losing You Should Be Winning', 'Stop Losing Games You Should Be Winning')
+
+          # Preserve the live proof layout, swap only the older/weak transformation proof.
+          set_img_by_alt(
+              soup, 'Lazy rank progression',
+              'https://slayerkey.com/wp-content/uploads/2026/08/lazy-site.png',
+              'Lazy climbed from Diamond 1 to Radiant #91 NA, gaining 1,395 RR in 47 days',
+              'Lazy • Plat to Radiant, 795 RR',
+              'Lazy • Diamond 1 to Radiant #91 NA • +1,395 RR • Under 2 Months'
+          )
+          set_img_by_alt(
+              soup, 'aidNbsns rank progression',
+              'https://slayerkey.com/wp-content/uploads/2026/08/dark-site.png',
+              'Darkblood climbed from Platinum 2 to Immortal 3, gaining 1,000 RR in 39 days',
+              'aidNbsns • Plat to Ascendant 2',
+              'Darkblood • Plat 2 to Immortal 3 • +1,000 RR • Just Over A Month'
+          )
+          set_img_by_alt(
+              soup, 'Rohit rank progression',
+              'https://slayerkey.com/wp-content/uploads/2026/08/chrake-site.png',
+              'Chrake climbed from Platinum 2 to Ascendant 3, gaining 700 RR in 10 days',
+              'Rohit • Plat to Immortal',
+              'Chrake • Plat 2 to Ascendant 3 • +700 RR • 10 Days'
+          )
+
+          # Keep the existing two-card visual offer. Update the obsolete products into the two current ways to buy the same mentorship.
+          insert_anchor_before_heading(soup, 'Work With Me 1:1', 'coaching-offer')
+          exact_text_replace(soup, 'Single Session', 'Private Mentorship')
+          exact_text_replace(soup, '$150 one-time', '$1,200 paid in full')
+          text_replace(soup, 'A focused 1:1 VOD review and coaching session. Book directly, no application.', 'Four months of private coaching built around your actual games, weaknesses, and improvement priorities.')
+          exact_text_replace(soup, 'Personalized VOD review', '8 private sessions across 4 months')
+          exact_text_replace(soup, 'Clear, actionable fixes', 'Personalized VOD analysis + clear improvement priorities')
+          exact_text_replace(soup, 'Book a time that works for you', 'Priority DM support between sessions')
+          text_replace(soup, 'Credits toward the full program if you upgrade within 14 days.', 'Includes lifetime Improvement System + Training Dojo access with the current offer.')
+
+          exact_text_replace(soup, 'Performance Mentorship', 'Four Monthly Payments')
+          exact_text_replace(soup, '$870 one-time', '$325 × 4')
+          text_replace(soup, 'A complete, structured program to rebuild your game from the ground up.', 'Same four-month Private Mentorship, split into four monthly payments. $1,300 total.')
+          text_replace(soup, '6 private 1:1 sessions over 90 days, from full diagnostic to long-term plan', '8 private sessions across 4 months')
+          text_replace(soup, 'A custom improvement roadmap built around your exact weaknesses', 'Personal improvement plan and priorities')
+          text_replace(soup, 'Personalized VOD reviews that turn every game into specific, fixable mistakes', 'Personalized VOD review and analysis')
+          text_replace(soup, 'Your own agent & map playbook, built around how you actually play', 'Priority DM support between sessions')
+          text_replace(soup, "Direct voice-note access between sessions, so you're never stuck waiting", 'Lifetime Improvement System access included')
+          text_replace(soup, 'Full Improvement System included ($197 value) + private student community', 'Training Dojo access included')
+          text_replace(soup, 'Try the Improvement System, $197 one-time', 'Try the Improvement System, $249 one-time')
+
+          # Current purchase destinations.
+          for a in anchors(soup, 'Book a Session'):
+              set_anchor(a, COACHING_FULL, 'Start Your Mentorship')
+          for a in anchors(soup, 'Start the Program'):
+              set_anchor(a, COACHING_FOUR, 'Use 4 Payments')
+          for a in anchors(soup, 'Book Coaching'):
+              set_anchor(a, '#coaching-offer', 'See Mentorship')
+          for a in soup.find_all('a'):
+              href = (a.get('href') or '').lower()
+              label = a.get_text(' ', strip=True).lower()
+              if 'tally.so' in href:
+                  set_anchor(a, '#coaching-offer', 'See Mentorship' if 'book' in label else None)
+
+          # Current process wording, same four-step live structure.
+          exact_text_replace(soup, 'Book', 'Start')
+          text_replace(soup, 'Choose a time that works for you and share your goals.', 'Choose how you want to pay, then schedule your first session and share your goals.')
+          text_replace(soup, 'Your climb starts with one session', 'Your mentorship starts with one decision')
+
+          # Remove obvious stale footer service naming without changing footer layout.
+          text_replace(soup, '($$$) Coaching Program', 'Private Mentorship')
+          text_replace(soup, '($$) Monthly Coaching', 'Four Monthly Payments')
+          text_replace(soup, '($) Resources + Community', 'Training Dojo')
+          text_replace(soup, '(FREE) Starter Pack', 'Free Improvement Plan')
+
+          out = ROOT / 'coaching-live-refresh-v1'
+          out.mkdir(parents=True, exist_ok=True)
+          (out/'index.html').write_text(str(soup), encoding='utf-8')
+
+          # ---------------- SYSTEM ----------------
+          system_url = 'https://slayerkey.com/system/'
+          raw = fetch(system_url)
+          base = ROOT / 'system-live-baseline-20260828'
+          base.mkdir(parents=True, exist_ok=True)
+          (base/'index.html').write_text(raw, encoding='utf-8')
+
+          soup = BeautifulSoup(raw, 'html.parser')
+          normalize_urls(soup, system_url)
+          add_marker(soup, 'system-live-refresh-v1')
+
+          # Current product price and checkout. Keep live layout and pacing intact.
+          text_replace(soup, '$197', '$249')
+          for a in soup.find_all('a'):
+              href = a.get('href') or ''
+              label = a.get_text(' ', strip=True)
+              if 'ko-fi.com/s/e34dd9cdef' in href or 'get the system' in label.lower():
+                  set_anchor(a, SYSTEM_CHECKOUT, None)
+
+          # Same live proof cards, only make the labels specific and current.
+          text_replace(soup, 'g09 • Gold to Diamond', 'g09 • Gold 2 to Diamond 1 • +500 RR • 35 Days')
+          text_replace(soup, 'Ruin • Ascendant to Radiant', 'Ruin • Ascendant 2 to Radiant')
+
+          # Stop making testimonial captions claim transformations the visible quote does not establish.
+          text_replace(soup, 'Eternity Diamond 1 → Ascendant 1', 'Eternity • Thought he had little to learn → quickly proven wrong')
+          text_replace(soup, 'FreezeChamp Busy schedule → consistent progress', 'FreezeChamp • System owner')
+          text_replace(soup, 'Tecz Diamond 1 → Radiant 215 RR', 'Tecz • Diamond 1 → Radiant #215 • 621 RR')
+
+          # Customer-facing guarantee language: concise, while pointing exact requirements back to current terms.
+          text_replace(soup, "30-day money-back guarantee. Use it, and if it doesn't help, full refund.", '30-day guarantee.')
+          text_replace(soup, "Complete the onboarding and if it's genuinely not helping you improve, message me for a full refund. All I ask is that you actually use it.", 'Your purchase includes a 30-day guarantee. See the current Terms & Conditions for the exact eligibility and request requirements.')
+
+          # Current product ladder values only. Preserve the existing Three Ways To Improve layout.
+          text_replace(soup, '$15/month', '$19.99/month')
+          text_replace(soup, 'From $150', '4-month mentorship')
+
+          # Remove obvious stale footer service naming without redesigning it.
+          text_replace(soup, '($$$) Coaching Program', 'Private Mentorship')
+          text_replace(soup, '($$) Monthly Coaching', 'Four Monthly Payments')
+          text_replace(soup, '($) Resources + Community', 'Training Dojo')
+          text_replace(soup, '(FREE) Starter Pack', 'Free Improvement Plan')
+
+          out = ROOT / 'system-live-refresh-v1'
+          out.mkdir(parents=True, exist_ok=True)
+          (out/'index.html').write_text(str(soup), encoding='utf-8')
+
+          print('Built raw baselines + conservative refresh candidates')
+          PY
+
+      - name: Commit candidates
+        run: |
+          git config user.name "slayerkey"
+          git config user.email "34904637+slayerkey@users.noreply.github.com"
+          git add wordpress/slayerkey-website/previews/live-refresh
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "Clone live sales pages into conservative refresh candidates"
+          git push
