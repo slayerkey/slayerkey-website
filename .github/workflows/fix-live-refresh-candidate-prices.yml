@@ -1,0 +1,85 @@
+name: Fix Live Refresh Candidate Prices
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-live-refresh-candidate-prices.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install parser
+        run: python -m pip install --quiet beautifulsoup4
+      - name: Correct split price elements and validate stale offer data
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          from bs4 import BeautifulSoup
+
+          root = Path('wordpress/slayerkey-website/previews/live-refresh')
+
+          cpath = root/'coaching-live-refresh-v1'/'index.html'
+          soup = BeautifulSoup(cpath.read_text(encoding='utf-8'), 'html.parser')
+          pricing = soup.select_one('#coaching-pricing')
+          if pricing is None:
+              raise SystemExit('Missing #coaching-pricing')
+          cards = pricing.select('.price-card')
+          if len(cards) < 2:
+              raise SystemExit(f'Expected two live pricing cards, found {len(cards)}')
+
+          amount = cards[0].select_one('.price .amount')
+          per = cards[0].select_one('.price .per')
+          amount2 = cards[1].select_one('.price .amount')
+          per2 = cards[1].select_one('.price .per')
+          if not all((amount, per, amount2, per2)):
+              raise SystemExit('Missing live pricing amount/per elements')
+          amount.string = '$1,200'
+          per.string = 'paid in full'
+          amount2.string = '$325'
+          per2.string = '× 4'
+
+          visible = soup.get_text(' ', strip=True)
+          if '$150' in visible or '$870' in visible or '$197' in visible:
+              raise SystemExit('Stale Coaching price remains in visible content')
+          if '6 private 1:1 sessions over 90 days' in visible:
+              raise SystemExit('Stale Coaching duration remains')
+          if not any(a.get('href') == 'https://buy.stripe.com/00w28q3IR4eg8IZ8VH04806' for a in soup.find_all('a')):
+              raise SystemExit('Paid-in-full Stripe checkout missing')
+          if not any(a.get('href') == 'https://buy.stripe.com/4gM00i3IR4eg3oF0pb04805' for a in soup.find_all('a')):
+              raise SystemExit('Four-payment Stripe checkout missing')
+          if any('tally.so' in (a.get('href') or '') for a in soup.find_all('a')):
+              raise SystemExit('Stale Tally link remains in Coaching candidate')
+          cpath.write_text(str(soup), encoding='utf-8')
+
+          spath = root/'system-live-refresh-v1'/'index.html'
+          ssoup = BeautifulSoup(spath.read_text(encoding='utf-8'), 'html.parser')
+          svisible = ssoup.get_text(' ', strip=True)
+          for stale in ('$197', '$15/month', 'From $150'):
+              if stale in svisible:
+                  raise SystemExit(f'Stale System value remains: {stale}')
+          if not any(a.get('href') == 'https://buy.stripe.com/28EbJ04MV4ege3j8VH04804' for a in ssoup.find_all('a')):
+              raise SystemExit('System Stripe checkout missing')
+          if any('ko-fi.com/s/e34dd9cdef' in (a.get('href') or '') for a in ssoup.find_all('a')):
+              raise SystemExit('Stale System Ko-fi checkout remains')
+          if 'Eternity Diamond 1 → Ascendant 1' in svisible:
+              raise SystemExit('Unsupported Eternity rank label remains')
+          print('Conservative live refresh candidates passed stale-offer validation')
+          PY
+      - name: Commit corrected candidate
+        run: |
+          git config user.name "slayerkey"
+          git config user.email "34904637+slayerkey@users.noreply.github.com"
+          git add wordpress/slayerkey-website/previews/live-refresh/coaching-live-refresh-v1/index.html
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "Correct current Mentorship pricing in live refresh candidate"
+          git push
