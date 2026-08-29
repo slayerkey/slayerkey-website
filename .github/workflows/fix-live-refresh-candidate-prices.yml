@@ -17,39 +17,36 @@ jobs:
           fetch-depth: 0
       - name: Install parser
         run: python -m pip install --quiet beautifulsoup4
-      - name: Correct split price elements and validate stale offer data
+      - name: Correct only stale offer values and validate
         run: |
           python <<'PY'
           from pathlib import Path
-          from bs4 import BeautifulSoup
+          from bs4 import BeautifulSoup, NavigableString
 
           root = Path('wordpress/slayerkey-website/previews/live-refresh')
-
           cpath = root/'coaching-live-refresh-v1'/'index.html'
           soup = BeautifulSoup(cpath.read_text(encoding='utf-8'), 'html.parser')
           pricing = soup.select_one('#coaching-pricing')
-          if pricing is None:
-              raise SystemExit('Missing #coaching-pricing')
-          cards = pricing.select('.price-card')
+          cards = pricing.select('.price-card') if pricing else []
           if len(cards) < 2:
               raise SystemExit(f'Expected two live pricing cards, found {len(cards)}')
 
-          amount = cards[0].select_one('.price .amount')
-          per = cards[0].select_one('.price .per')
-          amount2 = cards[1].select_one('.price .amount')
-          per2 = cards[1].select_one('.price .per')
-          if not all((amount, per, amount2, per2)):
-              raise SystemExit('Missing live pricing amount/per elements')
-          amount.string = '$1,200'
-          per.string = 'paid in full'
-          amount2.string = '$325'
-          per2.string = '× 4'
+          cards[0].select_one('.price .amount').string = '$1,200'
+          cards[0].select_one('.price .per').string = 'paid in full'
+          cards[1].select_one('.price .amount').string = '$325'
+          cards[1].select_one('.price .per').string = '× 4'
+
+          for node in list(soup.find_all(string=True)):
+              if node.parent and node.parent.name in ('script','style'):
+                  continue
+              value = str(node)
+              if 'Full Improvement System included ($197 value)' in value:
+                  node.replace_with(NavigableString(value.replace('Full Improvement System included ($197 value)', 'Lifetime Improvement System access included')))
 
           visible = soup.get_text(' ', strip=True)
-          if '$150' in visible or '$870' in visible or '$197' in visible:
-              raise SystemExit('Stale Coaching price remains in visible content')
-          if '6 private 1:1 sessions over 90 days' in visible:
-              raise SystemExit('Stale Coaching duration remains')
+          for stale in ('$150', '$870', '$197', '6 private 1:1 sessions over 90 days'):
+              if stale in visible:
+                  raise SystemExit(f'Stale Coaching offer data remains: {stale}')
           if not any(a.get('href') == 'https://buy.stripe.com/00w28q3IR4eg8IZ8VH04806' for a in soup.find_all('a')):
               raise SystemExit('Paid-in-full Stripe checkout missing')
           if not any(a.get('href') == 'https://buy.stripe.com/4gM00i3IR4eg3oF0pb04805' for a in soup.find_all('a')):
