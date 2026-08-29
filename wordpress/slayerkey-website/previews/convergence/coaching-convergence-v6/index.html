@@ -14,13 +14,14 @@
     #sk-coaching .ch-hero .ch-proofline{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;font-size:.74rem}
 
     #sk-coaching .ch-result-card{border:1px solid rgba(255,255,255,.11);background:#09151f;box-shadow:0 20px 50px rgba(0,0,0,.24);overflow:hidden}
-    #sk-coaching .ch-result-card.featured{border-color:rgba(40,223,203,.32)}
+    #sk-coaching .ch-result-card.featured{max-width:900px;margin-inline:auto;border-color:rgba(40,223,203,.32)}
     #sk-coaching .ch-result-caption{padding:17px 15px 19px;text-align:center;border-top:1px solid rgba(255,255,255,.09)}
     #sk-coaching .ch-result-caption small{display:block;margin-bottom:5px;color:var(--ch-teal);font-size:.62rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
     #sk-coaching .ch-result-caption strong{display:block;color:#fff;font-family:var(--font-display,'Arial Black',Impact,sans-serif);font-size:clamp(1.02rem,1.6vw,1.36rem);font-weight:400;line-height:1.16;text-transform:uppercase;text-wrap:balance}
     #sk-coaching .ch-result-caption span{display:block;margin-top:6px;color:#d9e3e8;font-size:.82rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+    #sk-coaching #more-results{padding-top:62px}
 
-    #sk-coaching #pricing{padding-top:76px;padding-bottom:82px}
+    #sk-coaching #pricing{padding-top:70px;padding-bottom:76px}
     #sk-coaching .ch-offer-wrap{max-width:1050px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1.12fr) minmax(320px,.88fr);gap:0;border:1px solid rgba(40,223,203,.34);background:linear-gradient(180deg,rgba(15,31,43,.96),rgba(8,20,29,.98));box-shadow:0 28px 76px rgba(0,0,0,.3)}
     #sk-coaching .ch-offer-includes{padding:34px 36px;border-right:1px solid rgba(255,255,255,.1)}
     #sk-coaching .ch-offer-includes h3{margin:0 0 9px;color:#fff;font-size:1.35rem}
@@ -75,7 +76,8 @@
       #sk-coaching .ch-hero{padding-top:26px}
       #sk-coaching .ch-hero .lead{font-size:.96rem}
       #sk-coaching .ch-hero .ch-proofline{gap:7px;margin-top:18px;padding-top:14px}
-      #sk-coaching #pricing{padding-top:58px;padding-bottom:62px}
+      #sk-coaching #pricing{padding-top:54px;padding-bottom:58px}
+      #sk-coaching #more-results{padding-top:48px}
       #sk-coaching .ch-offer-includes,#sk-coaching .ch-buy-box{padding:25px 19px}
       #sk-coaching .ch-result-caption{padding:13px 9px 15px}
       #sk-coaching .ch-result-caption strong{font-size:.88rem}
@@ -113,18 +115,11 @@
 
 <section class="ch-section" id="proof">
   <div class="container">
-    <div class="ch-section-head centered reveal"><div class="eyebrow">Player Results</div><h2>Real Players. <span class="accent-teal">Real Climbs.</span></h2></div>
-    <div class="ch-proof-stack">
-      <article class="ch-result-card featured reveal">
-        <button class="ch-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/lazy-site.png"><img loading="eager" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/lazy-site.png" alt="Lazy documented Valorant rank progression"></button>
-        <div class="ch-result-caption"><small>Lazy</small><strong>Diamond 1 → Radiant #91 NA</strong><span>+1,395 RR · Under 2 Months</span></div>
-      </article>
-      <div class="ch-proof-three">
-        <article class="ch-result-card reveal d1"><button class="ch-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/dark-site.png"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/dark-site.png" alt="Darkblood documented Valorant rank progression"></button><div class="ch-result-caption"><small>Darkblood</small><strong>Plat 2 → Immortal 3</strong><span>+1,000 RR · Just Over A Month</span></div></article>
-        <article class="ch-result-card reveal d2"><button class="ch-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/chrake-site.png"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/chrake-site.png" alt="Chrake documented Valorant rank progression"></button><div class="ch-result-caption"><small>Chrake</small><strong>Plat 2 → Ascendant 3</strong><span>+700 RR · 10 Days</span></div></article>
-        <article class="ch-result-card reveal d3"><button class="ch-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/g09-site.png"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/g09-site.png" alt="G09 documented Valorant rank progression"></button><div class="ch-result-caption"><small>G09</small><strong>Gold 2 → Diamond 1</strong><span>+500 RR · Just Over A Month</span></div></article>
-      </div>
-    </div>
+    <div class="ch-section-head centered reveal"><div class="eyebrow">Player Result</div><h2>Diamond 1 To <span class="accent-teal">Radiant #91 NA.</span></h2></div>
+    <article class="ch-result-card featured reveal d1">
+      <button class="ch-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/lazy-site.png"><img loading="eager" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/lazy-site.png" alt="Lazy documented Valorant rank progression"></button>
+      <div class="ch-result-caption"><small>Lazy</small><strong>Diamond 1 → Radiant #91 NA</strong><span>+1,395 RR · Under 2 Months</span></div>
+    </article>
   </div>
 </section>
 
@@ -153,6 +148,17 @@
         <a class="btn secondary ch-alt-btn" data-sk-cta="coaching_four_pay" data-sk-location="pricing" href="https://buy.stripe.com/4gM00i3IR4eg3oF0pb04805?utm_source=slayerkey_site&utm_medium=coaching_convergence_v6&utm_campaign=private_mentorship&utm_content=pricing_four_pay">Use 4 Payments</a>
         <p class="ch-offer-terms">Same Mentorship either way. <a href="/terms">Terms &amp; Conditions</a></p>
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="ch-section" id="more-results">
+  <div class="container">
+    <div class="ch-section-head centered reveal"><div class="eyebrow">More Player Results</div><h2>And Lazy Is <span class="accent-teal">Not The Only One.</span></h2></div>
+    <div class="ch-proof-three reveal d1">
+      <article class="ch-result-card"><button class="ch-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/dark-site.png"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/dark-site.png" alt="Darkblood documented Valorant rank progression"></button><div class="ch-result-caption"><small>Darkblood</small><strong>Plat 2 → Immortal 3</strong><span>+1,000 RR · Just Over A Month</span></div></article>
+      <article class="ch-result-card"><button class="ch-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/chrake-site.png"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/chrake-site.png" alt="Chrake documented Valorant rank progression"></button><div class="ch-result-caption"><small>Chrake</small><strong>Plat 2 → Ascendant 3</strong><span>+700 RR · 10 Days</span></div></article>
+      <article class="ch-result-card"><button class="ch-proof-image" type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/08/g09-site.png"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/08/g09-site.png" alt="G09 documented Valorant rank progression"></button><div class="ch-result-caption"><small>G09</small><strong>Gold 2 → Diamond 1</strong><span>+500 RR · Just Over A Month</span></div></article>
     </div>
   </div>
 </section>
