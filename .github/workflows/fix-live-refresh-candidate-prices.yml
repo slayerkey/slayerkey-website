@@ -36,6 +36,16 @@ jobs:
           cards[1].select_one('.price .amount').string = '$325'
           cards[1].select_one('.price .per').string = '× 4'
 
+          # Keep the live CTA's styling and placement, replace only its obsolete Cal.com behavior.
+          old_button = cards[0].select_one('button.btn')
+          if old_button:
+              old_button.name = 'a'
+              for attr in ('data-cal-config','data-cal-link','data-cal-namespace','type'):
+                  old_button.attrs.pop(attr, None)
+              old_button['href'] = 'https://buy.stripe.com/00w28q3IR4eg8IZ8VH04806'
+              old_button['target'] = '_self'
+              old_button.string = 'Start Your Mentorship'
+
           for node in list(soup.find_all(string=True)):
               if node.parent and node.parent.name in ('script','style'):
                   continue
