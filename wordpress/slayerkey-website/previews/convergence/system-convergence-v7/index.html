@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Slayerkey Improvement System v7</title>
+  <link rel="stylesheet" href="../system-v3/assets/system.css">
+  <style>
+    html,body{margin:0;background:#07111a;color:#f5f7fa}body{font-family:Inter,Arial,sans-serif}
+    #sk-system .sy-hero{padding-top:34px}
+    #sk-system .sy-hero h1{max-width:13ch}
+    #sk-system .sy-hero .lead{max-width:610px;font-size:1.04rem;line-height:1.58}
+    #sk-system .sy-vsl-caption{display:none}
+    #sk-system .sy-actions{display:block}
+    #sk-system .sy-proofline{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;font-size:.74rem}
+    #sk-system .sy-proofline span:before{content:'✓';margin-right:7px;color:var(--sy-teal)}
+    #sk-system .sy-rank-proof{max-width:1030px;margin:0 auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+    #sk-system .sy-proof-card{border:1px solid rgba(255,255,255,.11);background:#09151f;box-shadow:0 20px 50px rgba(0,0,0,.24);overflow:hidden}
+    #sk-system .sy-proof-card:first-child{border-color:rgba(40,223,203,.3)}
+    #sk-system .sy-proof-card button{display:block;width:100%;padding:0;border:0;background:#07111a;cursor:zoom-in}
+    #sk-system .sy-proof-card img{display:block;width:100%;height:auto}
+    #sk-system .sy-proof-caption{padding:17px 16px 19px;text-align:center;border-top:1px solid rgba(255,255,255,.09)}
+    #sk-system .sy-proof-caption small{display:block;margin-bottom:5px;color:var(--sy-teal);font-size:.62rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
+    #sk-system .sy-proof-caption strong{display:block;color:#fff;font-family:var(--font-display,'Arial Black',Impact,sans-serif);font-size:clamp(1.05rem,2vw,1.5rem);font-weight:400;line-height:1.15;text-transform:uppercase;text-wrap:balance}
+    #sk-system .sy-proof-caption span{display:block;margin-top:6px;color:#d9e3e8;font-size:.8rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+    #sk-system #pricing{padding-top:62px;padding-bottom:68px}
+    #sk-system .sy-offer{max-width:720px;margin:0 auto;padding:32px 29px;border:1px solid rgba(40,223,203,.34);background:linear-gradient(180deg,rgba(15,31,43,.96),rgba(8,20,29,.98));box-shadow:0 26px 70px rgba(0,0,0,.28);text-align:center}
+    #sk-system .sy-offer .sy-price{font-size:clamp(3.8rem,8vw,6rem);line-height:.92;margin-top:8px}
+    #sk-system .sy-offer .sy-price-sub{margin-top:7px;font-size:.78rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase}
+    #sk-system .sy-offer-points{display:flex;justify-content:center;gap:10px 22px;flex-wrap:wrap;margin:23px auto 24px;color:#d8e1e7;font-size:.82rem;font-weight:900}
+    #sk-system .sy-offer-points span:before{content:'✓';margin-right:7px;color:var(--sy-teal)}
+    #sk-system .sy-offer-start{max-width:520px;margin:0 auto 22px;color:#9fb0bb;font-size:.82rem;line-height:1.55}
+    #sk-system .sy-offer .btn{min-width:230px}
+    #sk-system .sy-offer-trust{margin-top:13px;color:#7f939f;font-size:.7rem}
+    #sk-system .sy-offer-trust a{color:var(--sy-teal);font-weight:900}
+    #sk-system .sy-loop-wrap{max-width:1040px;margin:0 auto}
+    #sk-system .sy-loop-intro{max-width:680px;margin:0 auto 28px;text-align:center;color:#a8b7c0;font-size:.94rem;line-height:1.65}
+    #sk-system .sy-method-grid{max-width:1040px;margin-inline:auto}
+    #sk-system .sy-owner-voices{max-width:1030px;margin:0 auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+    #sk-system .sy-owner-voice{border:1px solid rgba(255,255,255,.1);background:rgba(9,21,31,.9);overflow:hidden}
+    #sk-system .sy-owner-voice button{display:block;width:100%;padding:0;border:0;background:#07111a;cursor:zoom-in}
+    #sk-system .sy-owner-voice img{display:block;width:100%;height:auto}
+    #sk-system .sy-owner-copy{padding:17px 18px 19px}
+    #sk-system .sy-owner-copy small{display:block;color:var(--sy-teal);font-size:.62rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+    #sk-system .sy-owner-copy strong{display:block;margin-top:6px;color:#fff;font-size:1rem;line-height:1.35}
+    #sk-system .sy-owner-copy span{display:block;margin-top:6px;color:#9fb0bb;font-size:.78rem;line-height:1.45}
+    #sk-system .sy-inside-simple{max-width:980px;margin:0 auto}
+    #sk-system .sy-inside-lead{max-width:650px;margin:0 auto 25px;color:#a8b7c0;font-size:.92rem;line-height:1.62;text-align:center}
+    #sk-system .sy-inside-compact{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    #sk-system .sy-inside-compact div{padding:21px 19px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.025)}
+    #sk-system .sy-inside-compact strong{display:block;color:#fff;font-size:.94rem;line-height:1.3}
+    #sk-system .sy-inside-compact span{display:block;margin-top:7px;color:#9fb0bb;font-size:.78rem;line-height:1.5}
+    #sk-system .sy-faq-wrap{max-width:820px}
+    @media(max-width:900px){#sk-system .sy-proofline{grid-template-columns:1fr}#sk-system .sy-rank-proof,#sk-system .sy-owner-voices{grid-template-columns:1fr;max-width:720px}#sk-system .sy-inside-compact{grid-template-columns:1fr;max-width:720px;margin-inline:auto}}
+    @media(max-width:620px){#sk-system .sy-hero{padding-top:26px}#sk-system .sy-hero .lead{font-size:.96rem}#sk-system .sy-proofline{gap:7px;margin-top:18px;padding-top:14px}#sk-system .sy-proof-caption{padding:13px 10px 15px}#sk-system .sy-proof-caption strong{font-size:.92rem}#sk-system .sy-proof-caption span{font-size:.7rem}#sk-system #pricing{padding-top:50px;padding-bottom:54px}#sk-system .sy-offer{padding:26px 18px}#sk-system .sy-offer-points{display:grid;gap:8px;text-align:left;max-width:240px}#sk-system .sy-owner-copy{padding:14px 13px 16px}}
+  </style>
+</head>
+<body class="slayerkey-preview-system-v3">
+<main id="sk-system" data-page-variant="system_convergence_v7">
+<section class="sy-hero" id="top"><div class="container sy-hero-grid"><div class="sy-hero-copy reveal"><div class="eyebrow">The Improvement System</div><h1>Know Exactly <span class="accent-teal">What To Improve Next.</span></h1><p class="lead">Use one repeatable process to choose the problem, train it, test it in ranked, and know when it is time to move on.</p><div class="sy-actions"><a class="btn" data-sk-cta="system_buy" data-sk-location="hero" href="https://buy.stripe.com/28EbJ04MV4ege3j8VH04804?utm_source=slayerkey_site&utm_medium=system_convergence_v7&utm_campaign=improvement_system&utm_content=hero">Get The System</a></div><div class="sy-proofline"><span><strong>One time purchase</strong></span><span><strong>Lifetime access</strong></span><span><strong>30 day guarantee</strong></span></div></div><div class="sy-vsl reveal d1"><div class="sy-vsl-embed"><iframe id="systemVideo" title="Inside Slayerkey's Improvement System" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe><button id="systemUnmute" class="sy-unmute" type="button" hidden>🔊 Click for sound</button></div></div></div></section>
+<section class="sy-section" id="proof"><div class="container"><div class="sy-section-head centered reveal"><div class="eyebrow">System Owner Results</div><h2>What This Has Looked Like <span class="accent-teal">In Ranked.</span></h2></div><div class="sy-rank-proof reveal d1"><article class="sy-proof-card"><button type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/07/s-g09-gold2dia.jpg"><img loading="eager" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/s-g09-gold2dia.jpg" alt="G09 Improvement System Gold 2 to Diamond 1 rank progression"></button><div class="sy-proof-caption"><small>G09</small><strong>Gold 2 → Diamond 1</strong><span>+500 RR · 35 Days</span></div></article><article class="sy-proof-card"><button type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/07/s-ruin-asc2rad.jpg"><img loading="eager" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/s-ruin-asc2rad.jpg" alt="Ruin Improvement System Ascendant 2 to Radiant rank progression"></button><div class="sy-proof-caption"><small>Ruin</small><strong>Ascendant 2 → Radiant</strong></div></article></div></div></section>
+<section class="sy-section" id="pricing"><div class="container"><div class="sy-section-head centered reveal"><div class="eyebrow">Get The System</div><h2>One Purchase. <span class="accent-teal">Keep The Process.</span></h2></div><aside class="sy-offer reveal d1"><div class="sy-price">$249</div><div class="sy-price-sub">one time</div><div class="sy-offer-points"><span>Complete Improvement System</span><span>Lifetime access</span><span>30 day guarantee</span></div><p class="sy-offer-start">Start with the onboarding path, choose your current focus, and use the System around the problem you are actually trying to fix.</p><a class="btn" data-sk-cta="system_buy" data-sk-location="pricing" href="https://buy.stripe.com/28EbJ04MV4ege3j8VH04804?utm_source=slayerkey_site&utm_medium=system_convergence_v7&utm_campaign=improvement_system&utm_content=pricing">Get The System</a><p class="sy-offer-trust"><a href="/terms">Terms &amp; Conditions</a></p></aside></div></section>
+<section class="sy-section" id="how"><div class="container sy-loop-wrap"><div class="sy-section-head centered reveal"><div class="eyebrow">The Improvement Loop</div><h2>Use The Same Process <span class="accent-teal">Every Time You Get Stuck.</span></h2></div><p class="sy-loop-intro reveal">You can find ten things wrong in a VOD and still waste the week. The System helps you choose the priority, work on it, then decide whether it actually changed.</p><div class="sy-method-grid reveal d1"><article class="sy-method-step"><b>01</b><h3>Find</h3><p>Choose the bottleneck that matters most right now.</p></article><article class="sy-method-step"><b>02</b><h3>Train</h3><p>Use the training that matches that problem.</p></article><article class="sy-method-step"><b>03</b><h3>Apply</h3><p>Take one focus into ranked and turn games into reps.</p></article><article class="sy-method-step"><b>04</b><h3>Review</h3><p>Keep the priority if it still matters. Replace it when it does not.</p></article></div></div></section>
+<section class="sy-section" id="owner-voices"><div class="container"><div class="sy-section-head centered reveal"><div class="eyebrow">From System Owners</div><h2>The Value Is <span class="accent-teal">Having Direction.</span></h2></div><div class="sy-owner-voices reveal d1"><article class="sy-owner-voice"><button type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/07/s-deputy.jpg"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/s-deputy.jpg" alt="DeputySanders Improvement System testimonial"></button><div class="sy-owner-copy"><small>DeputySanders</small><strong>Stuck in Silver / Gold → Platinum 1</strong><span>Reached Plat 1 within 21 days of following the routines and aim training.</span></div></article><article class="sy-owner-voice"><button type="button" data-proof-src="https://slayerkey.com/wp-content/uploads/2026/07/s-eternity.jpg"><img loading="lazy" decoding="async" src="https://slayerkey.com/wp-content/uploads/2026/07/s-eternity.jpg" alt="Eternity Improvement System testimonial"></button><div class="sy-owner-copy"><small>Eternity</small><strong>“I didn't believe I had much to learn.”</strong><span>“I was quickly proven wrong. It is worth it at any rank.”</span></div></article></div></div></section>
+<section class="sy-section" id="inside"><div class="container sy-inside-simple"><div class="sy-section-head centered reveal"><div class="eyebrow">What You Get</div><h2>Use What Matches <span class="accent-teal">The Problem You Have Now.</span></h2></div><p class="sy-inside-lead reveal">You do not need to work through a giant course in order. Start where you are stuck, use what matches the problem, and repeat the process when the next bottleneck shows up.</p><div class="sy-inside-compact reveal d1"><div><strong>Start With A Clear Path</strong><span>Use the onboarding to choose what deserves your attention first.</span></div><div><strong>Train The Problem You Actually Have</strong><span>Mechanics, agents, maps, game sense, mentality, and the fundamentals underneath them.</span></div><div><strong>Review And Recalibrate</strong><span>Use the review tools, seminars, and AI Coach when you need to decide what should come next.</span></div></div></div></section>
+<section class="sy-section" id="faq"><div class="container sy-faq-wrap"><div class="sy-section-head centered reveal"><div class="eyebrow">Still Deciding?</div><h2>The Two Questions That <span class="accent-teal">Actually Matter.</span></h2></div><div class="sy-faq reveal d1"><details><summary>Why pay when YouTube is free?</summary><p>YouTube can give you another good idea. The System is for deciding which problem deserves your practice now, using the right training for it, and knowing when to move on.</p></details><details><summary>What happens after I buy?</summary><p>Start with the onboarding path, choose your current priority, use the matching training, then review what changed and repeat the process when a new bottleneck appears.</p></details></div></div></section>
+<section class="sy-final"><div class="container centered reveal"><div class="eyebrow">Stop Rebuilding Your Plan Every Week</div><h2>Know What To Work On <span class="accent-red">Before You Queue.</span></h2><a class="btn" data-sk-cta="system_buy" data-sk-location="final" href="https://buy.stripe.com/28EbJ04MV4ege3j8VH04804?utm_source=slayerkey_site&utm_medium=system_convergence_v7&utm_campaign=improvement_system&utm_content=final">Get The System</a></div></section>
+<div class="sy-lightbox" id="systemLightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Expanded proof image"><button type="button" class="sy-lightbox-close" aria-label="Close image">✕</button><img src="" alt="Expanded proof"></div>
+</main>
+<script src="../system-v3/assets/system.js" defer></script>
+</body>
+</html>
