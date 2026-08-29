@@ -1,0 +1,93 @@
+name: Convergence v6 Experience QA
+
+on:
+  push:
+    paths:
+      - '.github/workflows/convergence-v6-experience-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  experience:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for deployed commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 48); do
+            D=$(curl -fsSL --max-time 12 -H 'Cache-Control: no-cache' "https://slayerkey.com/wp-json/slayerkey/v1/health?cb=$GITHUB_SHA" | python -c "import json,sys; print(json.load(sys.stdin).get('deployed_commit') or '')" || true)
+            C=$(curl -fsSL --max-time 12 -H 'Cache-Control: no-cache' "https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/convergence/coaching-convergence-v6/index.html?cb=$GITHUB_SHA" || true)
+            S=$(curl -fsSL --max-time 12 -H 'Cache-Control: no-cache' "https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/convergence/system-convergence-v6/index.html?cb=$GITHUB_SHA" || true)
+            if [ "$D" = "$GITHUB_SHA" ] && grep -q 'coaching_convergence_v6' <<<"$C" && grep -q 'system_convergence_v6' <<<"$S"; then exit 0; fi
+            sleep 5
+          done
+          exit 1
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install chromium
+      - name: Capture buyer experience
+        shell: bash
+        run: |
+          mkdir -p v6-qa
+          cat > v6-qa.js <<'NODE'
+          const { chromium } = require('playwright');
+          const fs = require('fs');
+          const urls = {
+            coaching:'https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/convergence/coaching-convergence-v6/index.html',
+            system:'https://slayerkey.com/wp-content/plugins/slayerkey-website/previews/convergence/system-convergence-v6/index.html'
+          };
+          const sizes={desktop:{width:1440,height:900},mobile:{width:390,height:844}};
+          async function scrollAll(page,h){
+            const total=await page.evaluate(()=>document.documentElement.scrollHeight);
+            for(let y=0;y<total;y+=Math.max(330,Math.floor(h*.7))){await page.evaluate(v=>scrollTo(0,v),y);await page.waitForTimeout(110)}
+            await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(300);
+          }
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const report=[];
+            for(const [name,url] of Object.entries(urls)) for(const [mode,viewport] of Object.entries(sizes)){
+              const ctx=await browser.newContext({viewport,reducedMotion:'no-preference'});const page=await ctx.newPage();
+              const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+              const r=await page.goto(url+'?qa='+process.env.GITHUB_SHA,{waitUntil:'domcontentloaded',timeout:90000});await page.waitForTimeout(800);await scrollAll(page,viewport.height);
+              const root=name==='coaching'?'#sk-coaching':'#sk-system';
+              const variant=await page.locator(root).getAttribute('data-page-variant');
+              const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+              const pricing=await page.locator('#pricing').boundingBox();
+              const hero=await page.locator(`${root} section:first-of-type`).boundingBox();
+              let details={};
+              if(name==='coaching'){
+                const cta=page.locator(`${root} section:first-of-type a[href="#pricing"]`).first();
+                const href=await cta.getAttribute('href');
+                await cta.click();await page.waitForTimeout(350);
+                const scrollY=await page.evaluate(()=>scrollY);
+                const pricingAfter=await page.locator('#pricing').boundingBox();
+                const benefitCount=await page.locator('.ch-offer-list li').count();
+                const priceText=await page.locator('#pricing').innerText();
+                const offerBox=await page.locator('.ch-offer-wrap').boundingBox();
+                details={href,scrollY,pricingViewportY:pricingAfter.y-scrollY,benefitCount,offerHeight:Math.round(offerBox.height),priceText};
+              }else{
+                const compactCount=await page.locator('.sy-inside-compact > div').count();
+                const inside=await page.locator('#inside').boundingBox();
+                const pricingText=await page.locator('#pricing').innerText();
+                details={compactCount,insideHeight:Math.round(inside.height),pricingText};
+              }
+              await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(250);
+              await page.screenshot({path:`v6-qa/${name}-${mode}.png`,fullPage:true});
+              report.push({name,mode,status:r&&r.status(),variant,overflow,heroHeight:Math.round(hero.height),pricingTop:Math.round(pricing.y),pageHeight:await page.evaluate(()=>document.documentElement.scrollHeight),errors,details});
+              await ctx.close();
+            }
+            await browser.close();fs.writeFileSync('v6-qa/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+          node v6-qa.js
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: convergence-v6-experience-${{ github.sha }}
+          path: v6-qa
