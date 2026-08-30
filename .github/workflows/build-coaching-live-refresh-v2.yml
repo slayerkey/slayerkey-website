@@ -1,0 +1,248 @@
+name: Build Coaching Live Refresh V2
+
+on:
+  push:
+    paths:
+      - '.github/workflows/build-coaching-live-refresh-v2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install parser
+        run: python -m pip install --quiet beautifulsoup4
+      - name: Build conservative coaching v2
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          from bs4 import BeautifulSoup, NavigableString
+
+          src = Path('wordpress/slayerkey-website/previews/live-refresh/coaching-live-refresh-ready/index.html')
+          out = Path('wordpress/slayerkey-website/previews/live-refresh/coaching-live-refresh-v2/index.html')
+          soup = BeautifulSoup(src.read_text(encoding='utf-8'), 'html.parser')
+
+          # Fresh candidate marker. Preserve all live page structure unless explicitly changed below.
+          marker = soup.find('meta', attrs={'name':'slayerkey-candidate'})
+          if marker:
+              marker['content'] = 'coaching-live-refresh-v2'
+          elif soup.head:
+              marker = soup.new_tag('meta')
+              marker['name'] = 'slayerkey-candidate'
+              marker['content'] = 'coaching-live-refresh-v2'
+              soup.head.append(marker)
+
+          # CTA wording only. Keep the existing scroll destination / purchase flow.
+          for a in soup.find_all('a'):
+              if a.get_text(' ', strip=True) == 'See Mentorship':
+                  a.clear()
+                  a.append('Apply for Mentorship')
+
+          # Remove the redundant review text link under the hero CTA. The stronger proof immediately follows.
+          for a in soup.find_all('a'):
+              if '480+ five-star reviews' in a.get_text(' ', strip=True).lower():
+                  parent = a.parent
+                  a.decompose()
+                  if parent and not parent.get_text(' ', strip=True):
+                      parent.decompose()
+
+          # Reformat transformation proof so names are secondary and outcomes carry the visual weight.
+          rank_data = [
+              ('Lazy', 'Diamond 1 → Radiant #91 NA', '+1,395 RR in under 2 months'),
+              ('Darkblood', 'Plat 2 → Immortal 3', '+1,000 RR in just over a month'),
+              ('Chrake', 'Plat 2 → Ascendant 3', '+700 RR in only 10 days'),
+          ]
+          rank_cards = soup.select('#showcase .results-grid .result-card.rank')
+          if len(rank_cards) != 3:
+              raise SystemExit(f'Expected 3 rank cards, found {len(rank_cards)}')
+          for card, (name, rank, impact) in zip(rank_cards, rank_data):
+              cap = card.find('figcaption')
+              cap.clear()
+              n = soup.new_tag('span', attrs={'class':'result-name'}); n.string = name
+              r = soup.new_tag('span', attrs={'class':'result-rank'}); r.string = rank
+              i = soup.new_tag('strong', attrs={'class':'result-impact'}); i.string = impact
+              cap.extend([n, r, i])
+
+          video_data = [
+              ('Levi', 'Plat 1 → Immortal'),
+              ('Rohit', 'Gold 3 → Immortal 1'),
+          ]
+          video_cards = soup.select('#showcase .shorts-row .result-card.video')
+          if len(video_cards) != 2:
+              raise SystemExit(f'Expected 2 video testimonial cards, found {len(video_cards)}')
+          for card, (name, result) in zip(video_cards, video_data):
+              cap = card.find('figcaption')
+              cap.clear()
+              n = soup.new_tag('span', attrs={'class':'result-name'}); n.string = name
+              r = soup.new_tag('strong', attrs={'class':'video-result'}); r.string = result
+              cap.extend([n, r])
+
+          # Fix the pricing grid without redesigning it: remove stray direct text nodes that became grid items.
+          pricing = soup.find('section', id='coaching-pricing')
+          if not pricing:
+              raise SystemExit('Pricing section missing')
+          grid = pricing.select_one('.pricing-grid')
+          cards = pricing.select('.price-card')
+          if not grid or len(cards) != 2:
+              raise SystemExit(f'Pricing grid/card mismatch: grid={bool(grid)} cards={len(cards)}')
+          for child in list(grid.children):
+              if isinstance(child, NavigableString) and child.strip():
+                  child.extract()
+
+          # Make the only price difference unmistakable while keeping the current offer intact.
+          flag = cards[0].select_one('.price-flag')
+          if flag:
+              flag.string = 'Save $100'
+          first_note = cards[0].select_one('.upgrade-note')
+          if first_note:
+              first_note.string = 'Pay in full and save $100. Includes the current Improvement System + Training Dojo access.'
+
+          # Normalize the monthly card to the same mentorship instead of making it look like a different product.
+          second_list = cards[1].select_one('.price-list')
+          if second_list:
+              second_list.clear()
+              features = [
+                  '8 private sessions across 4 months',
+                  'Personalized VOD analysis + improvement priorities',
+                  'Priority DM support between sessions',
+                  'Current Improvement System + Training Dojo access',
+              ]
+              for feature in features:
+                  li = soup.new_tag('li')
+                  icon = soup.new_tag('span', attrs={'class':'i good','aria-hidden':'true'})
+                  icon.string = '✓'
+                  text = soup.new_tag('span'); text.string = feature
+                  li.extend([icon, text])
+                  second_list.append(li)
+
+          # Add one short comparison sentence above the existing cards.
+          section_head = pricing.select_one('.section-head')
+          existing_note = pricing.select_one('.price-compare-note')
+          if existing_note:
+              existing_note.decompose()
+          compare_note = soup.new_tag('p', attrs={'class':'price-compare-note'})
+          compare_note.string = 'Same four-month mentorship either way. Pay in full to save $100, or split it into four $325 payments.'
+          if section_head:
+              section_head.insert_after(compare_note)
+
+          # Warm people up before showing price: proof → why stuck → process → Discord proof → offer.
+          reviews = soup.find('section', id='reviews')
+          if not reviews:
+              raise SystemExit('Reviews section missing')
+          pricing.extract()
+          reviews.insert_after(pricing)
+
+          # Small, isolated visual overrides. Preserve the live palette/cards/type system.
+          style = soup.new_tag('style', id='coaching-live-refresh-v2-overrides')
+          style.string = r'''
+          #showcase .result-card figcaption{
+            text-align:center;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            gap:4px;
+            padding:15px 14px 17px;
+          }
+          #showcase .result-card figcaption::before{content:none!important}
+          #showcase .result-name{
+            display:block;
+            color:var(--muted);
+            font-size:.72rem;
+            font-weight:800;
+            letter-spacing:.13em;
+            text-transform:uppercase;
+            line-height:1.2;
+          }
+          #showcase .result-rank{
+            display:block;
+            color:var(--ink);
+            font-size:1.02rem;
+            font-weight:850;
+            letter-spacing:.01em;
+            line-height:1.25;
+          }
+          #showcase .result-impact{
+            display:block;
+            color:#fff;
+            font-size:clamp(1.15rem,1.45vw,1.35rem);
+            font-weight:900;
+            letter-spacing:-.015em;
+            line-height:1.18;
+          }
+          #showcase .video-result{
+            display:block;
+            color:#fff;
+            font-size:1.12rem;
+            font-weight:900;
+            letter-spacing:-.01em;
+            line-height:1.2;
+          }
+          #coaching-pricing .price-compare-note{
+            max-width:720px;
+            margin:-4px auto 30px;
+            text-align:center;
+            color:var(--muted);
+            font-size:1rem;
+            line-height:1.55;
+          }
+          #coaching-pricing .pricing-grid{
+            grid-template-columns:repeat(2,minmax(0,380px));
+            align-items:stretch;
+          }
+          #coaching-pricing .price-card{height:100%}
+          @media(max-width:760px){
+            #coaching-pricing .pricing-grid{grid-template-columns:minmax(0,430px)}
+            #showcase .result-impact{font-size:1.16rem}
+          }
+          '''
+          if soup.head:
+              soup.head.append(style)
+
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(str(soup), encoding='utf-8')
+
+          # Hard validation for this specific pass.
+          html = out.read_text(encoding='utf-8')
+          required = [
+              'coaching-live-refresh-v2',
+              'Apply for Mentorship',
+              '+1,000 RR in just over a month',
+              '+700 RR in only 10 days',
+              'Plat 1 → Immortal',
+              'Gold 3 → Immortal 1',
+              'Save $100',
+              'Same four-month mentorship either way',
+              '$1,200', '$325', '$1,300 total',
+              'https://buy.stripe.com/00w28q3IR4eg8IZ8VH04806',
+              'https://buy.stripe.com/4gM00i3IR4eg3oF0pb04805',
+          ]
+          for item in required:
+              assert item in html, f'Missing required content: {item}'
+          assert 'See 480+ five-star reviews' not in html
+          assert 'Levi • Video testimonial' not in html
+          assert 'Rohit • Video testimonial' not in html
+
+          # Verify the intended section order.
+          ids = [s.get('id') for s in soup.find_all('section') if s.get('id')]
+          expected = ['showcase','psmr','how','reviews','coaching-pricing','about']
+          positions = [ids.index(x) for x in expected]
+          assert positions == sorted(positions), f'Unexpected section order: {ids}'
+
+          # Verify pricing grid has exactly two element children and no direct non-whitespace strings.
+          assert len(grid.find_all('article', recursive=False)) == 2
+          assert not any(isinstance(x, NavigableString) and x.strip() for x in grid.children)
+          print('Coaching live refresh v2 built and validated')
+          PY
+      - name: Commit candidate
+        run: |
+          git config user.name "slayerkey"
+          git config user.email "34904637+slayerkey@users.noreply.github.com"
+          git add wordpress/slayerkey-website/previews/live-refresh/coaching-live-refresh-v2/index.html
+          git commit -m "Refine Coaching proof warmup and mentorship comparison"
+          git push
