@@ -1,0 +1,255 @@
+name: Build System Live Refresh V4
+
+on:
+  push:
+    paths:
+      - '.github/workflows/build-system-live-refresh-v4.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install parser
+        run: python -m pip install --quiet beautifulsoup4
+      - name: Build System v4 offer + contents pass
+        run: |
+          python - <<'PY'
+          from bs4 import BeautifulSoup
+          from pathlib import Path
+
+          src = Path('wordpress/slayerkey-website/previews/live-refresh/system-live-refresh-v3/index.html')
+          out = Path('wordpress/slayerkey-website/previews/live-refresh/system-live-refresh-v4/index.html')
+          soup = BeautifulSoup(src.read_text(encoding='utf-8'), 'html.parser')
+
+          marker = soup.find('meta', attrs={'name':'slayerkey-candidate'})
+          if marker:
+              marker['content'] = 'system-live-refresh-v4'
+          else:
+              marker = soup.new_tag('meta')
+              marker['name'] = 'slayerkey-candidate'
+              marker['content'] = 'system-live-refresh-v4'
+              soup.head.append(marker)
+
+          inside = soup.select_one('#inside')
+          final = soup.select_one('#final')
+          proof_wall = soup.select_one('#proof-wall')
+          how = soup.select_one('#how')
+          if not all([inside, final, proof_wall, how]):
+              raise SystemExit('Required System sections missing')
+
+          # Move the existing full System visual into the actual offer destination.
+          overview_frame = inside.select_one('.sk-frame')
+          overview_img = overview_frame.find('img') if overview_frame else None
+          if not overview_frame or not overview_img:
+              raise SystemExit('System overview visual missing from #inside')
+          overview_frame = overview_frame.extract()
+          overview_frame['class'] = ['system-offer-overview','sk-frame']
+          overview_frame.attrs.pop('style', None)
+          overview_img['alt'] = 'The full Slayerkey Improvement System at a glance'
+
+          old_offer = final.select_one('.wb-final')
+          if not old_offer:
+              raise SystemExit('Existing Get The Full System offer block missing')
+
+          shell = soup.new_tag('div')
+          shell['class'] = ['system-offer-shell','reveal']
+
+          visual = soup.new_tag('div')
+          visual['class'] = ['system-offer-visual']
+          visual.append(overview_frame)
+          caption = soup.new_tag('p')
+          caption['class'] = ['system-offer-caption']
+          caption.string = 'The full Improvement System at a glance. Click the visual to open it full size.'
+          visual.append(caption)
+
+          copy = soup.new_tag('div')
+          copy['class'] = ['system-offer-copy']
+          for child in list(old_offer.contents):
+              copy.append(child.extract())
+
+          shell.append(visual)
+          shell.append(copy)
+          old_offer.replace_with(shell)
+
+          # The Start Improving CTA should land on a meaningful product + offer block.
+          offer_heading = final.find(['h2','h3'])
+          if offer_heading:
+              offer_heading.string = 'Get The Full System'
+
+          # Place the deeper contents explanation immediately AFTER the offer.
+          final.extract()
+          inside.insert_before(final)
+
+          # Replace the old text-heavy contents section with a concise
+          # "what is included -> what it changes" explanation.
+          inside.clear()
+          container = soup.new_tag('div')
+          container['class'] = ['container']
+
+          head = soup.new_tag('div')
+          head['class'] = ['section-head','reveal']
+          head_inner = soup.new_tag('div')
+          eyebrow = soup.new_tag('div')
+          eyebrow['class'] = ['eyebrow']
+          eyebrow.string = "What's Included"
+          h2 = soup.new_tag('h2')
+          h2.string = "What's Actually Inside The System"
+          intro = soup.new_tag('p')
+          intro['class'] = ['inside-transform-intro']
+          intro.string = "You are not buying a pile of lessons to finish. Each part exists to solve a specific improvement problem and move you toward the next one."
+          head_inner.append(eyebrow)
+          head_inner.append(h2)
+          head_inner.append(intro)
+          head.append(head_inner)
+          container.append(head)
+
+          grid = soup.new_tag('div')
+          grid['class'] = ['inside-transform-grid','reveal']
+          cards = [
+              (
+                  '01', 'A Clear Improvement Path',
+                  'Structured improvement planning, priorities, quests, and progression guidance.',
+                  'Know what deserves your attention now instead of bouncing between random tips.'
+              ),
+              (
+                  '02', 'Mechanics You Can Actually Train',
+                  'Aim, movement, fundamentals, and targeted mechanics training.',
+                  'Turn vague mechanical problems into specific practice you can repeat in ranked.'
+              ),
+              (
+                  '03', 'Better Decisions In Real Games',
+                  'Agent, map, game sense, and situation based training.',
+                  'Know what good decisions look like before the same situations happen again.'
+              ),
+              (
+                  '04', 'Review That Tells You What Comes Next',
+                  'VOD study, examples, seminars, review tools, and AI Coach support.',
+                  'See what changed, catch the next bottleneck, and keep the improvement loop moving.'
+              ),
+          ]
+          for num, title, included, outcome in cards:
+              card = soup.new_tag('article')
+              card['class'] = ['inside-transform-card']
+              n = soup.new_tag('div')
+              n['class'] = ['inside-transform-num']
+              n.string = num
+              title_el = soup.new_tag('h3')
+              title_el.string = title
+              inc_label = soup.new_tag('div')
+              inc_label['class'] = ['inside-transform-label']
+              inc_label.string = 'IN THE SYSTEM'
+              inc = soup.new_tag('p')
+              inc['class'] = ['inside-transform-included']
+              inc.string = included
+              arrow = soup.new_tag('div')
+              arrow['class'] = ['inside-transform-arrow']
+              arrow.string = '↓'
+              out_label = soup.new_tag('div')
+              out_label['class'] = ['inside-transform-label','is-outcome']
+              out_label.string = 'WHAT IT CHANGES'
+              outp = soup.new_tag('p')
+              outp['class'] = ['inside-transform-outcome']
+              outp.string = outcome
+              for el in [n,title_el,inc_label,inc,arrow,out_label,outp]:
+                  card.append(el)
+              grid.append(card)
+          container.append(grid)
+
+          bottom = soup.new_tag('div')
+          bottom['class'] = ['inside-bottom-cta','reveal']
+          bcopy = soup.new_tag('span')
+          bcopy.string = 'See the whole System, then use it around the problem you are trying to fix right now.'
+          ba = soup.new_tag('a', href='#final')
+          ba['class'] = ['btn']
+          ba['target'] = '_self'
+          ba['data-cta'] = 'inside_get_system'
+          ba.string = 'Get The System'
+          bottom.append(bcopy)
+          bottom.append(ba)
+          container.append(bottom)
+          inside.append(container)
+
+          style = soup.new_tag('style')
+          style.string = '''
+          /* System v4: make the offer destination visually valuable, then simplify contents. */
+          #sk-wb #final{padding-top:58px;padding-bottom:46px}
+          #sk-wb .system-offer-shell{display:grid;grid-template-columns:minmax(0,1.18fr) minmax(300px,.82fr);gap:28px;align-items:center;max-width:1080px;margin:0 auto;padding:24px;border:1px solid rgba(255,70,85,.38);background:linear-gradient(145deg,rgba(17,28,39,.96),rgba(9,17,26,.82));box-shadow:0 20px 60px rgba(0,0,0,.18)}
+          #sk-wb .system-offer-visual{min-width:0}
+          #sk-wb .system-offer-overview{margin:0!important;max-width:none!important}
+          #sk-wb .system-offer-overview img{display:block;width:100%!important;height:auto;border:1px solid var(--line);cursor:zoom-in}
+          #sk-wb .system-offer-caption{margin:9px 2px 0;font-size:.78rem;line-height:1.45;color:var(--muted);text-align:center}
+          #sk-wb .system-offer-copy{min-width:0;padding:4px 4px 4px 2px}
+          #sk-wb .system-offer-copy>div:first-child{text-align:left!important}
+          #sk-wb .system-offer-copy h2{margin-bottom:12px}
+          #sk-wb .system-offer-copy>div+div{min-width:0!important}
+          #sk-wb #inside{padding-top:52px}
+          #sk-wb .inside-transform-intro{max-width:720px;margin:.7rem 0 0;color:var(--muted);font-size:1rem;line-height:1.65}
+          #sk-wb .inside-transform-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:22px}
+          #sk-wb .inside-transform-card{position:relative;border:1px solid var(--line);background:linear-gradient(180deg,rgba(17,28,39,.9),rgba(17,28,39,.55));padding:20px 20px 18px;overflow:hidden}
+          #sk-wb .inside-transform-card:before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(var(--red),var(--teal))}
+          #sk-wb .inside-transform-num{font-family:var(--font-display);font-size:.78rem;letter-spacing:.1em;color:var(--teal);margin-bottom:5px}
+          #sk-wb .inside-transform-card h3{font-size:1.15rem;margin:0 0 16px;color:var(--ink)}
+          #sk-wb .inside-transform-label{font-size:.68rem;letter-spacing:.11em;font-weight:800;color:var(--muted);margin-bottom:5px}
+          #sk-wb .inside-transform-label.is-outcome{color:var(--teal)}
+          #sk-wb .inside-transform-included,#sk-wb .inside-transform-outcome{margin:0;font-size:.9rem;line-height:1.52}
+          #sk-wb .inside-transform-included{color:#c7d0d8}
+          #sk-wb .inside-transform-outcome{color:var(--ink);font-weight:700}
+          #sk-wb .inside-transform-arrow{color:var(--red);font-size:1.05rem;line-height:1;margin:11px 0 9px}
+          #sk-wb .inside-bottom-cta{display:flex;align-items:center;justify-content:space-between;gap:18px;max-width:900px;margin:24px auto 0;padding:15px 18px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+          #sk-wb .inside-bottom-cta span{color:var(--muted);font-size:.9rem;line-height:1.5}
+          #sk-wb .inside-bottom-cta .btn{margin:0;white-space:nowrap}
+          @media(max-width:820px){
+            #sk-wb .system-offer-shell{grid-template-columns:1fr;gap:20px;padding:18px}
+            #sk-wb .system-offer-copy{text-align:center;padding:0}
+            #sk-wb .system-offer-copy>div:first-child{text-align:center!important}
+          }
+          @media(max-width:640px){
+            #sk-wb #final{padding-top:40px;padding-bottom:34px}
+            #sk-wb #inside{padding-top:40px}
+            #sk-wb .system-offer-shell{padding:14px;gap:17px}
+            #sk-wb .inside-transform-grid{grid-template-columns:1fr;gap:12px}
+            #sk-wb .inside-transform-card{padding:17px 17px 16px}
+            #sk-wb .inside-bottom-cta{align-items:stretch;flex-direction:column;text-align:center;padding:15px 4px 0;border-bottom:0}
+            #sk-wb .inside-bottom-cta .btn{width:100%;text-align:center}
+          }
+          '''
+          soup.head.append(style)
+
+          # Assertions.
+          html = str(soup)
+          order = ['showcase','owner-voices','solution','how','final','inside','proof-wall']
+          positions = [html.find(f'id="{sid}"') for sid in order]
+          if any(p < 0 for p in positions) or positions != sorted(positions):
+              raise SystemExit('Unexpected v4 section order')
+          if len(final.select('.system-offer-overview img')) != 1:
+              raise SystemExit('Overview visual was not moved into offer')
+          if inside.select('.system-offer-overview img'):
+              raise SystemExit('Overview visual still duplicated inside contents')
+          if len(inside.select('.inside-transform-card')) != 4:
+              raise SystemExit('Expected four simplified contents cards')
+          if '$249' not in final.get_text(' ', strip=True):
+              raise SystemExit('Offer price missing')
+          if 'Lifetime access' not in final.get_text(' ', strip=True):
+              raise SystemExit('Lifetime access missing')
+          if '30-day guarantee' not in final.get_text(' ', strip=True):
+              raise SystemExit('Guarantee missing')
+          if not final.select_one('a[href*="buy.stripe.com/28EbJ04MV4ege3j8VH04804"]'):
+              raise SystemExit('System Stripe link missing')
+
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(str(soup), encoding='utf-8')
+          print('Built', out)
+          PY
+      - name: Commit candidate
+        run: |
+          git config user.name "slayerkey"
+          git config user.email "34904637+slayerkey@users.noreply.github.com"
+          git add wordpress/slayerkey-website/previews/live-refresh/system-live-refresh-v4/index.html
+          git commit -m "Move System overview into offer and simplify contents"
+          git push
