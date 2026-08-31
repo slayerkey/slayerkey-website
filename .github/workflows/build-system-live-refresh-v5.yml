@@ -1,0 +1,269 @@
+name: Build System Live Refresh V5
+
+on:
+  push:
+    paths:
+      - '.github/workflows/build-system-live-refresh-v5.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install parser
+        run: python -m pip install --quiet beautifulsoup4
+
+      - name: Build System v5 simplification pass
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from bs4 import BeautifulSoup
+
+          src = Path('wordpress/slayerkey-website/previews/live-refresh/system-live-refresh-v4/index.html')
+          dst = Path('wordpress/slayerkey-website/previews/live-refresh/system-live-refresh-v5/index.html')
+          if not src.exists():
+              raise SystemExit('Missing v4 source')
+
+          soup = BeautifulSoup(src.read_text(encoding='utf-8'), 'html.parser')
+
+          # 1) Improvement Path: describe the improvement process, not the purchase process.
+          how = soup.select_one('#how')
+          if not how:
+              raise SystemExit('Missing #how')
+          steps = how.select('.process .stepx')
+          if len(steps) != 4:
+              raise SystemExit(f'Expected 4 improvement steps, got {len(steps)}')
+
+          process = [
+              ('01', 'Find', 'Use the 6-month plan to find the biggest thing holding you back.'),
+              ('02', 'Train', 'Go straight to the lesson, drill, or masterclass built for that weakness.'),
+              ('03', 'Apply', 'Take one clear focus into ranked until it starts showing up consistently.'),
+              ('04', 'Review', 'See what changed, find the next bottleneck, and repeat.'),
+          ]
+          for step, (num, title, copy) in zip(steps, process):
+              step.select_one('.num').string = num
+              step.select_one('.title').string = title
+              step.select_one('p').string = copy
+
+          inline_cta = how.select_one('.system-inline-cta')
+          if inline_cta:
+              inline_cta.decompose()
+
+          # 2) Offer: chart + headline + checkout only. Remove explanatory clutter.
+          offer = soup.select_one('#final .system-offer-shell')
+          if not offer:
+              raise SystemExit('Missing System offer')
+
+          caption = offer.select_one('.system-offer-caption')
+          if caption:
+              caption.decompose()
+
+          offer_copy = offer.select_one('.system-offer-copy')
+          if not offer_copy:
+              raise SystemExit('Missing offer copy')
+
+          eyebrow = offer_copy.select_one('.eyebrow')
+          if eyebrow:
+              eyebrow.decompose()
+
+          coaching_link = offer_copy.select_one('a.sk-textlink')
+          if coaching_link and coaching_link.parent:
+              coaching_link.parent.decompose()
+
+          price_p = None
+          for p in offer_copy.find_all('p'):
+              txt = ' '.join(p.stripped_strings)
+              if '$249' in txt and 'Lifetime access' in txt:
+                  price_p = p
+                  break
+          if not price_p:
+              raise SystemExit('Missing offer price line')
+
+          price_p.clear()
+          price_p['class'] = ['system-offer-meta']
+          price_pair = soup.new_tag('span')
+          price_pair['class'] = ['system-offer-pricepair']
+          price = soup.new_tag('strong')
+          price.string = '$249'
+          price_pair.append(price)
+          one_time = soup.new_tag('span')
+          one_time.string = 'one time'
+          price_pair.append(one_time)
+          price_p.append(price_pair)
+          for label in ('Lifetime access', '30 day guarantee'):
+              item = soup.new_tag('span')
+              item['class'] = ['system-offer-trust']
+              item.string = label
+              price_p.append(item)
+
+          # 3) What's Inside: four concrete flagship pieces, each with one transformation sentence.
+          inside = soup.select_one('#inside')
+          if not inside:
+              raise SystemExit('Missing #inside')
+
+          intro = inside.select_one('.inside-transform-intro')
+          if intro:
+              intro.decompose()
+
+          cards = inside.select('.inside-transform-card')
+          if len(cards) != 4:
+              raise SystemExit(f'Expected 4 inside cards, got {len(cards)}')
+
+          contents = [
+              ('01', '6-Month Improvement Plan', 'Know exactly where to take your gameplay next instead of guessing what to fix.'),
+              ('02', 'All-In-One Fundamentals', 'Build the core skills everything else in Valorant depends on.'),
+              ('03', 'Agent & Map Masterclasses', 'Know how to play your agent and common situations with a plan instead of improvising every round.'),
+              ('04', 'AI Coach', 'Turn questions and problems into a clear next step whenever you get stuck.'),
+          ]
+          for card, (num, title, outcome) in zip(cards, contents):
+              card.clear()
+              n = soup.new_tag('div')
+              n['class'] = ['inside-transform-num']
+              n.string = num
+              h3 = soup.new_tag('h3')
+              h3.string = title
+              p = soup.new_tag('p')
+              p['class'] = ['inside-simple-outcome']
+              p.string = outcome
+              card.extend([n, h3, p])
+
+          bottom_cta = inside.select_one('.inside-bottom-cta')
+          if bottom_cta:
+              bottom_cta.decompose()
+
+          # V5-only styling. Keep the working v4 design system, override only this pass.
+          style = soup.new_tag('style')
+          style.string = r'''
+          /* System v5: simplify the process, offer, and included-content sections. */
+          #sk-wb #how .process{margin-bottom:0}
+          #sk-wb #how .stepx p{max-width:230px}
+
+          #sk-wb #final{padding-top:48px;padding-bottom:42px}
+          #sk-wb .system-offer-shell{
+            grid-template-columns:minmax(0,1.08fr) minmax(360px,.92fr);
+            gap:30px;
+            padding:26px;
+          }
+          #sk-wb .system-offer-copy{
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            text-align:center;
+            padding:0 4px;
+          }
+          #sk-wb .system-offer-copy>div:first-child{text-align:center!important;width:100%}
+          #sk-wb .system-offer-copy h2{margin:0 0 18px;text-align:center}
+          #sk-wb .system-offer-meta{
+            margin:16px 0 0!important;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+            flex-wrap:nowrap;
+            white-space:nowrap;
+            font-size:.86rem!important;
+            letter-spacing:.01em!important;
+            opacity:.96!important;
+            text-align:center!important;
+          }
+          #sk-wb .system-offer-pricepair{display:inline-flex;align-items:baseline;gap:5px}
+          #sk-wb .system-offer-pricepair strong{
+            font-family:var(--font-display);
+            font-weight:400;
+            font-size:1.5rem;
+            color:#fff;
+          }
+          #sk-wb .system-offer-trust:before{content:'•';margin-right:8px;color:var(--muted)}
+
+          #sk-wb #inside{padding-top:48px}
+          #sk-wb #inside .section-head{margin-bottom:20px}
+          #sk-wb .inside-transform-grid{gap:14px;margin-top:0}
+          #sk-wb .inside-transform-card{
+            min-height:170px;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            padding:22px 22px 20px;
+          }
+          #sk-wb .inside-transform-card h3{
+            margin:2px 0 10px;
+            font-size:1.18rem;
+            line-height:1.3;
+          }
+          #sk-wb .inside-simple-outcome{
+            margin:0;
+            color:var(--muted);
+            line-height:1.55;
+            font-size:.94rem;
+            max-width:520px;
+          }
+
+          @media(max-width:920px){
+            #sk-wb .system-offer-shell{grid-template-columns:1fr;gap:20px;padding:18px}
+            #sk-wb .system-offer-meta{flex-wrap:wrap;white-space:normal;row-gap:5px}
+          }
+          @media(max-width:640px){
+            #sk-wb #final{padding-top:38px;padding-bottom:32px}
+            #sk-wb #inside{padding-top:38px}
+            #sk-wb .system-offer-shell{padding:14px;gap:18px}
+            #sk-wb .system-offer-copy h2{margin-bottom:14px}
+            #sk-wb .system-offer-meta{font-size:.82rem!important;gap:6px}
+            #sk-wb .system-offer-trust:before{margin-right:6px}
+            #sk-wb .inside-transform-card{min-height:0;padding:18px 18px 17px}
+          }
+          '''
+          soup.head.append(style)
+
+          # Marker makes public/CDN verification unambiguous.
+          marker = soup.new_tag('meta')
+          marker['name'] = 'slayerkey-preview-variant'
+          marker['content'] = 'system_live_refresh_v5'
+          soup.head.append(marker)
+
+          dst.parent.mkdir(parents=True, exist_ok=True)
+          dst.write_text(str(soup), encoding='utf-8')
+
+          built = dst.read_text(encoding='utf-8')
+          required = [
+              'system_live_refresh_v5',
+              '6-Month Improvement Plan',
+              'All-In-One Fundamentals',
+              'Agent &amp; Map Masterclasses',
+              'AI Coach',
+              '30 day guarantee',
+              'buy.stripe.com/28EbJ04MV4ege3j8VH04804',
+          ]
+          for marker in required:
+              if marker not in built:
+                  raise SystemExit('Missing v5 marker: ' + marker)
+
+          stale = [
+              'Buy or access the system instantly.',
+              'Quick onboarding, pick mains, set your focus.',
+              'Know What To Work On Next',
+              'The full Improvement System at a glance. Click the visual to open it full size.',
+              '>IN THE SYSTEM<',
+              '>WHAT IT CHANGES<',
+              'See the whole System, then use it around the problem you are trying to fix right now.',
+          ]
+          for marker in stale:
+              if marker in built:
+                  raise SystemExit('Stale v4 copy remains: ' + marker)
+
+          print('Built', dst)
+          PY
+
+      - name: Commit candidate
+        run: |
+          git config user.name "slayerkey"
+          git config user.email "34904637+slayerkey@users.noreply.github.com"
+          git add wordpress/slayerkey-website/previews/live-refresh/system-live-refresh-v5/index.html
+          git commit -m "Simplify System process offer and contents"
+          git push
