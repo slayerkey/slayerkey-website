@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.26
+ * Version: 0.1.27
  * Author: Slayerkey
  */
 
@@ -10,12 +10,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.26' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.27' );
 
 // Flip to true to replace the legacy Elementor /system page with the GitHub managed System v4.
 // /system/welcome (the Stripe post-purchase page) and the native /terms route are always on;
 // /terms only takes effect once the Redirection plugin rule pointing at the Google Doc is removed.
 define( 'SLAYERKEY_PUBLIC_SYSTEM_ENABLED', false );
+define( 'SLAYERKEY_PUBLIC_COACHING_ENABLED', true );
 define( 'SLAYERKEY_POSTHOG_TOKEN', 'phc_m92yxHMa2BTnSu7KmebGKu8sEitMki4oPhdLTKZzcpMc' );
 define( 'SLAYERKEY_POSTHOG_HOST', 'https://edge.slayerkey.com' );
 define( 'SLAYERKEY_POSTHOG_UI_HOST', 'https://us.posthog.com' );
@@ -374,6 +375,52 @@ function slayerkey_website_public_request_path() {
 
     return '' === $path ? '/' : $path;
 }
+
+
+function slayerkey_website_is_public_coaching_request() {
+    if ( ! SLAYERKEY_PUBLIC_COACHING_ENABLED || is_admin() || slayerkey_website_is_private_preview_request() ) {
+        return false;
+    }
+
+    return '/coaching' === slayerkey_website_public_request_path();
+}
+
+function slayerkey_website_render_public_coaching() {
+    if ( ! slayerkey_website_is_public_coaching_request() ) {
+        return;
+    }
+
+    $coaching_file = plugin_dir_path( __FILE__ ) . 'previews/live-refresh/coaching-live-refresh-v3/index.html';
+
+    if ( ! is_readable( $coaching_file ) ) {
+        return;
+    }
+
+    $html = file_get_contents( $coaching_file );
+
+    if ( false === $html ) {
+        return;
+    }
+
+    $html = str_replace(
+        '<meta content="coaching-live-refresh-v3" name="slayerkey-candidate"/>',
+        '<meta content="coaching-live-refresh-v3" name="slayerkey-live-page"/>',
+        $html
+    );
+
+    global $wp_query;
+    if ( $wp_query instanceof WP_Query ) {
+        $wp_query->is_404 = false;
+        $wp_query->is_page = true;
+    }
+
+    status_header( 200 );
+    nocache_headers();
+    header( 'Content-Type: text/html; charset=' . get_option( 'blog_charset' ) );
+    echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    exit;
+}
+add_action( 'template_redirect', 'slayerkey_website_render_public_coaching', 1 );
 
 function slayerkey_website_is_public_system_request() {
     if ( ! SLAYERKEY_PUBLIC_SYSTEM_ENABLED || is_admin() || slayerkey_website_is_private_preview_request() ) {

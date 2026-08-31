@@ -350,22 +350,6 @@ h2{font-size:clamp(1.7rem,1.1rem + 2.5vw,2.7rem);line-height:1.08;letter-spacing
 </style>
 <!-- Safety net while old http:// links get cleaned up -->
 <meta content="upgrade-insecure-requests" http-equiv="Content-Security-Policy"/>
-<!--
-  Whop pixel. Attributes Whop sales back to the page and UTMs that produced them,
-  using Whop's first-party payment data instead of third-party cookies.
-
-  Deliberately NOT deferred like GA4/Clarity below: the snippet is already async,
-  and deferring it loses the page views it exists to record.
-
-  Whop records checkout views, purchases, subscriptions and trials server-side with
-  no configuration, and rejects duplicates. Do not add a manual purchase event here.
-  Only events Whop cannot see belong in this pixel (see whop.track('lead') in the footer).
--->
-<script>
-!function(w,d,s,u,n,a,b){if(w[n])return;a=w[n]={q:[],t:+new Date,s:[],o:u,track:function(){a.q.push([+new Date].concat([].slice.call(arguments)))},setScope:function(){a.s=[].slice.call(arguments).filter(function(x){return typeof x==="string"});a.q.push([+new Date,"setScope"].concat(a.s))},scope:function(){var c=[].slice.call(arguments);return{track:function(){a.q.push([+new Date].concat([].slice.call(arguments)).concat([{__scope:c}]))}}}};b=d.createElement(s);b.async=1;b.src=u+"/s.js";d.getElementsByTagName(s)[0].parentNode.insertBefore(b,d.getElementsByTagName(s)[0])}(window,document,"script","https://t.whop.tw","whop");
-whop.setScope("biz_WIdultHzwTUrlE");
-whop.track("page");
-</script>
 <script type="text/javascript">
     (function(c,l,a,r,i,t,y){
         c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
@@ -388,7 +372,7 @@ whop.track("page");
     anonymize_ip: true,
     debug_mode: SK_DEBUG,
     // Keep sessions when users hop to Ko-fi or your Tally form
-    linker: { domains: ['slayerkey.com','ko-fi.com','tally.so','whop.com'] }
+    linker: { domains: ['slayerkey.com','buy.stripe.com','ko-fi.com','tally.so','whop.com'] }
   });
 
   window.SK_startGtagScript = function(){
@@ -1762,7 +1746,7 @@ marquee(document.querySelector('#reviews .loop'), { speed: 24, gap: 18, minSegs:
   }
 
   const SK_DEBUG = location.search.includes('debug=1') || location.hostname === 'localhost';
-  const OUT = ['ko-fi.com','youtube.com','youtu.be','twitch.tv','discord.gg','tally.so','whop.com'];
+  const OUT = ['buy.stripe.com','ko-fi.com','youtube.com','youtu.be','twitch.tv','discord.gg','tally.so','whop.com'];
 
   function isOutbound(u){
     try { return OUT.some(d => new URL(u, location.href).hostname.includes(d)); }
@@ -1809,9 +1793,9 @@ marquee(document.querySelector('#reviews .loop'), { speed: 24, gap: 18, minSegs:
   // Decorate outbound links with UTM and open in new tab
   document.querySelectorAll('a[href]').forEach(a=>{
     if (!isOutbound(a.href)) return;
-    a.target = '_blank'; a.rel = 'noopener';
     try{
       const u = new URL(a.href, location.href);
+      if (u.hostname !== 'buy.stripe.com'){ a.target = '_blank'; a.rel = 'noopener'; }
       if (!u.searchParams.has('utm_source')){
         u.searchParams.set('utm_source',   INBOUND.source   || 'slayerkey_site');
         u.searchParams.set('utm_medium',   INBOUND.medium   || sectionName(a));
@@ -1824,13 +1808,12 @@ marquee(document.querySelector('#reviews .loop'), { speed: 24, gap: 18, minSegs:
 
   /*
     Checkout links and what they are worth, so begin_checkout carries a real value.
-    GA4 never sees the purchase itself (that happens on Whop/Ko-fi), so this is the last
-    measurable step on our side. The purchase event fires on /welcome.
+    GA4 records the checkout start on Slayerkey before the browser hands off to Stripe.
+    Stripe remains the payment source of truth for the completed purchase.
   */
   const CHECKOUTS = [
-    { match:'whop.com/checkout/plan_TOSvOOLdpQXzi', value:15,  name:'Training Dojo Monthly',   id:'plan_TOSvOOLdpQXzi' },
-    { match:'ko-fi.com/s/e34dd9cdef',               value:197, name:'Improvement System',      id:'kofi_e34dd9cdef'    },
-    { match:'ko-fi.com/s/cd324493ce',               value:870, name:'Performance Mentorship',  id:'kofi_cd324493ce'    }
+    { match:'buy.stripe.com/00w28q3IR4eg8IZ8VH04806', value:1200, name:'Private Mentorship - One Time', id:'price_1U4qemArG6inWxHPnTaPZG6r' },
+    { match:'buy.stripe.com/4gM00i3IR4eg3oF0pb04805', value:1300, name:'Private Mentorship - Four Monthly Payments', id:'price_1U8X2WArG6inWxHPrHbN7G34' }
   ];
   function checkoutFor(href){
     return CHECKOUTS.find(c => href.indexOf(c.match) !== -1) || null;
@@ -1870,6 +1853,16 @@ marquee(document.querySelector('#reviews .loop'), { speed: 24, gap: 18, minSegs:
         items: [{ item_id: co.id, item_name: co.name, price: co.value, quantity: 1 }],
         debug_mode: SK_DEBUG
       });
+      if (window.posthog && typeof window.posthog.capture === 'function'){
+        posthog.capture('begin_checkout',{
+          currency: 'USD',
+          value: co.value,
+          item_id: co.id,
+          item_name: co.name,
+          cta_location: sectionName(el),
+          link_url: href
+        });
+      }
     }
   }, true);
 
