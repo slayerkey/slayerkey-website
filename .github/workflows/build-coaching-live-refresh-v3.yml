@@ -1,0 +1,141 @@
+name: Build Coaching Live Refresh V3
+
+on:
+  push:
+    paths:
+      - '.github/workflows/build-coaching-live-refresh-v3.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install parser
+        run: python -m pip install --quiet beautifulsoup4
+      - name: Build conservative Coaching v3
+        run: |
+          python - <<'PY'
+          from bs4 import BeautifulSoup
+          from pathlib import Path
+
+          src = Path('wordpress/slayerkey-website/previews/live-refresh/coaching-live-refresh-v2/index.html')
+          out = Path('wordpress/slayerkey-website/previews/live-refresh/coaching-live-refresh-v3/index.html')
+          soup = BeautifulSoup(src.read_text(encoding='utf-8'), 'html.parser')
+
+          marker = soup.find('meta', attrs={'name':'slayerkey-candidate'})
+          if marker:
+              marker['content'] = 'coaching-live-refresh-v3'
+          else:
+              marker = soup.new_tag('meta')
+              marker['name'] = 'slayerkey-candidate'
+              marker['content'] = 'coaching-live-refresh-v3'
+              soup.head.append(marker)
+
+          showcase = soup.select_one('#showcase')
+          proof = soup.select_one('#proof-wall')
+          psmr = soup.select_one('#psmr')
+          how = soup.select_one('#how')
+          reviews = soup.select_one('#reviews')
+          pricing = soup.select_one('#coaching-pricing')
+          about = soup.select_one('#about')
+          if not all([showcase, proof, psmr, how, reviews, pricing, about]):
+              raise SystemExit('Required Coaching sections missing')
+
+          # Buyer journey: proof -> problem/solution -> offer -> Discord proof -> how it works -> review rail -> story.
+          for node in (psmr, pricing, proof, how, reviews, about):
+              node.extract()
+          showcase.insert_after(psmr)
+          psmr.insert_after(pricing)
+          pricing.insert_after(proof)
+          proof.insert_after(how)
+          how.insert_after(reviews)
+          reviews.insert_after(about)
+
+          # Pricing labels: same mentorship, clearer comparison.
+          compare = pricing.select_one('.price-compare-note')
+          if compare:
+              compare.string = 'Same four-month mentorship either way. Choose one-time to save $100, or split it across four months.'
+
+          cards = pricing.select('.price-card')
+          if len(cards) != 2:
+              raise SystemExit(f'Expected 2 pricing cards, found {len(cards)}')
+
+          one, monthly = cards
+          flag = one.select_one('.price-flag')
+          if flag:
+              flag.string = 'Best Value'
+          per = one.select_one('.price .per')
+          if per:
+              per.string = 'one time'
+          note = one.select_one('.upgrade-note')
+          if note:
+              note.string = 'Save $100 compared with monthly. Includes the current Improvement System + Training Dojo access.'
+
+          mh3 = monthly.find('h3')
+          if mh3:
+              mh3.string = 'Private Mentorship Monthly'
+          mper = monthly.select_one('.price .per')
+          if mper:
+              mper.string = 'monthly for 4 months'
+          msub = monthly.select_one('.price-sub')
+          if msub:
+              msub.string = 'Same four-month Private Mentorship, split into four monthly payments. $1,300 total.'
+          mbtn = monthly.select_one('a.btn')
+          if mbtn:
+              mbtn.string = 'Start Your Mentorship'
+
+          # Step 1 should feel like the start of coaching, not checkout logistics.
+          first_step = how.select_one('.stepx')
+          if first_step:
+              title = first_step.select_one('.title')
+              p = first_step.find('p')
+              if title:
+                  title.string = 'Kickoff'
+              if p:
+                  p.string = 'Schedule your first session, share your goals, and start working toward the first priority that matters most.'
+
+          # Isolated tiny sizing assist so the longer monthly label does not crowd the price.
+          style = soup.new_tag('style')
+          style.string = '''
+          #sk-wb #coaching-pricing .price .per{max-width:150px;line-height:1.25}
+          @media(max-width:520px){#sk-wb #coaching-pricing .price .per{max-width:130px;font-size:.82rem}}
+          '''
+          soup.head.append(style)
+
+          # Structural assertions.
+          ids = ['showcase','psmr','coaching-pricing','proof-wall','how','reviews','about']
+          positions = []
+          for sid in ids:
+              node = soup.select_one('#'+sid)
+              if not node:
+                  raise SystemExit('Missing section '+sid)
+              positions.append(str(soup).find(f'id="{sid}"'))
+          if positions != sorted(positions):
+              raise SystemExit('Wrong section order')
+          if one.select_one('.price .per').get_text(strip=True).lower() != 'one time':
+              raise SystemExit('One-time label missing')
+          if 'Best Value' not in one.get_text(' ', strip=True):
+              raise SystemExit('Best Value missing')
+          if 'Private Mentorship Monthly' not in monthly.get_text(' ', strip=True):
+              raise SystemExit('Monthly title missing')
+          if monthly.select_one('a.btn').get_text(' ', strip=True) != 'Start Your Mentorship':
+              raise SystemExit('Monthly CTA mismatch')
+          if first_step.select_one('.title').get_text(strip=True) != 'Kickoff':
+              raise SystemExit('Kickoff step missing')
+
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(str(soup), encoding='utf-8')
+          print('Built', out)
+          PY
+      - name: Commit candidate
+        run: |
+          git config user.name "slayerkey"
+          git config user.email "34904637+slayerkey@users.noreply.github.com"
+          git add wordpress/slayerkey-website/previews/live-refresh/coaching-live-refresh-v3/index.html
+          git commit -m "Refine Coaching offer journey and pricing labels"
+          git push
