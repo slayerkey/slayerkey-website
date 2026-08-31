@@ -388,7 +388,7 @@ whop.track("page");
     anonymize_ip: true,
     debug_mode: SK_DEBUG,
     // Keep sessions when users hop to Ko-fi or your Tally form
-    linker: { domains: ['slayerkey.com','ko-fi.com','tally.so','whop.com'] }
+    linker: { domains: ['slayerkey.com','buy.stripe.com','ko-fi.com','tally.so','whop.com'] }
   });
 
   window.SK_startGtagScript = function(){
@@ -1514,7 +1514,7 @@ whop.track("page");
   }
 
   const SK_DEBUG = location.search.includes('debug=1') || location.hostname === 'localhost';
-  const OUT = ['ko-fi.com','youtube.com','youtu.be','twitch.tv','discord.gg','tally.so','whop.com'];
+  const OUT = ['buy.stripe.com','ko-fi.com','youtube.com','youtu.be','twitch.tv','discord.gg','tally.so','whop.com'];
 
   function isOutbound(u){
     try { return OUT.some(d => new URL(u, location.href).hostname.includes(d)); }
@@ -1561,9 +1561,9 @@ whop.track("page");
   // Decorate outbound links with UTM and open in new tab
   document.querySelectorAll('a[href]').forEach(a=>{
     if (!isOutbound(a.href)) return;
-    a.target = '_blank'; a.rel = 'noopener';
     try{
       const u = new URL(a.href, location.href);
+      if (u.hostname !== 'buy.stripe.com'){ a.target = '_blank'; a.rel = 'noopener'; }
       if (!u.searchParams.has('utm_source')){
         u.searchParams.set('utm_source',   INBOUND.source   || 'slayerkey_site');
         u.searchParams.set('utm_medium',   INBOUND.medium   || sectionName(a));
@@ -1580,9 +1580,7 @@ whop.track("page");
     measurable step on our side. The purchase event fires on /welcome.
   */
   const CHECKOUTS = [
-    { match:'whop.com/checkout/plan_TOSvOOLdpQXzi', value:15,  name:'Training Dojo Monthly',   id:'plan_TOSvOOLdpQXzi' },
-    { match:'ko-fi.com/s/e34dd9cdef',               value:197, name:'Improvement System',      id:'kofi_e34dd9cdef'    },
-    { match:'ko-fi.com/s/cd324493ce',               value:870, name:'Performance Mentorship',  id:'kofi_cd324493ce'    }
+    { match:'buy.stripe.com/28EbJ04MV4ege3j8VH04804', value:249, name:'Improvement System', id:'price_1U8WzqArG6inWxHPI4WlZjPo' }
   ];
   function checkoutFor(href){
     return CHECKOUTS.find(c => href.indexOf(c.match) !== -1) || null;
@@ -1622,6 +1620,12 @@ whop.track("page");
         items: [{ item_id: co.id, item_name: co.name, price: co.value, quantity: 1 }],
         debug_mode: SK_DEBUG
       });
+      if (window.posthog && typeof window.posthog.capture === 'function'){
+        posthog.capture('begin_checkout',{
+          currency: 'USD', value: co.value, item_id: co.id, item_name: co.name,
+          cta_location: sectionName(el), link_url: href
+        });
+      }
     }
   }, true);
 
