@@ -1,0 +1,225 @@
+name: Build System Live Refresh V6
+
+on:
+  push:
+    paths:
+      - '.github/workflows/build-system-live-refresh-v6.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install parser
+        run: python -m pip install --quiet beautifulsoup4
+      - name: Build System v6 proof and contents pass
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from bs4 import BeautifulSoup
+
+          src = Path('wordpress/slayerkey-website/previews/live-refresh/system-live-refresh-v5/index.html')
+          dst = Path('wordpress/slayerkey-website/previews/live-refresh/system-live-refresh-v6/index.html')
+          soup = BeautifulSoup(src.read_text(encoding='utf-8'), 'html.parser')
+
+          # Proof cards: use the same hierarchy as the approved Coaching page.
+          showcase = soup.select_one('#showcase')
+          cards = showcase.select('.result-card.rank') if showcase else []
+          if len(cards) != 2:
+              raise SystemExit(f'Expected 2 System proof cards, got {len(cards)}')
+
+          proof = [
+              ('g09', 'Gold 2 → Diamond 1', '+500 RR · 35 Days'),
+              ('Ruin', 'Ascendant 2 → Radiant', '8 Days'),
+          ]
+          for card, (name, rank, impact) in zip(cards, proof):
+              cap = card.select_one('figcaption')
+              cap.clear()
+              n = soup.new_tag('span'); n['class'] = ['result-name']; n.string = name
+              r = soup.new_tag('span'); r['class'] = ['result-rank']; r.string = rank
+              i = soup.new_tag('strong'); i['class'] = ['result-impact']; i.string = impact
+              cap.extend([n, r, i])
+
+          # Remove the two text testimonial cards below the visual proof.
+          owner = soup.select_one('#owner-voices')
+          if not owner:
+              raise SystemExit('Missing #owner-voices')
+          proof_cta = soup.new_tag('div')
+          proof_cta['class'] = ['system-simple-cta', 'reveal']
+          a = soup.new_tag('a')
+          a['class'] = ['btn']
+          a['data-cta'] = 'proof_start'
+          a['href'] = '#final'
+          a['target'] = '_self'
+          a.string = 'Start Improving'
+          proof_cta.append(a)
+          owner.replace_with(proof_cta)
+
+          # Offer: clearer title, same transformation-led CTA.
+          offer = soup.select_one('#final .system-offer-shell')
+          if not offer:
+              raise SystemExit('Missing offer')
+          h2 = offer.select_one('h2')
+          if h2:
+              h2.string = 'The Full Improvement System'
+          offer_btn = offer.select_one('a.btn[href*="buy.stripe.com"]')
+          if not offer_btn:
+              raise SystemExit('Missing Stripe offer CTA')
+          offer_btn.string = 'Start Improving'
+          offer_btn['data-cta'] = 'offer_start_improving'
+
+          # Simplify deeper review CTA to the same centered action.
+          reviews = soup.select_one('#proof-wall .system-inline-cta')
+          if reviews:
+              reviews.clear()
+              reviews['class'] = ['system-simple-cta', 'reveal']
+              reviews['data-system-cta'] = 'reviews_start'
+              ra = soup.new_tag('a')
+              ra['class'] = ['btn']
+              ra['data-cta'] = 'reviews_start'
+              ra['href'] = '#final'
+              ra['target'] = '_self'
+              ra.string = 'Start Improving'
+              reviews.append(ra)
+
+          # Any remaining buyer-facing exact “Get The System” buttons become Start Improving.
+          for link in soup.select('a.btn'):
+              if ' '.join(link.stripped_strings).strip().lower() == 'get the system':
+                  link.string = 'Start Improving'
+
+          # What's inside: preserve 2x2 structure, remove numbers/stripes, one concrete item + one outcome.
+          inside = soup.select_one('#inside')
+          cards = inside.select('.inside-transform-card') if inside else []
+          if len(cards) != 4:
+              raise SystemExit(f'Expected 4 inside cards, got {len(cards)}')
+          items = [
+              ('6-Month Improvement Plan', 'Know exactly what to work on next and where to take your gameplay from there.'),
+              ('All-In-One Fundamentals', 'Build the mechanics and fundamentals that every rank and every agent depends on.'),
+              ('Agent & Map Masterclasses', 'Know what to do on your agent and map before the same situations cost you another round.'),
+              ('AI Coach', 'Get a clear next step when you are stuck instead of going back to random tips and guessing.'),
+          ]
+          for card, (title, outcome) in zip(cards, items):
+              card.clear()
+              h3 = soup.new_tag('h3'); h3.string = title
+              p = soup.new_tag('p'); p['class'] = ['inside-simple-outcome']; p.string = outcome
+              card.extend([h3, p])
+
+          # V6 visual overrides only.
+          style = soup.new_tag('style')
+          style.string = r'''
+          /* System v6: Coaching-style proof hierarchy + simpler product tiles. */
+          #sk-wb #showcase{padding-bottom:0!important}
+          #sk-wb #showcase .result-card figcaption{
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            gap:5px;
+            padding:16px 14px 18px;
+            text-align:center;
+          }
+          #sk-wb #showcase .result-card figcaption::before{content:none!important}
+          #sk-wb #showcase .result-name{
+            display:block;
+            color:var(--muted);
+            font-size:.72rem;
+            font-weight:800;
+            letter-spacing:.13em;
+            text-transform:uppercase;
+            line-height:1.2;
+          }
+          #sk-wb #showcase .result-rank{
+            display:block;
+            color:var(--ink);
+            font-size:1.04rem;
+            font-weight:850;
+            letter-spacing:.01em;
+            line-height:1.25;
+          }
+          #sk-wb #showcase .result-impact{
+            display:block;
+            color:#fff;
+            font-size:clamp(1.22rem,1.7vw,1.48rem);
+            font-weight:900;
+            letter-spacing:-.015em;
+            line-height:1.2;
+          }
+          #sk-wb .system-simple-cta{
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            max-width:900px;
+            margin:24px auto 0;
+            padding:0;
+            border:0;
+            background:none;
+          }
+          #sk-wb .system-simple-cta .btn{margin:0}
+
+          #sk-wb #inside .inside-transform-grid{
+            gap:16px;
+          }
+          #sk-wb #inside .inside-transform-card{
+            min-height:155px;
+            padding:24px 24px 22px;
+            border:1px solid rgba(255,255,255,.09);
+            border-top:2px solid rgba(45,226,197,.62);
+            background:linear-gradient(180deg,rgba(17,28,39,.82),rgba(11,20,29,.62));
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+          }
+          #sk-wb #inside .inside-transform-card:before{display:none!important}
+          #sk-wb #inside .inside-transform-card h3{
+            margin:0 0 10px;
+            font-size:clamp(1.18rem,1.55vw,1.4rem);
+            line-height:1.22;
+            color:#fff;
+            letter-spacing:-.01em;
+          }
+          #sk-wb #inside .inside-simple-outcome{
+            margin:0;
+            color:var(--muted);
+            font-size:.96rem;
+            line-height:1.55;
+            max-width:520px;
+          }
+          @media(max-width:760px){
+            #sk-wb #showcase .result-impact{font-size:1.2rem}
+            #sk-wb .system-simple-cta{margin-top:20px}
+            #sk-wb .system-simple-cta .btn{width:min(100%,330px);text-align:center}
+            #sk-wb #inside .inside-transform-card{min-height:0;padding:19px 18px 18px}
+          }
+          '''
+          soup.head.append(style)
+
+          marker = soup.find('meta', attrs={'name':'slayerkey-preview-variant'})
+          if marker:
+              marker['content'] = 'system_live_refresh_v6'
+          else:
+              marker = soup.new_tag('meta'); marker['name']='slayerkey-preview-variant'; marker['content']='system_live_refresh_v6'; soup.head.append(marker)
+
+          dst.write_text(str(soup), encoding='utf-8')
+          built = dst.read_text(encoding='utf-8')
+          required = ['system_live_refresh_v6','Gold 2 → Diamond 1','+500 RR · 35 Days','Ascendant 2 → Radiant','8 Days','6-Month Improvement Plan','The Full Improvement System','Start Improving']
+          for x in required:
+              if x not in built:
+                  raise SystemExit('Missing marker: '+x)
+          stale = ['DeputySanders</strong><span>Gold 1 → Platinum 1','Build Your Own Climb','>Get The System<','inside-transform-num">01']
+          for x in stale:
+              if x in built:
+                  raise SystemExit('Stale marker remains: '+x)
+          print('Built', dst)
+          PY
+      - name: Commit candidate
+        run: |
+          git config user.name "slayerkey"
+          git config user.email "34904637+slayerkey@users.noreply.github.com"
+          git add wordpress/slayerkey-website/previews/live-refresh/system-live-refresh-v6/index.html
+          git commit -m "Refine System proof CTAs and contents"
+          git push
