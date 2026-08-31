@@ -47,8 +47,8 @@ jobs:
               marker:q('meta[name="slayerkey-candidate"]')?.content,
               order:['#showcase','#psmr','#coaching-pricing','#proof-wall','#how','#reviews','#about'].map(s=>y(s)),
               sameRow:Math.abs(cards[0].top-cards[1].top)<2,
-              pricing:q('#coaching-pricing')?.innerText||'',
-              step:q('#how .stepx')?.innerText||'',
+              pricing:q('#coaching-pricing')?.textContent||'',
+              step:q('#how .stepx')?.textContent||'',
               overflow:document.documentElement.scrollWidth-innerWidth
             };
           });
@@ -64,7 +64,7 @@ jobs:
           const mobile=await page.evaluate(()=>({
             overflow:document.documentElement.scrollWidth-innerWidth,
             cards:[...document.querySelectorAll('#coaching-pricing .price-card')].map(e=>e.getBoundingClientRect().width),
-            pricing:document.querySelector('#coaching-pricing')?.innerText||''
+            pricing:document.querySelector('#coaching-pricing')?.textContent||''
           }));
           if(mobile.overflow>2) throw new Error('Mobile overflow '+mobile.overflow);
           if(mobile.cards.some(w=>w>390)) throw new Error('Mobile pricing card overflow '+mobile.cards);
