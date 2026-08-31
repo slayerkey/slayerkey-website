@@ -1,0 +1,59 @@
+name: Patch System V4 Tracking Fixed
+
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-system-v4-tracking-fixed.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch Stripe tracking
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('wordpress/slayerkey-website/previews/live-refresh/system-live-refresh-v4/index.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace("linker: { domains: ['slayerkey.com','ko-fi.com','tally.so','whop.com'] }", "linker: { domains: ['slayerkey.com','buy.stripe.com','ko-fi.com','tally.so','whop.com'] }")
+          s = s.replace("const OUT = ['ko-fi.com','youtube.com','youtu.be','twitch.tv','discord.gg','tally.so','whop.com'];", "const OUT = ['buy.stripe.com','ko-fi.com','youtube.com','youtu.be','twitch.tv','discord.gg','tally.so','whop.com'];")
+          old = "    a.target = '_blank'; a.rel = 'noopener';\n    try{\n      const u = new URL(a.href, location.href);"
+          new = "    try{\n      const u = new URL(a.href, location.href);\n      if (u.hostname !== 'buy.stripe.com'){ a.target = '_blank'; a.rel = 'noopener'; }"
+          if old in s:
+              s = s.replace(old, new, 1)
+          elif new not in s:
+              raise SystemExit('outbound decorator not found')
+          pat = re.compile(r"  const CHECKOUTS = \[\n.*?\n  \];", re.S)
+          current = "  const CHECKOUTS = [\n    { match:'buy.stripe.com/28EbJ04MV4ege3j8VH04804', value:249, name:'Improvement System', id:'price_1U8WzqArG6inWxHPI4WlZjPo' }\n  ];"
+          s, n = pat.subn(current, s, count=1)
+          if n != 1:
+              raise SystemExit('checkout map not found')
+          ga = "      gtag('event','begin_checkout',{\n        currency: 'USD',\n        value: co.value,\n        cta_location: sectionName(el),\n        items: [{ item_id: co.id, item_name: co.name, price: co.value, quantity: 1 }],\n        debug_mode: SK_DEBUG\n      });"
+          ph = ga + "\n      if (window.posthog && typeof window.posthog.capture === 'function'){\n        posthog.capture('begin_checkout',{\n          currency: 'USD', value: co.value, item_id: co.id, item_name: co.name,\n          cta_location: sectionName(el), link_url: href\n        });\n      }"
+          if ga not in s:
+              raise SystemExit('GA begin_checkout block missing')
+          if "posthog.capture('begin_checkout'" not in s:
+              s = s.replace(ga, ph, 1)
+          for x in ["value:249", "price_1U8WzqArG6inWxHPI4WlZjPo", "'buy.stripe.com'", "posthog.capture('begin_checkout'"]:
+              if x not in s:
+                  raise SystemExit('missing '+x)
+          for x in ["match:'ko-fi.com/s/e34dd9cdef'", "match:'ko-fi.com/s/cd324493ce'", "match:'whop.com/checkout/plan_TOSvOOLdpQXzi'"]:
+              if x in s:
+                  raise SystemExit('stale checkout map '+x)
+          p.write_text(s, encoding='utf-8')
+          print('System v4 Stripe tracking patched')
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "slayerkey"
+          git config user.email "34904637+slayerkey@users.noreply.github.com"
+          git add wordpress/slayerkey-website/previews/live-refresh/system-live-refresh-v4/index.html
+          git commit -m "Fix System v4 Stripe checkout tracking"
+          git push
