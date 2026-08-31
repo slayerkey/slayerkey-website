@@ -1,0 +1,127 @@
+name: Patch System V4 Tracking
+
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-system-v4-tracking.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch current Stripe tracking
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('wordpress/slayerkey-website/previews/live-refresh/system-live-refresh-v4/index.html')
+          page = path.read_text(encoding='utf-8')
+
+          page = page.replace(
+              "linker: { domains: ['slayerkey.com','ko-fi.com','tally.so','whop.com'] }",
+              "linker: { domains: ['slayerkey.com','buy.stripe.com','ko-fi.com','tally.so','whop.com'] }"
+          )
+          page = page.replace(
+              "const OUT = ['ko-fi.com','youtube.com','youtu.be','twitch.tv','discord.gg','tally.so','whop.com'];",
+              "const OUT = ['buy.stripe.com','ko-fi.com','youtube.com','youtu.be','twitch.tv','discord.gg','tally.so','whop.com'];"
+          )
+
+          old_decorate = """    if (!isOutbound(a.href)) return;\n    a.target = '_blank'; a.rel = 'noopener';\n    try{\n      const u = new URL(a.href, location.href);"""
+          new_decorate = """    if (!isOutbound(a.href)) return;\n    try{\n      const u = new URL(a.href, location.href);\n      if (u.hostname !== 'buy.stripe.com'){ a.target = '_blank'; a.rel = 'noopener'; }"""
+          if old_decorate in page:
+              page = page.replace(old_decorate, new_decorate, 1)
+          elif new_decorate not in page:
+              raise SystemExit('Outbound decorator block not found')
+
+          checkout_pattern = re.compile(r"  const CHECKOUTS = \[\n.*?\n  \];", re.S)
+          if len(checkout_pattern.findall(page)) != 1:
+              raise SystemExit('Expected one checkout map')
+          current = """  const CHECKOUTS = [
+    { match:'buy.stripe.com/28EbJ04MV4ege3j8VH04804', value:249, name:'Improvement System', id:'price_1U8WzqArG6inWxHPI4WlZjPo' }
+  ];"""
+          page = checkout_pattern.sub(current, page, count=1)
+
+          page = page.replace(
+              "GA4 never sees the purchase itself (that happens on Whop/Ko-fi), so this is the last\n    measurable step on our side. The purchase event fires on /welcome.",
+              "GA4 records the checkout start on Slayerkey before the browser hands off to Stripe.\n    Stripe remains the payment source of truth for the completed purchase."
+          )
+
+          ga_block = """      gtag('event','begin_checkout',{\n        currency: 'USD',\n        value: co.value,\n        cta_location: sectionName(el),\n        items: [{ item_id: co.id, item_name: co.name, price: co.value, quantity: 1 }],\n        debug_mode: SK_DEBUG\n      });"""
+          ph_block = ga_block + """
+      if (window.posthog && typeof window.posthog.capture === 'function'){
+        posthog.capture('begin_checkout',{
+          currency: 'USD',
+          value: co.value,
+          item_id: co.id,
+          item_name: co.name,
+          cta_location: sectionName(el),
+          link_url: href
+        });
+      }"""
+          if ga_block not in page:
+              raise SystemExit('GA begin_checkout block missing')
+          if "posthog.capture('begin_checkout'" not in page:
+              page = page.replace(ga_block, ph_block, 1)
+
+          # Remove obsolete Whop page pixel. It does not own the System checkout anymore.
+          page = re.sub(
+              r'<!--\s*Whop Pixel.*?whop\.track\("page"\);\s*</script>\s*',
+              '',
+              page,
+              count=1,
+              flags=re.S | re.I
+          )
+          # Fallback for the actual legacy comment wording.
+          page = re.sub(
+              r'<!--\s*Deliberately NOT deferred like GA4/Clarity below:.*?whop\.track\("page"\);\s*</script>\s*',
+              '',
+              page,
+              count=1,
+              flags=re.S
+          )
+          page = re.sub(
+              r'\s*/\* Whop sees checkouts and purchases on its own, but not leads captured on our site\. \*/\s*if \(window\.whop && typeof window\.whop\.track === \'function\'\) \{\s*try \{ window\.whop\.track\(\'lead\'\); \} catch\(e\) \{\}\s*\}',
+              '',
+              page,
+              count=1,
+              flags=re.S
+          )
+
+          required = [
+              "buy.stripe.com/28EbJ04MV4ege3j8VH04804",
+              "value:249",
+              "price_1U8WzqArG6inWxHPI4WlZjPo",
+              "posthog.capture('begin_checkout'",
+              "'buy.stripe.com'",
+              "linker: { domains: ['slayerkey.com','buy.stripe.com'",
+          ]
+          for marker in required:
+              if marker not in page:
+                  raise SystemExit('Missing current tracking marker: '+marker)
+          stale = [
+              "match:'ko-fi.com/s/e34dd9cdef'",
+              "match:'ko-fi.com/s/cd324493ce'",
+              "match:'whop.com/checkout/plan_TOSvOOLdpQXzi'",
+              'whop.track("page")',
+          ]
+          for marker in stale:
+              if marker in page:
+                  raise SystemExit('Stale checkout tracking remains: '+marker)
+
+          path.write_text(page, encoding='utf-8')
+          print('Patched System v4 tracking')
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "slayerkey"
+          git config user.email "34904637+slayerkey@users.noreply.github.com"
+          git add wordpress/slayerkey-website/previews/live-refresh/system-live-refresh-v4/index.html
+          git commit -m "Fix System v4 Stripe checkout tracking"
+          git push
