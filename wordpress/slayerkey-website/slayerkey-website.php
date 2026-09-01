@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.27
+ * Version: 0.1.28
  * Author: Slayerkey
  */
 
@@ -10,12 +10,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.27' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.28' );
 
-// Flip to true to replace the legacy Elementor /system page with the GitHub managed System v4.
+// Public /system now uses the approved GitHub managed live refresh page.
 // /system/welcome (the Stripe post-purchase page) and the native /terms route are always on;
 // /terms only takes effect once the Redirection plugin rule pointing at the Google Doc is removed.
-define( 'SLAYERKEY_PUBLIC_SYSTEM_ENABLED', false );
+define( 'SLAYERKEY_PUBLIC_SYSTEM_ENABLED', true );
 define( 'SLAYERKEY_PUBLIC_COACHING_ENABLED', true );
 define( 'SLAYERKEY_POSTHOG_TOKEN', 'phc_m92yxHMa2BTnSu7KmebGKu8sEitMki4oPhdLTKZzcpMc' );
 define( 'SLAYERKEY_POSTHOG_HOST', 'https://edge.slayerkey.com' );
@@ -522,7 +522,35 @@ function slayerkey_website_render_public_system() {
         return;
     }
 
-    slayerkey_website_render_public_theme_page( 'system-v3', 'Slayerkey live System v4' );
+    $system_file = plugin_dir_path( __FILE__ ) . 'previews/live-refresh/system-live-refresh-v7-live/index.html';
+
+    if ( ! is_readable( $system_file ) ) {
+        return;
+    }
+
+    $html = file_get_contents( $system_file );
+
+    if ( false === $html ) {
+        return;
+    }
+
+    $html = str_replace(
+        '<meta content="system_live_refresh_v7_live" name="slayerkey-preview-variant"/>',
+        '<meta content="system-live-refresh-v7" name="slayerkey-live-page"/>',
+        $html
+    );
+
+    global $wp_query;
+    if ( $wp_query instanceof WP_Query ) {
+        $wp_query->is_404 = false;
+        $wp_query->is_page = true;
+    }
+
+    status_header( 200 );
+    nocache_headers();
+    header( 'Content-Type: text/html; charset=' . get_option( 'blog_charset' ) );
+    echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    exit;
 }
 add_action( 'template_redirect', 'slayerkey_website_render_public_system', 1 );
 
