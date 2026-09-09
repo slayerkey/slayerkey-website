@@ -1,0 +1,341 @@
+<!-- SK HEADER SCRIPT v17.0 "PROTOCOL" - Valorant-native design system -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://www.youtube.com">
+<link rel="preconnect" href="https://i.ytimg.com">
+<link rel="preconnect" href="https://www.clarity.ms">
+<link rel="preconnect" href="https://www.googletagmanager.com">
+<link rel="preconnect" href="https://t.whop.tw" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Core palette */
+  --bg:#0f1923;            /* Valorant dark navy */
+  --bg2:#0a121b;           /* deeper panel */
+  --card:#111c27;          /* card surface */
+  --ink:#ece8e1;           /* Valorant off-white */
+  --muted:#9aa8b2;         /* secondary text */
+  --red:#ff4655;           /* primary brand / CTA */
+  --teal:#2de2c5;          /* neon secondary accent */
+  --violet:#a78bfa;        /* tertiary (legacy pages) */
+  --gold:#ffd24a;          /* star ratings / radiant */
+  --line:rgba(236,232,225,.10);
+  /* Legacy aliases so older snippets keep working */
+  --accent:var(--red); --accent-2:var(--teal); --accent-3:var(--violet);
+  --ring:0 0 0 .25rem rgba(45,226,197,.35);
+  --iconSize:22px;
+  --font-display:'Anton',Impact,'Arial Narrow',sans-serif;
+  --font-body:'Inter',system-ui,'Segoe UI',Roboto,sans-serif;
+  --notch:12px;
+}
+*{box-sizing:border-box} html,body{height:100%}
+body{
+  margin:0;font-family:var(--font-body);
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(255,70,85,.10), transparent 55%),
+    radial-gradient(900px 520px at -12% 12%, rgba(45,226,197,.07), transparent 55%),
+    radial-gradient(820px 500px at 50% 118%, rgba(167,139,250,.10), transparent 70%),
+    var(--bg);
+  color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden;padding-top:76px
+}
+a{color:inherit;text-decoration:none} img{max-width:100%;display:block}
+::selection{background:rgba(255,70,85,.4);color:#fff}
+a:focus-visible,button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.container{max-width:1180px;margin:0 auto;padding:0 20px}
+
+/* Fixed header */
+.sk-header{position:fixed;left:0;right:0;top:0;z-index:1000;background:rgba(10,17,25,.82);backdrop-filter:saturate(140%) blur(10px);border-bottom:1px solid var(--line)}
+.sk-header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,70,85,.55),transparent)}
+.sk-header .nav{display:flex;align-items:center;justify-content:space-between;height:76px}
+.sk-brand{display:flex;align-items:center;gap:.7rem;font-weight:800;letter-spacing:.2px}
+.sk-brand .logo img{width:44px;height:44px;border-radius:8px;display:block}
+.sk-brand .name{font-family:var(--font-display);font-weight:400;font-size:1.35rem;letter-spacing:.08em;text-transform:uppercase}
+.sk-links>ul{display:flex;gap:.6rem;list-style:none;margin:0;padding:0;align-items:center}
+.sk-links a,.sk-links button{color:var(--ink)!important;font-weight:700;font-size:.86rem;letter-spacing:.09em;text-transform:uppercase;opacity:.92;padding:.55rem .85rem;border-radius:2px;border:1px solid transparent;transition:background .15s,border-color .15s,color .15s}
+.sk-links a:hover,.sk-links a:focus,.sk-links button:hover{background:rgba(255,70,85,.10);border-color:rgba(255,70,85,.45)}
+.sk-has-dd{position:relative} .sk-has-dd>button{background:transparent;border:none;cursor:pointer;display:flex;align-items:center;gap:.35rem;font-family:var(--font-body)}
+.sk-dd{position:absolute;top:110%;right:0;background:var(--card);border:1px solid var(--line);border-top:2px solid var(--red);border-radius:2px;padding:8px;width:240px;display:none;box-shadow:0 16px 60px rgba(0,0,0,.55)}
+.sk-dd a{display:block;padding:10px 12px;border-radius:2px} .sk-dd a:hover{background:rgba(255,70,85,.12)}
+.sk-has-dd.open .sk-dd{display:block}
+.sk-cta{display:flex;gap:.6rem}
+@media (max-width:860px){.sk-links{display:none}}
+
+/* Buttons: notched Valorant style */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:.55rem;
+  padding:.95rem 1.5rem;background:var(--red);color:#fff!important;
+  font-family:var(--font-body);font-weight:800;font-size:.92rem;line-height:1;
+  letter-spacing:.09em;text-transform:uppercase;border:0;border-radius:0;cursor:pointer;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - var(--notch)),calc(100% - var(--notch)) 100%,0 100%);
+  transition:transform .15s ease,filter .15s ease,background .15s ease;
+}
+.btn:hover,.btn:focus{transform:translateY(-2px);background:#ff5a67;filter:drop-shadow(0 10px 26px rgba(255,70,85,.45))}
+.btn.secondary{background:rgba(236,232,225,.05);color:var(--ink)!important;box-shadow:inset 0 0 0 1px rgba(236,232,225,.30)}
+.btn.secondary:hover,.btn.secondary:focus{background:rgba(45,226,197,.08);box-shadow:inset 0 0 0 1px rgba(45,226,197,.8);filter:drop-shadow(0 8px 20px rgba(45,226,197,.22))}
+/* clip-path clips outlines drawn outside the box, so focus rings go inside */
+.btn:focus-visible,.unmute-btn:focus-visible,.wb-unmute-btn:focus-visible{outline:2px solid #fff;outline-offset:-5px}
+
+.badge{display:inline-flex;gap:.45rem;align-items:center;font-weight:700;font-size:.78rem;letter-spacing:.06em;color:var(--ink);border:1px solid rgba(45,226,197,.35);border-radius:2px;padding:.4rem .7rem;background:rgba(45,226,197,.07)}
+.pill{display:inline-block;border:1px solid rgba(45,226,197,.30);border-radius:2px;padding:.42rem .75rem;color:var(--ink);background:rgba(45,226,197,.06)}
+.gradient-text{background:linear-gradient(100deg,var(--red),#ff7a45 48%,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 6px 24px rgba(255,70,85,.30))}
+.sk-textlink{color:var(--teal);font-weight:700;font-size:.9rem;letter-spacing:.04em;border-bottom:1px solid rgba(45,226,197,.4);padding-bottom:1px}
+.sk-textlink:hover{border-bottom-color:var(--teal)}
+
+/* Sections / headings */
+section{padding:84px 0;border-top:1px solid var(--line)}
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:24px}
+.eyebrow{font-family:var(--font-body);font-weight:800;font-size:.78rem;color:var(--teal);letter-spacing:.24em;text-transform:uppercase}
+.eyebrow::before{content:"// ";color:var(--red);letter-spacing:0}
+h1,h2,.faq-title{font-family:var(--font-display);font-weight:400;text-transform:uppercase}
+h1{font-size:clamp(2.3rem,1.2rem + 4.2vw,4.2rem);line-height:1.04;letter-spacing:.015em;margin:.4rem 0 1rem}
+h2{font-size:clamp(1.7rem,1.1rem + 2.5vw,2.7rem);line-height:1.08;letter-spacing:.02em;margin:0 0 .4rem}
+.lead,p.sub{font-size:1.06rem;line-height:1.65;color:var(--ink);max-width:62ch}
+
+/* Hero */
+.hero{position:relative;padding:64px 0 34px;border-top:none}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
+.vid{position:relative;border-radius:4px;overflow:hidden;border:1px solid var(--line);box-shadow:0 24px 80px rgba(0,0,0,.45)}
+.vid::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(10,17,25,.5),transparent 40%)}
+@media (max-width:980px){.hero-grid{grid-template-columns:1fr}}
+
+/* Corner-bracket frame (video / featured media) */
+.sk-frame{position:relative}
+.sk-frame::before,.sk-frame::after{content:"";position:absolute;width:26px;height:26px;pointer-events:none;z-index:2}
+.sk-frame::before{top:-6px;left:-6px;border-top:2px solid var(--red);border-left:2px solid var(--red)}
+.sk-frame::after{bottom:-6px;right:-6px;border-bottom:2px solid var(--teal);border-right:2px solid var(--teal)}
+
+/* Stat band */
+.sk-stats{display:inline-flex;flex-wrap:wrap;justify-content:center;border:1px solid var(--line);background:rgba(17,28,39,.6);border-radius:2px}
+.sk-stat{padding:14px 26px;text-align:center}
+.sk-stat + .sk-stat{border-left:1px solid var(--line)}
+.sk-stat .n{font-family:var(--font-display);font-size:1.7rem;line-height:1.1;color:#fff}
+.sk-stat .n em{font-style:normal;color:var(--teal)}
+.sk-stat .l{font-weight:700;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+@media (max-width:560px){
+  .sk-stats{display:flex;width:100%}
+  .sk-stat{flex:1;min-width:0;padding:11px 6px}
+  .sk-stat .n{font-size:1.35rem}
+  .sk-stat .l{font-size:.56rem;letter-spacing:.1em}
+}
+
+/* Rank climb strip: fill sweeps left to right, then each node "ignites" as the
+   fill reaches it. Nodes are CSS diamonds by default; add class "icon" to an li
+   and drop an <img> of the real rank badge inside to use game art instead. */
+.sk-ranks{position:relative;max-width:560px;margin:30px auto 0}
+.sk-ranks .track{position:absolute;top:6px;left:10%;right:10%;height:2px;background:rgba(236,232,225,.12)}
+/* Slow, deliberate sweep: waits ~1.2s after reveal, then takes ~2.8s. The climb takes a while. */
+.sk-ranks .track .fill{display:block;height:100%;width:0;background:linear-gradient(90deg,#7c8388,#eccf56 30%,#59a9b6 50%,#bb3d65 75%,#ffa03f);transition:width 2.8s cubic-bezier(.22,.61,.36,1) 1.2s!important}
+.sk-ranks.in .track .fill{width:100%}
+.sk-ranks ul{list-style:none;display:flex;margin:0;padding:0}
+.sk-ranks li{flex:1;position:relative;padding-top:22px;text-align:center;font-weight:700;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.sk-ranks li::before{
+  content:"";position:absolute;top:6px;left:50%;transform:translate(-50%,-50%) rotate(45deg) scale(.6);
+  width:10px;height:10px;background:var(--c,#7c8388);opacity:.3;
+  transition:opacity .45s ease,transform .45s ease,box-shadow .45s ease!important;
+}
+.sk-ranks.in li::before{opacity:1;transform:translate(-50%,-50%) rotate(45deg) scale(1);box-shadow:0 0 12px var(--c,#7c8388)}
+.sk-ranks.in li:nth-child(1)::before{transition-delay:1.25s!important}
+.sk-ranks.in li:nth-child(2)::before{transition-delay:1.75s!important}
+.sk-ranks.in li:nth-child(3)::before{transition-delay:2.3s!important}
+.sk-ranks.in li:nth-child(4)::before{transition-delay:2.9s!important}
+.sk-ranks.in li:nth-child(5)::before{transition-delay:3.7s!important}
+.sk-ranks li:last-child{color:#ffb45c}
+.sk-ranks li.icon::before{display:none}
+.sk-ranks li.icon img{position:absolute;top:6px;left:50%;transform:translate(-50%,-50%) scale(.6);width:24px;height:24px;opacity:.3;transition:opacity .45s ease,transform .45s ease!important}
+.sk-ranks.in li.icon img{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.sk-ranks.in li.icon:nth-child(1) img{transition-delay:1.25s!important}
+.sk-ranks.in li.icon:nth-child(2) img{transition-delay:1.75s!important}
+.sk-ranks.in li.icon:nth-child(3) img{transition-delay:2.3s!important}
+.sk-ranks.in li.icon:nth-child(4) img{transition-delay:2.9s!important}
+.sk-ranks.in li.icon:nth-child(5) img{transition-delay:3.7s!important}
+@media (max-width:420px){.sk-ranks li{font-size:.53rem;letter-spacing:.08em}}
+
+/* Reviews: stars */
+.reviews-head{text-align:center;margin-bottom:12px}
+.stars{display:inline-flex;gap:6px;margin:.25rem 0}
+.stars svg{width:28px;height:28px;fill:var(--gold)!important;filter:drop-shadow(0 2px 10px rgba(255,210,74,.35))}
+
+/* Reviews rail visuals (no animation here) */
+.reviews-rail{position:relative;overflow:hidden;margin:28px 0 6px}
+.reviews-rail::before{content:"";display:block;height:1px;background:var(--line);margin:6px 0 14px 0}
+.reviews-rail .loop{display:flex;gap:18px;will-change:transform}
+.reviews-rail .items{display:flex;gap:18px}
+.review-card{min-width:280px;max-width:420px;padding:16px;border-radius:4px;color:#fff;border:1px solid rgba(255,255,255,.14);box-shadow:0 24px 60px rgba(0,0,0,.25)}
+.grad-blue{background:linear-gradient(180deg,#14304f,#1d4ed8)}
+.grad-orange{background:linear-gradient(180deg,#5b1d10,#c2410c)}
+.grad-green{background:linear-gradient(180deg,#04382b,#15803d)}
+.grad-purple{background:linear-gradient(180deg,#391775,#6d28d9)}
+.grad-gold{background:linear-gradient(180deg,#57280c,#b45309)}
+.review-card .author{margin-top:12px;font-weight:800;opacity:.95;display:flex;gap:.35rem;align-items:center}
+.review-card .author img{width:16px;height:16px}
+
+/* Results grid */
+.grid-2x2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.grid-2x2 img{border-radius:4px;border:1px solid var(--line);transition:transform .18s ease, box-shadow .18s ease;cursor:zoom-in}
+.grid-2x2 img:hover{transform:scale(1.02);box-shadow:0 24px 80px rgba(255,70,85,.22)}
+@media (max-width:860px){.grid-2x2{grid-template-columns:1fr}}
+
+/* Lightbox */
+#lightbox{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.78);z-index:1200}
+#lightbox img{max-width:min(95vw,1200px);max-height:92vh;border-radius:4px;border:1px solid var(--line)}
+#lightbox.show{display:grid}
+
+/* About layout */
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start}
+.media-stack{display:grid;gap:12px;justify-items:center;align-self:start}
+.media-stack img{border-radius:4px;border:1px solid var(--line);max-width:560px}
+.embed-916{position:relative;width:100%;max-width:420px;padding-top:177.77%;border-radius:4px;overflow:hidden;border:1px solid var(--line)}
+.embed-916 iframe{position:absolute;inset:0;width:100%;height:100%}
+.about-text{max-width:560px}
+@media (max-width:980px){.about-grid{grid-template-columns:1fr} .embed-916{max-width:560px}}
+
+/* Process steps */
+.process{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;text-align:center}
+.stepx{position:relative;border:1px solid var(--line);border-radius:2px;padding:22px 18px;background:linear-gradient(180deg,rgba(17,28,39,.9),rgba(17,28,39,.5))}
+.stepx::before{content:"";position:absolute;top:0;left:0;width:34px;height:2px;background:var(--red)}
+.stepx .num{font-family:var(--font-display);font-size:1.9rem;line-height:1;color:var(--red);opacity:.9}
+.stepx .title{font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin:.5rem 0 .35rem;font-size:1rem}
+.stepx p{color:var(--muted);line-height:1.6;margin:.2rem 0 0}
+@media (max-width:980px){.process{grid-template-columns:1fr}}
+
+/* Check / cross badges */
+/* No emoji fonts here: Android renders ✔ as a colored emoji otherwise */
+.i{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:2px;font:800 14px/1 system-ui,sans-serif!important}
+.i.good{color:var(--teal)!important;background:rgba(45,226,197,.12)!important;border:1px solid rgba(45,226,197,.45)!important}
+.i.bad{color:var(--red)!important;background:rgba(255,70,85,.12)!important;border:1px solid rgba(255,70,85,.45)!important}
+
+/* Feature cards */
+.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:980px){.feature-grid{grid-template-columns:1fr}}
+.feature.card{border:1px solid var(--line);border-radius:2px;padding:16px;background:rgba(17,28,39,.6)}
+.feature.card h4{margin:.2rem 0 .2rem;font-weight:800}
+
+/* FAQ */
+.faq-wrap{max-width:1100px;margin-inline:auto}
+.faq-title{text-align:center;font-size:clamp(28px,3.2vw,44px);margin:18px 0 14px}
+.faq-list{display:flex;flex-direction:column;gap:12px}
+.faq-item{background:var(--card);border:1px solid var(--line);border-left:3px solid rgba(255,70,85,.55);border-radius:2px;overflow:hidden;transition:border-color .2s}
+.faq-item.open{border-left-color:var(--teal)}
+.faq-trigger{all:unset;display:flex;gap:12px;align-items:center;justify-content:space-between;width:100%;padding:18px 22px;cursor:pointer;font-weight:700;font-size:1.02rem;color:var(--ink)!important;box-sizing:border-box}
+.faq-left{display:flex;gap:12px;align-items:center}
+.faq-chevron{width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;color:var(--red);opacity:.95;transition:transform .18s}
+.faq-body{max-height:0;overflow:hidden;transition:max-height .25s ease;background:var(--card)}
+.faq-body-inner{padding:0 22px 18px 22px;color:var(--muted);line-height:1.7}
+.faq-item.open .faq-chevron{transform:rotate(90deg)}
+.faq-item.open .faq-body{max-height:420px}
+
+/* CTA band & reveal */
+.cta-band{background:linear-gradient(90deg,rgba(255,70,85,.13),rgba(45,226,197,.08));border:1px solid rgba(255,70,85,.35);border-left:3px solid var(--red);padding:22px;border-radius:2px;display:flex;gap:14px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.cta-band h3{margin:0;font-family:var(--font-display);font-weight:400;font-size:1.5rem;letter-spacing:.02em;text-transform:uppercase}
+/* !important beats Elementor's reduced-motion reset (html *{transition-duration:0s!important})
+   which otherwise kills every animation when the OS reports reduced motion */
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease!important;will-change:transform,opacity}
+.reveal.in{opacity:1;transform:none}
+.d1{transition-delay:.1s!important}.d2{transition-delay:.2s!important}.d3{transition-delay:.3s!important}
+
+@media(max-width:640px){section{padding:54px 0}}
+
+/* Footer */
+.sk-footer{border-top:1px solid var(--line);margin-top:40px;background:rgba(10,17,25,.6);backdrop-filter:saturate(120%) blur(4px)}
+.sk-footer .top{display:grid;grid-template-columns:1.1fr 1.9fr;gap:24px;padding:26px 0}
+.sk-footer .brand{display:flex;gap:12px;align-items:center;font-weight:800}
+.sk-footer .brand img{width:40px;height:40px;border-radius:6px}
+.sk-footer .cols{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.sk-footer .col h4{margin:0 0 10px;font-weight:800;font-size:.82rem;letter-spacing:.16em;text-transform:uppercase;color:var(--teal)}
+.sk-footer .col a{display:block;padding:6px 0;opacity:.9}
+.sk-footer .col a:hover{opacity:1;color:#fff}
+.sk-footer .bottom{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--line);padding:12px 0 26px;color:var(--muted);font-size:.9rem}
+.sk-footer .socials a{opacity:.92}
+.sk-footer .socials a:hover{opacity:1;text-decoration:underline}
+@media (max-width:980px){
+  .sk-footer .top{grid-template-columns:1fr}
+  .sk-footer .cols{grid-template-columns:1fr 1fr}
+}
+@media (max-width:680px){
+  .sk-footer .cols{grid-template-columns:1fr}
+  .sk-footer .bottom{flex-direction:column;align-items:flex-start;gap:8px}
+}
+
+/* Elementor/WordPress: remove default section wrapper spacing */
+.elementor-top-section { padding-top:0 !important; }
+.elementor-widget-html > .elementor-widget-container { padding:0 !important; }
+
+/* Accessibility / motion (kept minimal on purpose: scroll reveals and marquees
+   are core to the design and Windows reports reduced-motion whenever the OS
+   "Animation effects" toggle is off) */
+@media (prefers-reduced-motion:reduce){
+  .faq-body,.faq-chevron{transition:none}
+}
+</style>
+
+<!-- Safety net while old http:// links get cleaned up -->
+<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+
+<!--
+  Whop pixel. Attributes Whop sales back to the page and UTMs that produced them,
+  using Whop's first-party payment data instead of third-party cookies.
+
+  Deliberately NOT deferred like GA4/Clarity below: the snippet is already async,
+  and deferring it loses the page views it exists to record.
+
+  Whop records checkout views, purchases, subscriptions and trials server-side with
+  no configuration, and rejects duplicates. Do not add a manual purchase event here.
+  Only events Whop cannot see belong in this pixel (see whop.track('lead') in the footer).
+-->
+<script>
+!function(w,d,s,u,n,a,b){if(w[n])return;a=w[n]={q:[],t:+new Date,s:[],o:u,track:function(){a.q.push([+new Date].concat([].slice.call(arguments)))},setScope:function(){a.s=[].slice.call(arguments).filter(function(x){return typeof x==="string"});a.q.push([+new Date,"setScope"].concat(a.s))},scope:function(){var c=[].slice.call(arguments);return{track:function(){a.q.push([+new Date].concat([].slice.call(arguments)).concat([{__scope:c}]))}}}};b=d.createElement(s);b.async=1;b.src=u+"/s.js";d.getElementsByTagName(s)[0].parentNode.insertBefore(b,d.getElementsByTagName(s)[0])}(window,document,"script","https://t.whop.tw","whop");
+whop.setScope("biz_WIdultHzwTUrlE");
+whop.track("page");
+</script>
+
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        window.SK_startClarity=function(){
+          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        };
+    })(window, document, "clarity", "script", "v9sofegg9a");
+</script>
+
+<!-- GA4 base: single property across site & Ko-fi/Tally -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+
+  // Show your device in DebugView when you add ?debug=1
+  const SK_DEBUG = location.search.includes('debug=1') || location.hostname === 'localhost';
+
+  gtag('js', new Date());
+  gtag('config', 'G-0SZBZW0HP6', {
+    anonymize_ip: true,
+    debug_mode: SK_DEBUG,
+    // Keep sessions when users hop to Ko-fi or your Tally form
+    linker: { domains: ['slayerkey.com','ko-fi.com','tally.so','whop.com'] }
+  });
+
+  window.SK_startGtagScript = function(){
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = "https://www.googletagmanager.com/gtag/js?id=G-0SZBZW0HP6";
+    document.head.appendChild(s);
+  };
+</script>
+
+<!--
+  Start GA4/Clarity at DOMContentLoaded rather than window.load. Both scripts are
+  async so neither blocks render, but waiting for load meant anyone who bounced
+  before images and YouTube embeds finished was never recorded at all.
+-->
+<script>
+(function(){
+  function start(){
+    if (window.SK_ANALYTICS_STARTED) return;
+    window.SK_ANALYTICS_STARTED = true;
+    window.SK_startGtagScript();
+    window.SK_startClarity();
+  }
+  if (document.readyState !== 'loading') start();
+  else document.addEventListener('DOMContentLoaded', start);
+})();
+</script>
