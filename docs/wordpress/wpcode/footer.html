@@ -1,0 +1,430 @@
+<!-- Footer v17.0: nav dropdowns, smooth scroll, reveal (JS unchanged from v16; styles reskinned) -->
+<script>
+(function(){
+  if (window.SK_BOOTED) return; window.SK_BOOTED = true;
+
+  function onReady(fn){
+    if (document.readyState !== 'loading') fn();
+    else document.addEventListener('DOMContentLoaded', fn);
+  }
+
+  onReady(function(){
+
+    /* Smooth in-page scroll */
+    document.addEventListener('click', function(e){
+      var a = e.target.closest && e.target.closest('a[href^="#"]');
+      if(!a) return;
+      var id = a.getAttribute('href').slice(1);
+      var el = document.getElementById(id);
+      if(el){ e.preventDefault(); el.scrollIntoView({behavior:'smooth', block:'start'}); }
+    });
+
+    /* FAQ toggles */
+    document.querySelectorAll('.faq-item .faq-trigger').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var item=btn.closest('.faq-item');
+        var open=!item.classList.contains('open');
+        item.classList.toggle('open', open);
+        btn.setAttribute('aria-expanded', open?'true':'false');
+      });
+      btn.addEventListener('mousedown', function(e){ e.preventDefault(); });
+    });
+
+    /* Reveal on scroll */
+    (function(){
+      var io=new IntersectionObserver(function(entries){
+        entries.forEach(function(ent){
+          if(ent.isIntersecting){ ent.target.classList.add('in'); io.unobserve(ent.target); }
+        });
+      },{threshold:.12, rootMargin:'0px 0px -10% 0px'});
+      document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+    })();
+
+    /* Footer year */
+    var y=document.getElementById('sk-year'); if(y) y.textContent=new Date().getFullYear();
+  });
+})();
+</script>
+
+<footer class="sk-footer" role="contentinfo">
+  <div class="container">
+    <div class="top">
+      <div class="brand">
+        <img src="https://slayerkey.com/wp-content/uploads/2025/05/avatar-ProfilePictureMaker.com_.png" alt="" loading="lazy">
+        <div>
+          <div style="font-size:1.1rem">Slayerkey</div>
+          <div style="opacity:.8;font-weight:600">Dojo • System • Coaching</div>
+        </div>
+      </div>
+
+      <nav class="cols" aria-label="Footer">
+        <!--
+          Two columns since v18. The old "More" column (Reviews / About / FAQ) pointed at
+          three fragments across two different pages, so it read as a grab bag and half of
+          it was already broken (/#about and /#faq did not exist on the page / served).
+          When Terms, Refund and Contact pages exist they become the third column; the
+          .cols grid in header-script.txt goes back to repeat(3,1fr) at that point.
+        -->
+        <div class="col">
+          <h4>Train</h4>
+          <a href="/">The Training Dojo</a>
+          <a href="/system">Improvement System</a>
+          <a href="/coaching">1:1 Coaching</a>
+        </div>
+        <div class="col">
+          <h4>Follow</h4>
+          <a href="https://www.youtube.com/@Slayerkey?sub_confirmation=1" target="_blank" rel="noopener">YouTube</a>
+          <a href="https://www.twitch.tv/slayerkey" target="_blank" rel="noopener">Twitch</a>
+          <a href="https://discord.gg/AgWTSfz4H9" target="_blank" rel="noopener">Discord</a>
+        </div>
+      </nav>
+    </div>
+
+    <div class="bottom">
+      <div>© <span id="sk-year"></span> Slayerkey. All rights reserved.</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  if (typeof window.gtag !== 'function') {
+    console.error('[GA] gtag not found. Check the GA <script> in <head>.');
+    return;
+  }
+
+  const SK_DEBUG = location.search.includes('debug=1') || location.hostname === 'localhost';
+  const OUT = ['ko-fi.com','youtube.com','youtu.be','twitch.tv','discord.gg','tally.so','whop.com'];
+
+  function isOutbound(u){
+    try { return OUT.some(d => new URL(u, location.href).hostname.includes(d)); }
+    catch(e){ return false; }
+  }
+  function sectionName(el){
+    const p = el.closest('header.sk-header, footer.sk-footer, section');
+    if (!p) return 'global';
+    if (p.matches('header.sk-header')) return 'header';
+    if (p.matches('footer.sk-footer')) return 'footer';
+    return p.id || 'section';
+  }
+  function label(el){
+    const t = (el.dataset.cta || el.textContent || el.getAttribute('aria-label') || 'link').trim();
+    return t.replace(/\s+/g,' ').slice(0,100);
+  }
+  function slug(s){
+    return (s || '').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,60);
+  }
+
+  /*
+    Inbound campaign, read once from the landing URL.
+
+    This used to be the single worst bug in the funnel: a visitor arriving from a YouTube pinned
+    comment on slayerkey.com/?utm_source=youtube had that overwritten with utm_source=slayerkey_site
+    the moment they clicked through to Whop, so the origin never survived the hop and every sale
+    looked like it came from the site itself. Inbound values now always win.
+  */
+  const INBOUND = (function(){
+    try{
+      const q = new URLSearchParams(location.search);
+      return {
+        source:   q.get('utm_source')   || '',
+        medium:   q.get('utm_medium')   || '',
+        campaign: q.get('utm_campaign') || '',
+        content:  q.get('utm_content')  || ''
+      };
+    }catch(e){ return {source:'',medium:'',campaign:'',content:''}; }
+  })();
+
+  // Page slug, used as the campaign when the visit carries no campaign of its own
+  const PAGE = slug(location.pathname.replace(/\/$/,'').split('/').pop()) || 'home';
+
+  // Decorate outbound links with UTM and open in new tab
+  document.querySelectorAll('a[href]').forEach(a=>{
+    if (!isOutbound(a.href)) return;
+    a.target = '_blank'; a.rel = 'noopener';
+    try{
+      const u = new URL(a.href, location.href);
+      if (!u.searchParams.has('utm_source')){
+        u.searchParams.set('utm_source',   INBOUND.source   || 'slayerkey_site');
+        u.searchParams.set('utm_medium',   INBOUND.medium   || sectionName(a));
+        u.searchParams.set('utm_campaign', INBOUND.campaign || PAGE);
+        u.searchParams.set('utm_content',  INBOUND.content  || slug(label(a)) || 'link');
+        a.href = u.toString();
+      }
+    }catch(e){}
+  });
+
+  /*
+    Checkout links and what they are worth, so begin_checkout carries a real value.
+    GA4 never sees the purchase itself (that happens on Whop/Ko-fi), so this is the last
+    measurable step on our side. The purchase event fires on /welcome.
+  */
+  const CHECKOUTS = [
+    { match:'whop.com/checkout/plan_TOSvOOLdpQXzi', value:15,  name:'Training Dojo Monthly',   id:'plan_TOSvOOLdpQXzi' },
+    { match:'ko-fi.com/s/e34dd9cdef',               value:197, name:'Improvement System',      id:'kofi_e34dd9cdef'    },
+    { match:'ko-fi.com/s/cd324493ce',               value:870, name:'Performance Mentorship',  id:'kofi_cd324493ce'    }
+  ];
+  function checkoutFor(href){
+    return CHECKOUTS.find(c => href.indexOf(c.match) !== -1) || null;
+  }
+
+  /*
+    Track clicks as 'cta_click'.
+
+    Buttons only count when they carry .btn or data-cta. Without that filter this fired for FAQ
+    toggles, the video unmute overlay, lightbox and popup close buttons, and the mobile burger,
+    which buried the real CTAs in noise.
+  */
+  document.addEventListener('click', function(e){
+    const el = e.target.closest && e.target.closest('a[href],button');
+    if (!el) return;
+
+    const isLink = el.tagName === 'A';
+    if (!isLink && !el.classList.contains('btn') && !el.dataset.cta) return;
+
+    const href = isLink ? el.href : '';
+    const type = isLink && isOutbound(href) ? 'outbound' : (isLink ? 'internal' : 'button');
+
+    gtag('event','cta_click',{
+      cta_name: label(el),
+      cta_location: sectionName(el),
+      link_url: href || '',
+      link_type: type,
+      debug_mode: SK_DEBUG
+    });
+
+    const co = href && checkoutFor(href);
+    if (co){
+      gtag('event','begin_checkout',{
+        currency: 'USD',
+        value: co.value,
+        cta_location: sectionName(el),
+        items: [{ item_id: co.id, item_name: co.name, price: co.value, quantity: 1 }],
+        debug_mode: SK_DEBUG
+      });
+    }
+  }, true);
+
+  // Dev helper, only when ?debug=1 (handy from the console)
+  if (SK_DEBUG){
+    window.$ga = (name, params={}) => {
+      params.debug_mode = true;
+      gtag('event', name, params);
+      console.log('[GA] sent', name, params);
+    };
+    gtag('event','debug_ping',{debug_mode:true,page_location:location.href,page_title:document.title,ts:Date.now()});
+    console.log('[GA] Debug: try $ga('+'"cta_click"'+',{cta_name:"console test",link_type:"internal"})');
+  }
+})();
+</script>
+
+<!-- Email popup: exit-intent desktop / 30s timer mobile -->
+<div id="sk-ep" hidden role="dialog" aria-modal="true" aria-labelledby="sk-ep-h">
+  <div class="sk-ep-card">
+    <button class="sk-ep-x" type="button" aria-label="Close">✕</button>
+    <p class="sk-ep-tag">Free Resource</p>
+
+    <h2 id="sk-ep-h" class="sk-ep-title">
+      Get Your Free 30-Day Valorant Rank-Up Routine.
+    </h2>
+
+    <p class="sk-ep-desc">
+      Know what to practice, what to focus on, and what to review for the next 30 days.
+    </p>
+
+    <form id="sk-ep-form" novalidate>
+      <input type="email" name="email_address" class="sk-ep-input" placeholder="Your email address" required autocomplete="email">
+
+      <button type="submit" class="btn sk-ep-btn">
+        Send Me the Routine
+      </button>
+    </form>
+
+    <p class="sk-ep-fine">
+      You'll also get my weekly Valorant improvement emails. Unsubscribe anytime.
+    </p>
+
+    <div id="sk-ep-ok" hidden>
+      <div class="sk-ep-ok-check">✓</div>
+      <p class="sk-ep-ok-title">You're in.</p>
+      <p class="sk-ep-ok-msg">
+        Check your inbox and click confirm to get the routine. Check spam if you don't see it.
+      </p>
+    </div>
+  </div>
+</div>
+
+<style>
+#sk-ep[hidden]{display:none}
+#sk-ep{position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(10,17,25,.85);backdrop-filter:saturate(140%) blur(6px)}
+@keyframes sk-ep-pop{from{opacity:0;transform:scale(.92) translateY(12px)}to{opacity:1;transform:none}}
+.sk-ep-card{position:relative;background:var(--card,#111c27);border:1px solid rgba(236,232,225,.14);border-top:2px solid var(--red,#ff4655);border-radius:2px;padding:2.25rem 2rem 1.75rem;max-width:420px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,.6);animation:sk-ep-pop .3s cubic-bezier(.2,.9,.3,1) both}
+.sk-ep-x{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:2px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:var(--muted,#9aa8b2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.sk-ep-x:hover{background:rgba(255,70,85,.3);color:#fff}
+.sk-ep-tag{font-size:.72rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--teal,#2de2c5);margin:0 0 .7rem}
+.sk-ep-tag::before{content:"// ";color:var(--red,#ff4655)}
+.sk-ep-title{font-size:1.35rem;font-weight:800;color:var(--ink,#ece8e1);margin:0 0 .55rem;line-height:1.3}
+.sk-ep-desc{color:var(--muted,#9aa8b2);font-size:.92rem;line-height:1.55;margin:0 0 1.3rem}
+.sk-ep-input{width:100%;padding:.78rem 1rem;border-radius:2px;border:1px solid rgba(236,232,225,.22);background:rgba(255,255,255,.04);color:var(--ink,#ece8e1);font-size:.98rem;box-sizing:border-box;outline:none;margin-bottom:.7rem;font-family:inherit}
+.sk-ep-input:focus{border-color:rgba(45,226,197,.7);background:rgba(45,226,197,.04)}
+.sk-ep-input::placeholder{color:#6b7a85}
+.sk-ep-btn{width:100%;padding:.85rem;font-size:.95rem}
+.sk-ep-fine{text-align:center;color:#5b6a75;font-size:.76rem;margin:.55rem 0 0}
+.sk-ep-ok-msg{color:var(--muted,#9aa8b2);font-size:1rem;text-align:center;margin:0;padding:.75rem 0;line-height:1.5}
+.sk-ep-ok-check{width:52px;height:52px;border-radius:50%;background:rgba(45,226,197,.15);border:2px solid var(--teal,#2de2c5);color:var(--teal,#2de2c5);font-size:1.5rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto .8rem}
+.sk-ep-ok-title{font-size:1.25rem;font-weight:800;color:var(--ink,#ece8e1);text-align:center;margin:0 0 .3rem}
+</style>
+
+<script>
+(function(){
+  var KEY = 'sk_ep1';
+  var ep = document.getElementById('sk-ep');
+  if (!ep) return;
+
+  var suppressed = false;
+  try {
+    var sub = localStorage.getItem(KEY + '_sub');
+    if (sub && (Date.now() - Number(sub)) / 86400000 < 14) suppressed = true;
+    if (sessionStorage.getItem(KEY + '_dis')) suppressed = true;
+  } catch(e) {}
+
+  var autoShown = false;
+
+  function show() {
+    if (!ep.hidden) return;
+    ep.hidden = false;
+    document.documentElement.style.overflow = 'hidden';
+    var inp = ep.querySelector('.sk-ep-input');
+    if (inp) setTimeout(function(){ inp.focus(); }, 50);
+  }
+
+  function hide(dismiss) {
+    ep.hidden = true;
+    document.documentElement.style.overflow = '';
+    if (dismiss) {
+      try { sessionStorage.setItem(KEY + '_dis', '1'); } catch(e) {}
+    }
+  }
+
+  ep.querySelector('.sk-ep-x').addEventListener('click', function(){ hide(true); });
+  ep.addEventListener('click', function(e){ if (e.target === ep) hide(true); });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && !ep.hidden) hide(true);
+  });
+
+  function autoShow(){
+    if (autoShown || suppressed) return;
+    autoShown = true;
+    show();
+  }
+
+  /* Manual open: any [data-ep-open] button, the #free-plan hash, or window.SK_openFreePlan() */
+  window.SK_openFreePlan = show;
+
+  document.addEventListener('click', function(e){
+    var t = e.target.closest && e.target.closest('[data-ep-open]');
+    if (t) { e.preventDefault(); show(); }
+  });
+
+  function hashOpen(){
+    if (location.hash === '#free-plan') show();
+  }
+
+  window.addEventListener('hashchange', hashOpen);
+  hashOpen();
+
+  var form = document.getElementById('sk-ep-form');
+  var okMsg = document.getElementById('sk-ep-ok');
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+
+    var emailInput = form.querySelector('[name="email_address"]');
+    var email = emailInput.value.trim();
+
+    if (!email || email.indexOf('@') === -1) {
+      emailInput.focus();
+      return;
+    }
+
+    var btn = form.querySelector('.sk-ep-btn');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+
+    fetch('https://app.convertkit.com/forms/9535572/subscriptions', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: 'email_address=' + encodeURIComponent(email),
+      mode: 'no-cors'
+    })
+    .then(function(){
+      try {
+        localStorage.setItem(KEY + '_sub', String(Date.now()));
+      } catch(e) {}
+
+      ['sk-ep-tag','sk-ep-title','sk-ep-desc','sk-ep-fine'].forEach(function(cls){
+        var el = ep.querySelector('.'+cls);
+        if(el) el.hidden = true;
+      });
+
+      form.hidden = true;
+
+      if (okMsg) okMsg.hidden = false;
+
+      if (typeof gtag === 'function') {
+        gtag('event', 'email_signup', {
+          event_category: 'engagement',
+          method: 'popup'
+        });
+      }
+
+      /* Whop sees checkouts and purchases on its own, but not leads captured on our site. */
+      if (window.whop && typeof window.whop.track === 'function') {
+        try {
+          window.whop.track('lead');
+        } catch(e) {}
+      }
+
+      setTimeout(function(){
+        hide(false);
+      }, 4000);
+    })
+    .catch(function(){
+      btn.disabled = false;
+      btn.textContent = 'Send Me the Routine';
+    });
+  });
+
+  var isMobile = window.matchMedia && window.matchMedia('(max-width:900px)').matches;
+
+  if (!isMobile) {
+    document.addEventListener('mouseleave', function(e){
+      if (e.clientY <= 10) autoShow();
+    });
+  } else {
+    setTimeout(autoShow, 30000);
+  }
+})();
+</script>
+
+<!--
+  Free Improvement Plan: floating button that opens the #sk-ep popup.
+
+  The old desktop header-CTA injection was removed in v18. It queried header .sk-cta, a class the nav
+  markup never had (it uses .sk-right), so it had silently done nothing since launch. The header now
+  carries a single Join the Dojo CTA instead, and the lead magnet lives on this button plus exit intent.
+-->
+<style>
+.sk-fp-float{
+  position:fixed;left:50%;bottom:16px;transform:translateX(-50%);
+  z-index:1900;display:none;white-space:nowrap;
+  padding:.7rem 1.15rem!important;font-size:.8rem!important;
+  filter:drop-shadow(0 12px 34px rgba(255,70,85,.5));
+}
+.sk-fp-float.show{display:inline-flex}
+.sk-fp-float:hover,.sk-fp-float:focus{transform:translateX(-50%) translateY(-1px)}
+</style>
+
+<a class="btn sk-fp-float show" href="#free-plan" data-ep-open="">
+  🎯 Free 30-Day Rank-Up Routine
+</a>
