@@ -125,37 +125,11 @@
         });
     }
 
-    function openLeadMagnetFromHash() {
-        if (window.location.hash !== '#free-plan') {
-            return;
-        }
-
-        updateLeadMagnetCopy();
-
-        if (typeof window.SK_openFreePlan === 'function') {
-            window.SK_openFreePlan();
-            return;
-        }
-
-        var popup = document.getElementById('sk-ep');
-        if (!popup) {
-            return;
-        }
-
-        popup.hidden = false;
-        document.documentElement.style.overflow = 'hidden';
-    }
-
-    function syncLeadMagnet() {
-        updateLeadMagnetCopy();
-        openLeadMagnetFromHash();
-    }
-
     function initialize() {
         updateLegacyDojoPrice();
         alignDojoPricingCards();
         updateWelcomeDiscordLink();
-        syncLeadMagnet();
+        updateLeadMagnetCopy();
     }
 
     if (document.readyState === 'loading') {
@@ -164,33 +138,13 @@
         initialize();
     }
 
-    window.addEventListener('load', syncLeadMagnet);
-    window.addEventListener('hashchange', syncLeadMagnet);
-
     window.setTimeout(updateLegacyDojoPrice, 750);
     window.setTimeout(alignDojoPricingCards, 750);
     window.setTimeout(updateWelcomeDiscordLink, 750);
-    window.setTimeout(syncLeadMagnet, 50);
-    window.setTimeout(syncLeadMagnet, 250);
-    window.setTimeout(syncLeadMagnet, 1000);
-    window.setTimeout(syncLeadMagnet, 2500);
 
-    if ('MutationObserver' in window) {
-        var leadMagnetObserver = new MutationObserver(function () {
-            syncLeadMagnet();
-        });
-
-        if (document.documentElement) {
-            leadMagnetObserver.observe(document.documentElement, {
-                childList: true,
-                subtree: true,
-                characterData: true
-            });
-            window.setTimeout(function () {
-                leadMagnetObserver.disconnect();
-            }, 10000);
-        }
-    }
+    // The original popup script already owns #free-plan opening behavior.
+    // Only refresh visible lead-magnet copy once after the footer has settled.
+    window.setTimeout(updateLeadMagnetCopy, 750);
 
     document.addEventListener('click', function (event) {
         if (!(event.target instanceof Element)) {
