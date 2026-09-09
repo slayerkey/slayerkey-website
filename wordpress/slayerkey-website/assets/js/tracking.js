@@ -113,7 +113,7 @@
             var label = (link.textContent || '').replace(/\s+/g, ' ').trim();
             var href = link.getAttribute('href') || '';
 
-            if (label === 'Free Improvement Plan' || href.indexOf('ko-fi.com/s/05c066f8a7') !== -1) {
+            if (label === 'Free Improvement Plan' || label === '(FREE) Starter Pack' || href.indexOf('ko-fi.com/s/05c066f8a7') !== -1) {
                 link.textContent = 'Free 30-Day Rank-Up Routine';
                 link.setAttribute('href', '#free-plan');
                 link.setAttribute('data-ep-open', '');
@@ -125,11 +125,37 @@
         });
     }
 
+    function openLeadMagnetFromHash() {
+        if (window.location.hash !== '#free-plan') {
+            return;
+        }
+
+        updateLeadMagnetCopy();
+
+        if (typeof window.SK_openFreePlan === 'function') {
+            window.SK_openFreePlan();
+            return;
+        }
+
+        var popup = document.getElementById('sk-ep');
+        if (!popup) {
+            return;
+        }
+
+        popup.hidden = false;
+        document.documentElement.style.overflow = 'hidden';
+    }
+
+    function syncLeadMagnet() {
+        updateLeadMagnetCopy();
+        openLeadMagnetFromHash();
+    }
+
     function initialize() {
         updateLegacyDojoPrice();
         alignDojoPricingCards();
         updateWelcomeDiscordLink();
-        updateLeadMagnetCopy();
+        syncLeadMagnet();
     }
 
     if (document.readyState === 'loading') {
@@ -138,15 +164,20 @@
         initialize();
     }
 
+    window.addEventListener('load', syncLeadMagnet);
+    window.addEventListener('hashchange', syncLeadMagnet);
+
     window.setTimeout(updateLegacyDojoPrice, 750);
     window.setTimeout(alignDojoPricingCards, 750);
     window.setTimeout(updateWelcomeDiscordLink, 750);
-    window.setTimeout(updateLeadMagnetCopy, 250);
-    window.setTimeout(updateLeadMagnetCopy, 1000);
+    window.setTimeout(syncLeadMagnet, 50);
+    window.setTimeout(syncLeadMagnet, 250);
+    window.setTimeout(syncLeadMagnet, 1000);
+    window.setTimeout(syncLeadMagnet, 2500);
 
     if ('MutationObserver' in window) {
         var leadMagnetObserver = new MutationObserver(function () {
-            updateLeadMagnetCopy();
+            syncLeadMagnet();
         });
 
         if (document.documentElement) {
@@ -157,7 +188,7 @@
             });
             window.setTimeout(function () {
                 leadMagnetObserver.disconnect();
-            }, 5000);
+            }, 10000);
         }
     }
 
