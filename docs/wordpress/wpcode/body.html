@@ -1,0 +1,172 @@
+<!-- SK Global Body SCRIPT v18.0: nav reordered to the Dojo > System > Coaching hierarchy, single Join the Dojo CTA.
+     Palette overrides removed so the v17 header styles in header-script.txt actually apply. -->
+<header class="sk-header" role="banner">
+  <div class="container nav">
+    <!-- Left: brand only -->
+    <div class="sk-left">
+      <a class="sk-brand" href="https://slayerkey.com/">
+        <span class="logo">
+          <img src="https://slayerkey.com/wp-content/uploads/2025/05/avatar-ProfilePictureMaker.com_.png" alt="Slayerkey logo">
+        </span>
+        <span class="name">Slayerkey</span>
+      </a>
+    </div>
+
+    <!-- Desktop nav -->
+    <nav class="sk-links" aria-label="Primary">
+      <ul>
+        <li><a href="/">Dojo</a></li>
+        <li><a href="/system">System</a></li>
+        <li><a href="/coaching">Coaching</a></li>
+        <li><a href="/#proof">Reviews</a></li>
+      </ul>
+    </nav>
+
+    <!-- Right: CTA + burger -->
+    <div class="sk-right">
+      <a class="btn sk-cta-btn" href="/">Join the Dojo</a>
+      <button id="sk-burger" class="sk-burger" type="button" aria-label="Open menu" aria-controls="sk-mobile" aria-expanded="false">☰</button>
+    </div>
+  </div>
+</header>
+
+<!-- Mobile overlay menu -->
+<div id="sk-mobile" class="sk-mobile" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-label="Site menu">
+    <div class="panel-head">
+      <div class="brand-mini">
+        <img src="https://slayerkey.com/wp-content/uploads/2025/05/avatar-ProfilePictureMaker.com_.png" alt="" aria-hidden="true">
+        <strong>Slayerkey</strong>
+      </div>
+      <button id="sk-close" class="sk-close" type="button" aria-label="Close menu">✕</button>
+    </div>
+
+    <a class="btn sk-mobile-cta" href="/">Join the Dojo</a>
+
+    <nav class="links" aria-label="Mobile">
+      <a href="/">Dojo</a>
+      <a href="/system">System</a>
+      <a href="/coaching">Coaching</a>
+      <a href="/#proof">Reviews</a>
+    </nav>
+  </div>
+</div>
+
+<style>
+/*
+  Layout and mobile-menu styles only.
+
+  The v16 palette overrides that used to live here (.sk-header, .sk-brand, .sk-links a in
+  #60a5fa blue with 10-12px radii) were deleted in v18. Because this snippet is injected
+  after header-script.txt, those rules were winning on equal specificity and rendering a
+  legacy blue rounded header on every page of an otherwise Valorant-red site. The header
+  now inherits its look from the v17 design system where it is defined once.
+*/
+.sk-left{display:flex;align-items:center}
+.sk-brand{min-width:0}
+.sk-brand .name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sk-links a.active{opacity:.55!important;cursor:default;pointer-events:none}
+
+.sk-right{display:flex;align-items:center;gap:.55rem}
+.sk-cta-btn{white-space:nowrap}
+
+.sk-burger{
+  display:none;
+  align-items:center;justify-content:center;
+  min-width:40px;height:40px;padding:0 .5rem;
+  border-radius:2px;border:1px solid rgba(236,232,225,.30);
+  background:rgba(236,232,225,.06);color:var(--ink);font-size:22px;line-height:1;cursor:pointer;
+}
+.sk-burger:hover{background:rgba(255,70,85,.10);border-color:rgba(255,70,85,.45)}
+.sk-burger:focus-visible{outline:2px solid rgba(45,226,197,.55)}
+
+@media (max-width:900px){
+  .sk-links{display:none}
+  .sk-burger{display:inline-flex}
+  .sk-cta-btn{padding:.55rem .75rem;font-size:.8rem}
+  .sk-brand .logo img{width:38px;height:38px}
+  .sk-brand .name{font-size:1.15rem}
+}
+
+#sk-mobile[hidden]{display:none}
+#sk-mobile{position:fixed;inset:0;z-index:1500;display:grid;background:rgba(10,17,25,.92);backdrop-filter:saturate(140%) blur(6px)}
+#sk-mobile .panel{align-self:start;justify-self:stretch;max-width:880px;margin:0 auto;padding:12px 20px 26px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding-top:6px}
+.brand-mini{display:flex;align-items:center;gap:.55rem;color:var(--ink);font-weight:800}
+.brand-mini img{width:32px;height:32px;border-radius:4px;border:1px solid var(--line)}
+.sk-close{width:40px;height:40px;border-radius:2px;border:1px solid rgba(236,232,225,.30);background:rgba(236,232,225,.06);color:var(--ink);font-size:20px;cursor:pointer}
+.sk-close:hover{background:rgba(255,70,85,.10);border-color:rgba(255,70,85,.45)}
+.sk-mobile-cta{align-self:flex-start;margin:6px 0 6px}
+.links{display:flex;flex-direction:column}
+.links a{padding:12px 6px;border-radius:2px;color:var(--ink);font-weight:700;letter-spacing:.09em;text-transform:uppercase;font-size:.9rem;opacity:.95}
+.links a:hover,.links a:focus{background:rgba(255,70,85,.10);outline:none}
+</style>
+
+<script>
+(function(){
+  var burger  = document.getElementById('sk-burger');
+  var mobile  = document.getElementById('sk-mobile');
+  var closeBtn= document.getElementById('sk-close');
+
+  if(!burger || !mobile || !closeBtn) return;
+
+  function lockScroll(lock){
+    document.documentElement.style.overflow = lock ? 'hidden' : '';
+    document.body.style.overscrollBehaviorY = lock ? 'contain' : '';
+  }
+
+  function openMenu(){
+    mobile.hidden = false;
+    burger.setAttribute('aria-expanded','true');
+    lockScroll(true);
+    var first = mobile.querySelector('a,button');
+    if(first) first.focus({preventScroll:true});
+  }
+  function closeMenu(){
+    mobile.hidden = true;
+    burger.setAttribute('aria-expanded','false');
+    lockScroll(false);
+    burger.focus({preventScroll:true});
+  }
+
+  burger.addEventListener('click', function(e){ e.stopPropagation(); openMenu(); }, true);
+  closeBtn.addEventListener('click', function(e){ e.stopPropagation(); closeMenu(); }, true);
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && !mobile.hidden) closeMenu();
+  });
+
+  mobile.addEventListener('click', function(e){
+    if(e.target === mobile) closeMenu();
+  });
+
+  mobile.addEventListener('click', function(e){
+    var link = e.target.closest && e.target.closest('a');
+    if(link) closeMenu();
+  });
+
+  // Active nav state: dim link for current page (desktop only)
+  (function(){
+    var path = location.pathname.replace(/\/$/, '') || '/';
+    document.querySelectorAll('.sk-links a').forEach(function(a){
+      try {
+        if (a.href.indexOf('#') !== -1) return;
+        var aPath = new URL(a.href, location.href).pathname.replace(/\/$/, '') || '/';
+        if (aPath === path) a.classList.add('active');
+      } catch(e){}
+    });
+  })();
+
+  // Reviews link: jump to this page's own proof section when it has one, otherwise
+  // fall through to /#proof on the homepage. Section ids differ per page for historical reasons.
+  (function(){
+    var local = ['proof','wb-reviews','reviews','showcase'].find(function(id){
+      return document.getElementById(id);
+    });
+    if (!local) return;
+    document.querySelectorAll('.sk-links a, .links a').forEach(function(a){
+      if (a.getAttribute('href') === '/#proof') a.setAttribute('href', '#' + local);
+    });
+  })();
+})();
+</script>
