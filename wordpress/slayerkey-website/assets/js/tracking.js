@@ -55,9 +55,34 @@
             '#sk-std #pricing .dj-price-card{align-self:stretch!important}';
     }
 
+    function updateWelcomeDiscordLink() {
+        var path = window.location.pathname.replace(/\/+$/, '') || '/';
+
+        if (path !== '/welcome') {
+            return;
+        }
+
+        var discordUrl = 'https://whop.com/slayerkey/exp_1scafiU5z9mhL2/app/';
+        var links = document.querySelectorAll('a');
+
+        links.forEach(function (link) {
+            var label = (link.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+            if (label.indexOf('connect your discord') === -1) {
+                return;
+            }
+
+            link.href = discordUrl;
+            link.setAttribute('data-sk-cta', 'welcome-connect-discord');
+            link.setAttribute('data-sk-location', 'welcome');
+            link.setAttribute('data-sk-offer', 'dojo');
+        });
+    }
+
     function initialize() {
         updateLegacyDojoPrice();
         alignDojoPricingCards();
+        updateWelcomeDiscordLink();
     }
 
     if (document.readyState === 'loading') {
@@ -68,6 +93,7 @@
 
     window.setTimeout(updateLegacyDojoPrice, 750);
     window.setTimeout(alignDojoPricingCards, 750);
+    window.setTimeout(updateWelcomeDiscordLink, 750);
 
     document.addEventListener('click', function (event) {
         if (!(event.target instanceof Element)) {
