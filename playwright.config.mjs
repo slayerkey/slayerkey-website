@@ -1,3 +1,4 @@
+// CI deploy gate: retry transient browser automation failures once.
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './tests/browser',
