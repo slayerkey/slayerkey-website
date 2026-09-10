@@ -17,12 +17,89 @@ permissions:
 concurrency:
   group: slayerkey-easywp-production
   cancel-in-progress: false
+
 jobs:
+  classify:
+    name: classify change
+    runs-on: ubuntu-latest
+    outputs:
+      full_checks: ${{ steps.classify.outputs.full_checks }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: classify
+        name: Choose reliability gate
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" != "push" ]]; then
+            echo "full_checks=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          base="${{ github.event.before }}"
+          if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
+            base="$(git rev-parse HEAD^ 2>/dev/null || true)"
+          fi
+
+          if [[ -z "$base" ]]; then
+            echo "full_checks=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          files="$(git diff --name-only "$base" "$GITHUB_SHA")"
+          printf 'Changed files:\n%s\n' "$files"
+
+          full_checks=false
+          while IFS= read -r file; do
+            [[ -z "$file" ]] && continue
+            case "$file" in
+              wordpress/slayerkey-website/pages/*/live/index.html|wordpress/slayerkey-website/DEPLOY_MARKER.txt|wordpress/slayerkey-website/DEPLOY_TRIGGER_*.txt)
+                ;;
+              *)
+                full_checks=true
+                break
+                ;;
+            esac
+          done <<< "$files"
+
+          echo "full_checks=$full_checks" >> "$GITHUB_OUTPUT"
+
   checks:
+    name: full reliability gate
+    needs: classify
+    if: needs.classify.outputs.full_checks == 'true'
     uses: ./.github/workflows/checks.yml
+
+  fast-checks:
+    name: copy-only fast gate
+    needs: classify
+    if: needs.classify.outputs.full_checks != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:unit
+      - run: python3 tests/publish_test.py
+      - run: npm run test:php
+      - run: python3 tools/build_deploy.py --output build/php-check/plugin
+      - run: php tests/wordpress.php build/php-check/plugin
+      - name: Desktop and mobile content smoke
+        run: >
+          npx playwright test tests/browser/homepage.spec.mjs
+          --project=chromium-desktop
+          --project=chromium-390
+          --grep "native content, section scrolling, chooser, proof, footer, and reload"
+
   deploy:
-    if: github.ref == 'refs/heads/main'
-    needs: checks
+    if: always() && github.ref == 'refs/heads/main' && (needs.checks.result == 'success' || needs.fast-checks.result == 'success')
+    needs: [classify, checks, fast-checks]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
