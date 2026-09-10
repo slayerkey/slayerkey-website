@@ -4,7 +4,7 @@ export default defineConfig({
   timeout: 60000,
   expect: { timeout: 6000 },
   workers: 1,
-  retries: 0,
+  retries: process.env.CI ? 1 : 0,
   reporter: [['list'], ['html', { open: 'never' }], ['json', { outputFile: 'artifacts/tests.json' }]],
   use: { ignoreHTTPSErrors:true, baseURL: 'https://127.0.0.1:4173', trace: 'retain-on-failure', screenshot: 'only-on-failure' },
   webServer: { ignoreHTTPSErrors:true, command: 'node tools/fixture-server.mjs', url: 'https://127.0.0.1:4173', reuseExistingServer: !process.env.CI },

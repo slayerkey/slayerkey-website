@@ -51,7 +51,10 @@ test('native content, section scrolling, chooser, proof, footer, and reload', as
   await expect(page.locator('#djLightbox')).toBeHidden();
   await unlockCheck(page);
   await expect(page.locator('[data-proof-src]').first()).toBeFocused();
-  await page.locator('footer.sk-footer a[href="/"]').click();
+  const footerLink = page.locator('footer.sk-footer a[href="/"]');
+  await footerLink.scrollIntoViewIfNeeded();
+  await expect(footerLink).toBeVisible();
+  await footerLink.click();
   await readable(page);
   await page.reload();
   await readable(page);
@@ -141,7 +144,10 @@ test('popup manual/hash/timer/exit paths and overlapping dialogs retain independ
   await page.locator('.sk-ep-x').click();
   await unlockCheck(page);
   if (isMobile) {
-    await page.locator('#sk-burger').click();
+    const burger = page.locator('#sk-burger');
+    await burger.scrollIntoViewIfNeeded();
+    await expect(burger).toBeVisible();
+    await burger.click();
     await expect(page.locator('#sk-mobile')).toBeVisible();
     await page.locator('.sk-mobile-cta').click();
     await expect(page.locator('#sk-mobile')).toBeHidden();
