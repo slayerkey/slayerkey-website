@@ -5,3 +5,5 @@ The source remains archived under previews/work-v2 with ARCHIVED.md.
 Both portfolio preview routes were removed from the active preview map.
 The public /work route now returns a real 404.
 Plugin version bumped to 0.1.13.
+
+Redeploy requested 2026-09-10 after hardening transient mobile browser checks.
