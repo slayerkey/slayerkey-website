@@ -69,12 +69,18 @@ try {
     await page.locator('.sk-ep-x').click();
     assert.equal(await page.evaluate(()=>document.documentElement.style.overflow==='hidden'||document.body.classList.contains('dojo-dialog-open')),false);
     await page.screenshot({path:'artifacts/live/'+name+'.png'});
+    // A reload must supply its own verified responses, including browser-cache responses.
+    // Never let the preceding navigation's successful hashes satisfy this check.
+    loaded.clear();
     const reload=await page.reload({waitUntil:'domcontentloaded',timeout:30000});
     verifyHTML(await reload.text(),manifest,sha,rollback);
     await Promise.all(hashes);
     assert.deepEqual(byteFailures,[]);
     for(const key of assetKeys) assert.equal(loaded.get(key),manifest[key+'_sha256'],'Reload bytes mismatch: '+key);
     assert.equal(await page.locator('#dojoVideo').getAttribute('src').then(Boolean),true);
+    await page.locator('#sk-std [data-sk-checkout="true"]').first().click();
+    assert.equal(await page.locator('#sk-plan-chooser').isVisible(),true);
+    await page.locator('.sk-plan-close').click();
     assert.deepEqual(errors,[]);
     result.hashes=Object.fromEntries(loaded);result.completed=true;
     await context.close();
