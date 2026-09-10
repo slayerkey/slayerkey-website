@@ -1,164 +1,165 @@
 (function () {
     'use strict';
 
-    function ready(fn) {
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', fn, { once: true });
-        } else {
-            fn();
+    function initialize() {
+        var root = document.getElementById('sk-std');
+        if (!root || root.dataset.dojoInitialized) return;
+        root.dataset.dojoInitialized = 'true';
+
+        // An optional enhancement may fail without taking the others down.
+        function enhance(fn) {
+            try { fn(); } catch (error) {
+                console.warn('[Dojo] Optional enhancement unavailable:', error.message);
+            }
         }
+
+        function modalController(modal, closeButton) {
+            var trigger = null;
+            function close() {
+                if (!modal.classList.contains('open')) return;
+                modal.classList.remove('open');
+                modal.hidden = true;
+                modal.setAttribute('aria-hidden', 'true');
+                // A CSS class owns only our lock; WPCode retains its independent html lock.
+                document.body.classList.remove('dojo-dialog-open');
+                if (trigger && trigger.isConnected) trigger.focus({ preventScroll: true });
+            }
+            closeButton.addEventListener('click', close);
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) close();
+            });
+            modal.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') close();
+                if (event.key !== 'Tab') return;
+                var focusable = Array.from(modal.querySelectorAll('button,a[href]')).filter(function (el) {
+                    return el.getClientRects().length && !el.disabled;
+                });
+                var first = focusable[0], last = focusable[focusable.length - 1];
+                if (event.shiftKey && document.activeElement === first) {
+                    event.preventDefault(); last.focus();
+                } else if (!event.shiftKey && document.activeElement === last) {
+                    event.preventDefault(); first.focus();
+                }
+            });
+            return {
+                close: close,
+                open: function (from) {
+                    if (!modal.isConnected || !closeButton.isConnected) return false;
+                    // Never stack our dialogs or steal focus from an active WPCode dialog.
+                    if (document.querySelector('#sk-ep:not([hidden]),#sk-mobile:not([hidden])')) return false;
+                    if (document.querySelector('.sk-plan-modal.open,.dj-lightbox.open')) return false;
+                    trigger = from || document.activeElement;
+                    try {
+                        modal.hidden = false;
+                        modal.classList.add('open');
+                        modal.setAttribute('aria-hidden', 'false');
+                        if (!modal.getClientRects().length || !closeButton.getClientRects().length) {
+                            close(); return false;
+                        }
+                        document.body.classList.add('dojo-dialog-open');
+                        closeButton.focus({ preventScroll: true });
+                        return true;
+                    } catch (error) {
+                        close(); return false;
+                    }
+                }
+            };
+        }
+
+        enhance(function videoControls() {
+            var iframe = document.getElementById('dojoVideo');
+            var button = document.getElementById('unmuteBtn');
+            if (!iframe || !button || !iframe.getAttribute('src')) return;
+            var origin = new URL(iframe.src).origin;
+            button.addEventListener('click', function () {
+                ['unMute', 'playVideo'].forEach(function (command) {
+                    iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: command, args: []}), origin);
+                });
+                button.hidden = true;
+            });
+            button.hidden = false;
+        });
+
+        enhance(function inboundAttribution() {
+            var inbound = new URLSearchParams(window.location.search);
+            root.querySelectorAll('[data-sk-plan-direct="true"]').forEach(function (link) {
+                var url = new URL(link.href);
+                if (url.searchParams.get('utm_source') === 'private_preview') return;
+                ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach(function (key) {
+                    if (inbound.get(key)) url.searchParams.set(key, inbound.get(key));
+                });
+                if (link.href !== url.href) link.href = url.href;
+            });
+        });
+
+        enhance(function planChooser() {
+            var template = document.getElementById('dojoPlanChooserTemplate');
+            var monthly = root.querySelector('[data-sk-location="pricing_monthly"]');
+            var annual = root.querySelector('[data-sk-location="pricing_annual"]');
+            if (!template || !monthly || !annual) return;
+            var modal = template.content.firstElementChild.cloneNode(true);
+            var links = modal.querySelectorAll('.sk-plan-action');
+            if (links.length !== 2) return;
+            [monthly, annual].forEach(function (source, index) {
+                var url = new URL(source.href);
+                if (url.protocol !== 'https:' || url.hostname !== 'whop.com') throw new Error('Checkout unavailable');
+                links[index].href = url.href;
+            });
+            document.body.appendChild(modal);
+            var controller = modalController(modal, modal.querySelector('.sk-plan-close'));
+            window.SK_openDojoPlanChooser = controller.open;
+            // Capture analytics sees the original click. Only a successfully opened dialog
+            // cancels the native anchor and the global WPCode smooth-scroll handler.
+            document.querySelectorAll('.sk-cta-btn,.sk-mobile-cta,#sk-std [data-sk-checkout="true"]')
+                .forEach(function (link) {
+                    if (link.dataset.skPlanDirect === 'true') return;
+                    link.addEventListener('click', function (event) {
+                        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                        var focusReturn = link;
+                        if (link.closest('#sk-mobile')) {
+                            document.getElementById('sk-close').click();
+                            focusReturn = document.getElementById('sk-burger');
+                        }
+                        if (controller.open(focusReturn)) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                    });
+                });
+        });
+
+        enhance(function proofLightbox() {
+            var modal = document.getElementById('djLightbox');
+            if (!modal) return;
+            var img = modal.querySelector('img');
+            var close = modal.querySelector('.dj-lightbox-close');
+            if (!img || !close) return;
+            var controller = modalController(modal, close);
+            root.querySelectorAll('[data-proof-src]').forEach(function (trigger) {
+                trigger.addEventListener('click', function () {
+                    if (!controller.open(trigger)) return;
+                    img.src = trigger.dataset.proofSrc;
+                    img.alt = trigger.querySelector('img').alt || 'Expanded proof';
+                });
+            });
+        });
+
+        enhance(function reviewAnimation() {
+            var rail = root.querySelector('.dj-review-rail');
+            var track = rail && rail.querySelector('.dj-review-track');
+            if (!track || !window.IntersectionObserver) return;
+            var inView = false;
+            function update() { track.classList.toggle('is-running', inView && !document.hidden); }
+            var observer = new IntersectionObserver(function (entries) {
+                inView = entries[0].isIntersecting;
+                update();
+            });
+            observer.observe(rail);
+            document.addEventListener('visibilitychange', update);
+            window.addEventListener('pagehide', function () { track.classList.remove('is-running'); });
+        });
     }
 
-    ready(function () {
-        var root = document.getElementById('sk-std');
-        if (!root) return;
-
-        /*
-         * Fail-safe presentation.
-         * The page must remain readable and usable even if an animation, embed,
-         * analytics script, or third-party lazy loader fails later.
-         */
-        var failSafeStyle = document.getElementById('dojoRuntimeFailSafeStyles');
-        if (!failSafeStyle) {
-            failSafeStyle = document.createElement('style');
-            failSafeStyle.id = 'dojoRuntimeFailSafeStyles';
-            failSafeStyle.textContent = '' +
-                '#sk-std .reveal{opacity:1!important;transform:none!important;filter:none!important}' +
-                '#sk-std .reveal.show,#sk-std .reveal.is-visible{opacity:1!important;transform:none!important;filter:none!important}';
-            document.head.appendChild(failSafeStyle);
-        }
-
-        Array.prototype.forEach.call(root.querySelectorAll('.reveal'), function (el) {
-            el.classList.add('show');
-        });
-
-        /*
-         * VSL should never depend on a long runtime chain before it receives a URL.
-         * Load it directly and keep sound opt-in.
-         */
-        var iframe = document.getElementById('dojoVideo');
-        var unmuteButton = document.getElementById('unmuteBtn');
-        var videoSrc = 'https://www.youtube.com/embed/H7hYaHnT6ko?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1';
-
-        if (iframe) {
-            if (!iframe.getAttribute('src')) iframe.setAttribute('src', videoSrc);
-
-            function postVideoCommand(command) {
-                try {
-                    iframe.contentWindow.postMessage(JSON.stringify({
-                        event: 'command',
-                        func: command,
-                        args: []
-                    }), '*');
-                } catch (e) {}
-            }
-
-            if (unmuteButton) {
-                unmuteButton.hidden = false;
-                unmuteButton.addEventListener('click', function () {
-                    postVideoCommand('unMute');
-                    postVideoCommand('playVideo');
-                    unmuteButton.hidden = true;
-
-                    window.setTimeout(function () {
-                        var src = iframe.getAttribute('src') || '';
-                        if (src.indexOf('mute=1') !== -1) {
-                            iframe.setAttribute('src', src.replace('mute=1', 'mute=0'));
-                        }
-                    }, 300);
-                });
-            }
-        }
-
-        /*
-         * Keep generic Dojo CTAs simple and fail-safe.
-         * No capture-phase interception and no dynamically maintained modal.
-         * If JavaScript stops later, these links still point at #pricing.
-         */
-        var pricing = document.getElementById('pricing');
-
-        Array.prototype.forEach.call(document.querySelectorAll('.sk-cta-btn,.sk-mobile-cta'), function (link) {
-            link.setAttribute('href', '#pricing');
-            link.removeAttribute('target');
-            link.removeAttribute('rel');
-        });
-
-        Array.prototype.forEach.call(root.querySelectorAll('[data-sk-checkout="true"]'), function (link) {
-            var location = link.getAttribute('data-sk-location') || '';
-            var direct = link.getAttribute('data-sk-plan-direct') === 'true' ||
-                location === 'pricing_monthly' ||
-                location === 'pricing_annual';
-
-            if (!direct) {
-                link.setAttribute('href', '#pricing');
-                link.removeAttribute('target');
-                link.removeAttribute('rel');
-            }
-        });
-
-        document.addEventListener('click', function (event) {
-            if (!pricing || !event.target || !event.target.closest) return;
-
-            var link = event.target.closest('a[href="#pricing"]');
-            if (!link) return;
-
-            event.preventDefault();
-            pricing.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-
-        /*
-         * Preserve the proof lightbox without any global observers.
-         */
-        var lightbox = document.getElementById('djLightbox');
-        if (lightbox) {
-            var lightboxImage = lightbox.querySelector('img');
-            var lightboxClose = lightbox.querySelector('.dj-lightbox-close');
-            var lightboxTrigger = null;
-
-            function closeLightbox() {
-                lightbox.classList.remove('open');
-                lightbox.setAttribute('aria-hidden', 'true');
-                if (lightboxImage) lightboxImage.removeAttribute('src');
-                document.body.style.overflow = '';
-                if (lightboxTrigger && typeof lightboxTrigger.focus === 'function') {
-                    lightboxTrigger.focus();
-                }
-            }
-
-            Array.prototype.forEach.call(root.querySelectorAll('[data-proof-src]'), function (trigger) {
-                trigger.addEventListener('click', function () {
-                    if (!lightboxImage) return;
-
-                    lightboxTrigger = trigger;
-                    lightboxImage.src = trigger.getAttribute('data-proof-src');
-
-                    var childImage = trigger.querySelector('img');
-                    lightboxImage.alt = childImage && childImage.alt ? childImage.alt : 'Expanded proof';
-
-                    lightbox.classList.add('open');
-                    lightbox.setAttribute('aria-hidden', 'false');
-                    document.body.style.overflow = 'hidden';
-                });
-            });
-
-            if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
-            lightbox.addEventListener('click', function (event) {
-                if (event.target === lightbox) closeLightbox();
-            });
-            document.addEventListener('keydown', function (event) {
-                if (event.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox();
-            });
-        }
-
-        /*
-         * Best-effort image fallback for lazy-load rewrites. This does not watch the
-         * DOM or repeatedly mutate it. It only repairs images that already exist.
-         */
-        Array.prototype.forEach.call(root.querySelectorAll('img'), function (img) {
-            if (!img.getAttribute('src')) {
-                var fallback = img.getAttribute('data-src') || img.getAttribute('data-lazy-src');
-                if (fallback) img.setAttribute('src', fallback);
-            }
-        });
-    });
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize, { once: true });
+    else initialize();
 })();

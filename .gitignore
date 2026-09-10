@@ -21,3 +21,10 @@ vendor/
 Thumbs.db
 .vscode/
 .idea/
+
+# Reliability test and release artifacts
+artifacts/
+test-results/
+playwright-report/
+build/
+__pycache__/

@@ -1,0 +1,194 @@
+[
+  {
+    "original": "https://slayerkey.com/wp-content/uploads/2026/08/lazy-site.png",
+    "original_sha256": "a293b04779b39048f76eb80296c7dd026bbc7133ce4d8c114e1cdcbb0243a706",
+    "original_bytes": 1084605,
+    "width": 1920,
+    "height": 1080,
+    "variants": [
+      {
+        "file": "lazy-site-400.webp",
+        "width": 400,
+        "bytes": 19092
+      },
+      {
+        "file": "lazy-site-800.webp",
+        "width": 800,
+        "bytes": 51132
+      },
+      {
+        "file": "lazy-site-1200.webp",
+        "width": 1200,
+        "bytes": 85780
+      }
+    ]
+  },
+  {
+    "original": "https://slayerkey.com/wp-content/uploads/2026/08/dark-site.png",
+    "original_sha256": "8fd3dfb5a012276f02707e05a1e01b5ed5edbd6457aa0a7eb2d5d9bac7bc0d71",
+    "original_bytes": 1259892,
+    "width": 1920,
+    "height": 1080,
+    "variants": [
+      {
+        "file": "dark-site-400.webp",
+        "width": 400,
+        "bytes": 17674
+      },
+      {
+        "file": "dark-site-800.webp",
+        "width": 800,
+        "bytes": 48938
+      },
+      {
+        "file": "dark-site-1200.webp",
+        "width": 1200,
+        "bytes": 86956
+      }
+    ]
+  },
+  {
+    "original": "https://slayerkey.com/wp-content/uploads/2026/08/chrake-site.png",
+    "original_sha256": "73de12234c4e16135861042d1d9450e7514959a00456b6e7e04737be2ca4a006",
+    "original_bytes": 775216,
+    "width": 1920,
+    "height": 1080,
+    "variants": [
+      {
+        "file": "chrake-site-400.webp",
+        "width": 400,
+        "bytes": 17144
+      },
+      {
+        "file": "chrake-site-800.webp",
+        "width": 800,
+        "bytes": 42726
+      },
+      {
+        "file": "chrake-site-1200.webp",
+        "width": 1200,
+        "bytes": 68052
+      }
+    ]
+  },
+  {
+    "original": "https://slayerkey.com/wp-content/uploads/2026/08/g09-site.png",
+    "original_sha256": "34090b4db3e2e35e6d0c4c2b88739d0af08867bdb3606e7238d57cfb833202d9",
+    "original_bytes": 1472909,
+    "width": 1920,
+    "height": 1080,
+    "variants": [
+      {
+        "file": "g09-site-400.webp",
+        "width": 400,
+        "bytes": 19730
+      },
+      {
+        "file": "g09-site-800.webp",
+        "width": 800,
+        "bytes": 54588
+      },
+      {
+        "file": "g09-site-1200.webp",
+        "width": 1200,
+        "bytes": 99926
+      }
+    ]
+  },
+  {
+    "original": "https://slayerkey.com/wp-content/uploads/2026/08/std-diawin-huge.png",
+    "original_sha256": "26702ddeec0ebe006650f058f57bc518f020eec358f6f22ec440b682447b0493",
+    "original_bytes": 392026,
+    "width": 1054,
+    "height": 667,
+    "variants": [
+      {
+        "file": "std-diawin-huge-400.webp",
+        "width": 400,
+        "bytes": 12926
+      },
+      {
+        "file": "std-diawin-huge-800.webp",
+        "width": 800,
+        "bytes": 34376
+      },
+      {
+        "file": "std-diawin-huge-1054.webp",
+        "width": 1054,
+        "bytes": 48236
+      }
+    ]
+  },
+  {
+    "original": "https://slayerkey.com/wp-content/uploads/2026/08/std-10gamewinstreak.png",
+    "original_sha256": "95912bec2a552f263c76aed05e86f5d5e50623cbc881da9b3c034177d213e1d8",
+    "original_bytes": 95656,
+    "width": 1007,
+    "height": 686,
+    "variants": [
+      {
+        "file": "std-10gamewinstreak-400.webp",
+        "width": 400,
+        "bytes": 16300
+      },
+      {
+        "file": "std-10gamewinstreak-800.webp",
+        "width": 800,
+        "bytes": 44508
+      },
+      {
+        "file": "std-10gamewinstreak-1007.webp",
+        "width": 1007,
+        "bytes": 67180
+      }
+    ]
+  },
+  {
+    "original": "https://slayerkey.com/wp-content/uploads/2026/08/std-46bomb-huge.png",
+    "original_sha256": "7d24b183246028af446e3eb1ef0db5abc8bee7576cc534d06c5f043d361dbe3c",
+    "original_bytes": 75420,
+    "width": 902,
+    "height": 611,
+    "variants": [
+      {
+        "file": "std-46bomb-huge-400.webp",
+        "width": 400,
+        "bytes": 13398
+      },
+      {
+        "file": "std-46bomb-huge-800.webp",
+        "width": 800,
+        "bytes": 36064
+      },
+      {
+        "file": "std-46bomb-huge-902.webp",
+        "width": 902,
+        "bytes": 47952
+      }
+    ]
+  },
+  {
+    "original": "https://slayerkey.com/wp-content/uploads/2026/08/std-bronzetosilverwinstreak.png",
+    "original_sha256": "ecd6ab6bbef95c056ba8a5e2d2c0d3fb1827f41fc5569c69f6f48fcac8770e8f",
+    "original_bytes": 341505,
+    "width": 931,
+    "height": 690,
+    "variants": [
+      {
+        "file": "std-bronzetosilverwinstreak-400.webp",
+        "width": 400,
+        "bytes": 13430
+      },
+      {
+        "file": "std-bronzetosilverwinstreak-800.webp",
+        "width": 800,
+        "bytes": 36416
+      },
+      {
+        "file": "std-bronzetosilverwinstreak-931.webp",
+        "width": 931,
+        "bytes": 44268
+      }
+    ]
+  }
+]

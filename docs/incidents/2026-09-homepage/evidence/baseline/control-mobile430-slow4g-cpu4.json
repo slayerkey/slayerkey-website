@@ -1,0 +1,599 @@
+{
+  "scenario": {
+    "id": "control-mobile430-slow4g-cpu4",
+    "w": 430,
+    "h": 932,
+    "cpu": 4,
+    "slow": true
+  },
+  "dcl": 8545,
+  "elapsed": 36518,
+  "checks": {
+    "chooser": "sk-plan-modal open",
+    "proof": "dj-lightbox open",
+    "menu": true,
+    "footer": true,
+    "autoPopup": true,
+    "manualPopup": true
+  },
+  "state": {
+    "stats": {
+      "observers": [
+        {
+          "calls": 38,
+          "records": 113,
+          "stack": "Error\n    at Object.construct (<anonymous>:4:139)\n    at Ht (https://t.whop.tw/s.js:8:9425)\n    at we.startFormTracking (https://t.whop.tw/s.js:72:14950)\n    at we.setupAutoTracking (https://t.whop.tw/s.js:72:14176)\n    at https://t.whop.tw/s.js:72:19382\n    at https://t.whop.tw/s.js:72:19403\n    at https://t.whop.tw/s.js:72:19408"
+        },
+        {
+          "calls": 38,
+          "records": 113,
+          "stack": "Error\n    at Object.construct (<anonymous>:4:139)\n    at Zt (https://t.whop.tw/s.js:8:10706)\n    at we.startIframeSync (https://t.whop.tw/s.js:72:14784)\n    at we.setupAutoTracking (https://t.whop.tw/s.js:72:14287)\n    at https://t.whop.tw/s.js:72:19382\n    at https://t.whop.tw/s.js:72:19403\n    at https://t.whop.tw/s.js:72:19408"
+        },
+        {
+          "calls": 32,
+          "records": 105,
+          "stack": "Error\n    at Object.construct (<anonymous>:4:139)\n    at slayerkey-live-dojo-v3-js-after:2:402\n    at slayerkey-live-dojo-v3-js-after:2:510"
+        },
+        {
+          "calls": 3,
+          "records": 18,
+          "stack": "Error\n    at Object.construct (<anonymous>:4:139)\n    at suppressAutomaticEmailCapture (https://spcdn.shortpixel.ai/spio/ret_auto,v_1,q_cdnize,to_webp,s_webp/slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/dojo.f6a5cf6a26218d68.js?ver=0.1.28.601a2c09.1788921256:185:37)\n    at HTMLDocument.<anonymous> (https://spcdn.shortpixel.ai/spio/ret_auto,v_1,q_cdnize,to_webp,s_webp/slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/dojo.f6a5cf6a26218d68.js?ver=0.1.28.601a2c09.1788921256:188:11)"
+        },
+        {
+          "calls": 7,
+          "records": 21,
+          "stack": "Error\n    at Object.construct (<anonymous>:4:139)\n    at installPlanChooser (https://spcdn.shortpixel.ai/spio/ret_auto,v_1,q_cdnize,to_webp,s_webp/slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/dojo.f6a5cf6a26218d68.js?ver=0.1.28.601a2c09.1788921256:340:39)\n    at HTMLDocument.<anonymous> (https://spcdn.shortpixel.ai/spio/ret_auto,v_1,q_cdnize,to_webp,s_webp/slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/dojo.f6a5cf6a26218d68.js?ver=0.1.28.601a2c09.1788921256:352:11)"
+        },
+        {
+          "calls": 1,
+          "records": 2,
+          "stack": "Error\n    at Object.construct (<anonymous>:4:139)\n    at u (https://slayerkey.com/wp-includes/js/wp-emoji-release.min.js?ver=7.1:5:2225)\n    at new <anonymous> (https://slayerkey.com/wp-includes/js/wp-emoji-release.min.js?ver=7.1:5:2767)\n    at https://slayerkey.com/wp-includes/js/wp-emoji-release.min.js?ver=7.1:5:41\n    at https://slayerkey.com/wp-includes/js/wp-emoji-release.min.js?ver=7.1:5:2788"
+        },
+        {
+          "calls": 0,
+          "records": 0,
+          "stack": "Error\n    at Object.construct (<anonymous>:4:139)\n    at InjectedScript._setupGlobalListenersRemovalDetection (<anonymous>:7725:5)\n    at new InjectedScript (<anonymous>:6677:10)\n    at <anonymous>:8165:16\n    at <anonymous>:8166:11"
+        }
+      ],
+      "raf": 1542,
+      "heartbeats": 36,
+      "longTasks": [
+        {
+          "start": 1838.7000000011176,
+          "duration": 153
+        },
+        {
+          "start": 2036.1000000014901,
+          "duration": 111
+        },
+        {
+          "start": 2161.7000000011176,
+          "duration": 76
+        },
+        {
+          "start": 2257.10000000149,
+          "duration": 438
+        },
+        {
+          "start": 2727.10000000149,
+          "duration": 88
+        },
+        {
+          "start": 2829.5,
+          "duration": 164
+        },
+        {
+          "start": 3007.10000000149,
+          "duration": 92
+        },
+        {
+          "start": 3105.60000000149,
+          "duration": 140
+        },
+        {
+          "start": 3252.300000000745,
+          "duration": 256
+        },
+        {
+          "start": 3515.10000000149,
+          "duration": 270
+        },
+        {
+          "start": 3803.5,
+          "duration": 85
+        },
+        {
+          "start": 3929.2000000011176,
+          "duration": 79
+        },
+        {
+          "start": 8509.400000000373,
+          "duration": 50
+        },
+        {
+          "start": 8567.200000001118,
+          "duration": 65
+        },
+        {
+          "start": 13311.900000000373,
+          "duration": 51
+        },
+        {
+          "start": 13366,
+          "duration": 58
+        },
+        {
+          "start": 13428.200000001118,
+          "duration": 65
+        },
+        {
+          "start": 16272.800000000745,
+          "duration": 83
+        },
+        {
+          "start": 16392.300000000745,
+          "duration": 58
+        },
+        {
+          "start": 28350.700000001118,
+          "duration": 58
+        },
+        {
+          "start": 28505.200000001118,
+          "duration": 289
+        },
+        {
+          "start": 29388.60000000149,
+          "duration": 206
+        },
+        {
+          "start": 30272.400000000373,
+          "duration": 57
+        },
+        {
+          "start": 32845.40000000037,
+          "duration": 54
+        },
+        {
+          "start": 35031,
+          "duration": 277
+        },
+        {
+          "start": 35415.40000000037,
+          "duration": 50
+        },
+        {
+          "start": 35484.10000000149,
+          "duration": 325
+        }
+      ]
+    },
+    "ready": "interactive",
+    "video": "https://www.youtube.com/embed/H7hYaHnT6ko?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1",
+    "hiddenReveals": [
+      {
+        "class": "dj-mech-close reveal d2",
+        "section": "how-it-works",
+        "height": 66.810546875
+      },
+      {
+        "class": "dj-mid-cta reveal d2",
+        "section": "how-it-works",
+        "height": 51.2197265625
+      },
+      {
+        "class": "dj-diagnosis-card reveal d3",
+        "section": "diagnosis",
+        "height": 241.494140625
+      },
+      {
+        "class": "dj-win-card reveal d3",
+        "section": "community-wins",
+        "height": 371.037109375
+      }
+    ],
+    "width": [
+      430,
+      430
+    ],
+    "overflow": [
+      "hidden auto",
+      "visible"
+    ],
+    "scrollY": 0,
+    "height": 13782,
+    "overlays": [
+      {
+        "id": "sk-mobile",
+        "display": "none",
+        "opacity": "1",
+        "pointer": "auto"
+      },
+      {
+        "id": "sk-ep",
+        "display": "none",
+        "opacity": "1",
+        "pointer": "auto"
+      },
+      {
+        "id": "djLightbox",
+        "display": "none",
+        "opacity": "1",
+        "pointer": "auto"
+      },
+      {
+        "id": "sk-plan-chooser",
+        "display": "none",
+        "opacity": "1",
+        "pointer": "auto"
+      }
+    ],
+    "nav": [
+      {
+        "dcl": 8543.200000001118,
+        "load": 0
+      }
+    ]
+  },
+  "metricsStart": [
+    {
+      "name": "Timestamp",
+      "value": 16190.423991
+    },
+    {
+      "name": "AudioHandlers",
+      "value": 3
+    },
+    {
+      "name": "AudioWorkletProcessors",
+      "value": 0
+    },
+    {
+      "name": "Documents",
+      "value": 15
+    },
+    {
+      "name": "Frames",
+      "value": 7
+    },
+    {
+      "name": "JSEventListeners",
+      "value": 132
+    },
+    {
+      "name": "LayoutObjects",
+      "value": 1469
+    },
+    {
+      "name": "MediaKeySessions",
+      "value": 0
+    },
+    {
+      "name": "MediaKeys",
+      "value": 0
+    },
+    {
+      "name": "Nodes",
+      "value": 3599
+    },
+    {
+      "name": "Resources",
+      "value": 86
+    },
+    {
+      "name": "ContextLifecycleStateObservers",
+      "value": 51
+    },
+    {
+      "name": "V8PerContextDatas",
+      "value": 13
+    },
+    {
+      "name": "WorkerGlobalScopes",
+      "value": 0
+    },
+    {
+      "name": "UACSSResources",
+      "value": 0
+    },
+    {
+      "name": "RTCPeerConnections",
+      "value": 0
+    },
+    {
+      "name": "ResourceFetchers",
+      "value": 15
+    },
+    {
+      "name": "AdSubframes",
+      "value": 0
+    },
+    {
+      "name": "DetachedScriptStates",
+      "value": 8
+    },
+    {
+      "name": "ArrayBufferContents",
+      "value": 18
+    },
+    {
+      "name": "LayoutCount",
+      "value": 31
+    },
+    {
+      "name": "RecalcStyleCount",
+      "value": 94
+    },
+    {
+      "name": "LayoutDuration",
+      "value": 1.408285
+    },
+    {
+      "name": "RecalcStyleDuration",
+      "value": 0.183292
+    },
+    {
+      "name": "DevToolsCommandDuration",
+      "value": 0.094107
+    },
+    {
+      "name": "ScriptDuration",
+      "value": 0.552416
+    },
+    {
+      "name": "V8CompileDuration",
+      "value": 0.008625
+    },
+    {
+      "name": "TaskDuration",
+      "value": 3.186591
+    },
+    {
+      "name": "TaskOtherDuration",
+      "value": 0.939866
+    },
+    {
+      "name": "ThreadTime",
+      "value": 0.84892
+    },
+    {
+      "name": "ProcessTime",
+      "value": 11.858607
+    },
+    {
+      "name": "JSHeapUsedSize",
+      "value": 7148288
+    },
+    {
+      "name": "JSHeapTotalSize",
+      "value": 8536064
+    },
+    {
+      "name": "FirstMeaningfulPaint",
+      "value": 0
+    },
+    {
+      "name": "DomContentLoaded",
+      "value": 16189.384189
+    },
+    {
+      "name": "NavigationStart",
+      "value": 16180.874669
+    }
+  ],
+  "metricsEnd": [
+    {
+      "name": "Timestamp",
+      "value": 16217.391846
+    },
+    {
+      "name": "AudioHandlers",
+      "value": 0
+    },
+    {
+      "name": "AudioWorkletProcessors",
+      "value": 0
+    },
+    {
+      "name": "Documents",
+      "value": 5
+    },
+    {
+      "name": "Frames",
+      "value": 5
+    },
+    {
+      "name": "JSEventListeners",
+      "value": 390
+    },
+    {
+      "name": "LayoutObjects",
+      "value": 1130
+    },
+    {
+      "name": "MediaKeySessions",
+      "value": 0
+    },
+    {
+      "name": "MediaKeys",
+      "value": 0
+    },
+    {
+      "name": "Nodes",
+      "value": 2697
+    },
+    {
+      "name": "Resources",
+      "value": 92
+    },
+    {
+      "name": "ContextLifecycleStateObservers",
+      "value": 36
+    },
+    {
+      "name": "V8PerContextDatas",
+      "value": 5
+    },
+    {
+      "name": "WorkerGlobalScopes",
+      "value": 0
+    },
+    {
+      "name": "UACSSResources",
+      "value": 0
+    },
+    {
+      "name": "RTCPeerConnections",
+      "value": 0
+    },
+    {
+      "name": "ResourceFetchers",
+      "value": 5
+    },
+    {
+      "name": "AdSubframes",
+      "value": 0
+    },
+    {
+      "name": "DetachedScriptStates",
+      "value": 2
+    },
+    {
+      "name": "ArrayBufferContents",
+      "value": 323
+    },
+    {
+      "name": "LayoutCount",
+      "value": 101
+    },
+    {
+      "name": "RecalcStyleCount",
+      "value": 1729
+    },
+    {
+      "name": "LayoutDuration",
+      "value": 1.66915
+    },
+    {
+      "name": "RecalcStyleDuration",
+      "value": 0.689256
+    },
+    {
+      "name": "DevToolsCommandDuration",
+      "value": 0.738543
+    },
+    {
+      "name": "ScriptDuration",
+      "value": 2.455504
+    },
+    {
+      "name": "V8CompileDuration",
+      "value": 0.015912
+    },
+    {
+      "name": "TaskDuration",
+      "value": 10.357685
+    },
+    {
+      "name": "TaskOtherDuration",
+      "value": 4.78932
+    },
+    {
+      "name": "ThreadTime",
+      "value": 2.773373
+    },
+    {
+      "name": "ProcessTime",
+      "value": 43.746524
+    },
+    {
+      "name": "JSHeapUsedSize",
+      "value": 21581512
+    },
+    {
+      "name": "JSHeapTotalSize",
+      "value": 31350784
+    },
+    {
+      "name": "FirstMeaningfulPaint",
+      "value": 0
+    },
+    {
+      "name": "DomContentLoaded",
+      "value": 16189.384189
+    },
+    {
+      "name": "NavigationStart",
+      "value": 16180.874669
+    }
+  ],
+  "errors": [],
+  "failed": [
+    {
+      "url": "https://www.clarity.ms/tag/v9sofegg9a",
+      "error": {
+        "errorText": "net::ERR_NAME_NOT_RESOLVED"
+      }
+    },
+    {
+      "url": "https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495",
+      "error": {
+        "errorText": "net::ERR_NAME_NOT_RESOLVED"
+      }
+    },
+    {
+      "url": "https://www.googletagmanager.com/gtag/js",
+      "error": {
+        "errorText": "net::ERR_NAME_NOT_RESOLVED"
+      }
+    },
+    {
+      "url": "https://slayerkey.com/wp-content/uploads/2026/08/lazy-site.png",
+      "error": {
+        "errorText": "net::ERR_ABORTED"
+      }
+    },
+    {
+      "url": "https://googleads.g.doubleclick.net/pagead/id",
+      "error": {
+        "errorText": "net::ERR_NAME_NOT_RESOLVED"
+      }
+    },
+    {
+      "url": "https://static.doubleclick.net/instream/ad_status.js",
+      "error": {
+        "errorText": "net::ERR_NAME_NOT_RESOLVED"
+      }
+    },
+    {
+      "url": "https://www.youtube.com/api/stats/qoe",
+      "error": {
+        "errorText": "net::ERR_ABORTED"
+      }
+    },
+    {
+      "url": "https://www.youtube.com/ptracking",
+      "error": {
+        "errorText": "net::ERR_ABORTED"
+      }
+    },
+    {
+      "url": "https://www.youtube.com/api/stats/playback",
+      "error": {
+        "errorText": "net::ERR_ABORTED"
+      }
+    },
+    {
+      "url": "https://www.youtube.com/api/stats/watchtime",
+      "error": {
+        "errorText": "net::ERR_ABORTED"
+      }
+    },
+    {
+      "url": "https://yt3.ggpht.com/N1uvtLoGSaVclRyAhEaZqVqmFaMfb5BB4aC_K3U26wDyF6KrMt-Y0E9Q8Klel60NinIgQLDZdt8=s88-c-k-c0x00ffffff-no-rj",
+      "error": {
+        "errorText": "net::ERR_ABORTED"
+      }
+    }
+  ]
+}

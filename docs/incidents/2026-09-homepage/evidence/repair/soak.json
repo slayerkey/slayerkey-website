@@ -1,0 +1,135 @@
+{
+  "samples": [
+    {
+      "elapsed": 2996,
+      "heap": 2401288,
+      "nodes": 1675,
+      "listeners": 67,
+      "state": {
+        "beats": 12,
+        "maxGap": 254.5,
+        "mutations": 1257,
+        "raf": 0,
+        "longTasks": []
+      }
+    },
+    {
+      "elapsed": 35605,
+      "heap": 2501204,
+      "nodes": 1675,
+      "listeners": 67,
+      "state": {
+        "beats": 142,
+        "maxGap": 264.6000000014901,
+        "mutations": 1257,
+        "raf": 0,
+        "longTasks": []
+      }
+    },
+    {
+      "elapsed": 68169,
+      "heap": 2532212,
+      "nodes": 1675,
+      "listeners": 67,
+      "state": {
+        "beats": 272,
+        "maxGap": 264.6000000014901,
+        "mutations": 1257,
+        "raf": 0,
+        "longTasks": []
+      }
+    },
+    {
+      "elapsed": 100732,
+      "heap": 2556800,
+      "nodes": 1675,
+      "listeners": 67,
+      "state": {
+        "beats": 403,
+        "maxGap": 265.3999999985099,
+        "mutations": 1257,
+        "raf": 0,
+        "longTasks": []
+      }
+    },
+    {
+      "elapsed": 133293,
+      "heap": 2583200,
+      "nodes": 1675,
+      "listeners": 67,
+      "state": {
+        "beats": 533,
+        "maxGap": 265.3999999985099,
+        "mutations": 1257,
+        "raf": 0,
+        "longTasks": []
+      }
+    },
+    {
+      "elapsed": 165887,
+      "heap": 2588968,
+      "nodes": 1675,
+      "listeners": 67,
+      "state": {
+        "beats": 663,
+        "maxGap": 265.3999999985099,
+        "mutations": 1257,
+        "raf": 0,
+        "longTasks": []
+      }
+    },
+    {
+      "elapsed": 198382,
+      "heap": 2594968,
+      "nodes": 1675,
+      "listeners": 67,
+      "state": {
+        "beats": 793,
+        "maxGap": 265.3999999985099,
+        "mutations": 1257,
+        "raf": 0,
+        "longTasks": []
+      }
+    },
+    {
+      "elapsed": 230919,
+      "heap": 2605372,
+      "nodes": 1675,
+      "listeners": 67,
+      "state": {
+        "beats": 923,
+        "maxGap": 265.3999999985099,
+        "mutations": 1257,
+        "raf": 0,
+        "longTasks": []
+      }
+    },
+    {
+      "elapsed": 263672,
+      "heap": 2617856,
+      "nodes": 1675,
+      "listeners": 67,
+      "state": {
+        "beats": 1054,
+        "maxGap": 265.3999999985099,
+        "mutations": 1257,
+        "raf": 0,
+        "longTasks": []
+      }
+    },
+    {
+      "elapsed": 296307,
+      "heap": 2618552,
+      "nodes": 1675,
+      "listeners": 67,
+      "state": {
+        "beats": 1185,
+        "maxGap": 265.3999999985099,
+        "mutations": 1257,
+        "raf": 0,
+        "longTasks": []
+      }
+    }
+  ],
+  "errors": []
+}
