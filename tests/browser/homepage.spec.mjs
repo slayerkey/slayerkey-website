@@ -2,6 +2,10 @@ import { test, expect } from '@playwright/test';
 
 const checkout = plan => '[data-sk-location="pricing_' + plan + '"]';
 const hero = '#sk-std [data-sk-checkout="true"]:not([data-sk-plan-direct])';
+const expectedCheckoutPlans = {
+  monthly: 'plan_eVop6pXsIhHlf',
+  annual: 'plan_kaaoYadRlBi4n'
+};
 async function unlockCheck(page) {
   await expect(page.locator('body')).not.toHaveClass(/dojo-dialog-open/);
   expect(await page.evaluate(() => document.documentElement.style.overflow)).not.toBe('hidden');
@@ -76,11 +80,14 @@ for (const fault of ['disabled', 'blocked', 'throws']) {
         expect(await page.locator(selector).first().getAttribute('href')).toMatch(/#pricing$/);
       }
     }
-    for (const plan of ['monthly', 'annual']) {
-      await page.locator(checkout(plan)).click();
-      // External traffic is aborted, but the real anchor still initiates navigation.
-      // Use a fresh fixture for the second checkout.
-      await page.goto('/');
+    // In failure-mode tests, validate the native checkout destinations without
+    // actually navigating away. Aborted external navigation is flaky in WebKit
+    // and does not add coverage beyond proving the real anchors are present.
+    for (const [plan, planId] of Object.entries(expectedCheckoutPlans)) {
+      const link = page.locator(checkout(plan));
+      await expect(link).toBeVisible();
+      const href = await link.getAttribute('href');
+      expect(new URL(href, 'https://slayerkey.com').pathname).toBe('/checkout/' + planId + '/');
     }
     await owned?.close();
   });

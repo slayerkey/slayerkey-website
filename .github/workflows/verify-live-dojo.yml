@@ -39,7 +39,9 @@ jobs:
           echo "DEPLOY_SHA=$release" >> "$GITHUB_ENV"
       - run: npm run test:live
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: failure()
+        continue-on-error: true
         with:
-          name: scheduled-live-evidence
+          name: scheduled-live-evidence-${{ github.run_id }}
           path: artifacts/live/
+          retention-days: 1
