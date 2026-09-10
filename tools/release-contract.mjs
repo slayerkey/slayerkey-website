@@ -8,7 +8,11 @@ export function verifyHTML(html, manifest, commit, rollback=false) {
     'Cached HTML release marker mismatch');
   for (const key of assetKeys) assert.ok(html.includes(manifest[key]), 'HTML asset reference mismatch: ' + key);
   if (rollback) assert.equal(commit,'0ff5f81f6337650e47b3d1a0e18e38117466f2e7','Only the pinned pre-regression runtime is eligible');
-  else assert.match(html, /<iframe[^>]*id="dojoVideo"[^>]*src="https:\/\/www.youtube.com\/embed\/H7hYaHnT6ko/);
+  else {
+    assert.match(html, /<a[^>]*id="dojoVideoFacade"[^>]*href="https:\/\/www.youtube.com\/watch\?v=H7hYaHnT6ko"/);
+    assert.match(html, /data-embed-src="https:\/\/www.youtube.com\/embed\/H7hYaHnT6ko\?autoplay=1&amp;mute=0/);
+    assert.doesNotMatch(html, /<iframe[^>]*id="dojoVideo"/,'YouTube iframe must not load before interaction');
+  }
 }
 export function verifyBytes(body, expected, label) {
   const actual = createHash('sha256').update(body).digest('hex');

@@ -13,7 +13,8 @@ test('a healthy endpoint cannot disguise stale ordinary HTML or tracking bytes',
   const commit='a'.repeat(40);
   const manifest={commit,dojo_js:'dojo.123.js',dojo_css:'dojo.456.css',tracking_js:'tracking.789.js'};
   const html='<!-- Slayerkey Website 1.0.aaaaaaaa active --> dojo.123.js dojo.456.css tracking.789.js '+
-    '<iframe id="dojoVideo" src="https://www.youtube.com/embed/H7hYaHnT6ko"></iframe>';
+    '<a id="dojoVideoFacade" href="https://www.youtube.com/watch?v=H7hYaHnT6ko" '+
+    'data-embed-src="https://www.youtube.com/embed/H7hYaHnT6ko?autoplay=1&amp;mute=0"></a>';
   verifyHTML(html,manifest,commit);
   assert.throws(()=>verifyHTML(html.replace('aaaaaaaa','601a2c09'),manifest,commit));
   assert.throws(()=>verifyHTML(html.replace('tracking.789.js','tracking.js'),manifest,commit));

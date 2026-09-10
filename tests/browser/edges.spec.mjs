@@ -23,10 +23,15 @@ test('campaign attribution and both chooser checkouts use the existing pricing d
   }
 });
 
-test('failed preview images and blocked YouTube never hide copy or trap scrolling', async ({ page }) => {
+test('failed preview images and responsive YouTube loading never hide copy or trap scrolling', async ({ page, isMobile }) => {
   await page.route('**/assets/proof/**',r=>r.abort());
   await page.goto('/');
-  await expect(page.locator('#dojoVideo')).toHaveAttribute('src',/youtube.com\/embed\//);
+  if (isMobile) {
+    await expect(page.locator('#dojoVideoFacade')).toBeVisible();
+    await expect(page.locator('#dojoVideo')).toHaveCount(0);
+  } else {
+    await expect(page.locator('#dojoVideo')).toHaveAttribute('src',/youtube.com\/embed\/H7hYaHnT6ko\?autoplay=1&mute=1/);
+  }
   for(const section of await page.locator('#sk-std section').all()) {
     await section.scrollIntoViewIfNeeded();
     expect(await section.evaluate(el=>el.getBoundingClientRect().height)).toBeGreaterThan(0);

@@ -66,18 +66,60 @@
             };
         }
 
-        enhance(function videoControls() {
-            var iframe = document.getElementById('dojoVideo');
-            var button = document.getElementById('unmuteBtn');
-            if (!iframe || !button || !iframe.getAttribute('src')) return;
-            var origin = new URL(iframe.src).origin;
-            button.addEventListener('click', function () {
-                ['unMute', 'playVideo'].forEach(function (command) {
-                    iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: command, args: []}), origin);
-                });
-                button.hidden = true;
+        enhance(function videoFacade() {
+            var facade = document.getElementById('dojoVideoFacade');
+            if (!facade || !facade.dataset.embedSrc) return;
+            var mobileScrollHandler = null;
+            var mobileAutoplayTimer = null;
+            function loadPlayer(muted) {
+                if (!facade.isConnected) return null;
+                if (mobileScrollHandler) window.removeEventListener('scroll', mobileScrollHandler);
+                if (mobileAutoplayTimer) clearTimeout(mobileAutoplayTimer);
+                var embed = new URL(facade.dataset.embedSrc);
+                if (embed.protocol !== 'https:' || embed.hostname !== 'www.youtube.com') return null;
+                embed.searchParams.set('mute', muted ? '1' : '0');
+                var iframe = document.createElement('iframe');
+                iframe.id = 'dojoVideo';
+                iframe.src = embed.href;
+                iframe.title = "Slayerkey's Training Dojo";
+                iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+                iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+                iframe.allowFullscreen = true;
+                facade.replaceWith(iframe);
+                if (muted) {
+                    var button = document.createElement('button');
+                    button.id = 'unmuteBtn';
+                    button.className = 'dj-unmute';
+                    button.type = 'button';
+                    button.textContent = '🔊 Click for sound';
+                    button.addEventListener('click', function () {
+                        var origin = new URL(iframe.src).origin;
+                        ['unMute', 'playVideo'].forEach(function (command) {
+                            iframe.contentWindow.postMessage(JSON.stringify({event: 'command', func: command, args: []}), origin);
+                        });
+                        button.remove();
+                    });
+                    iframe.parentNode.appendChild(button);
+                }
+                return iframe;
+            }
+            facade.addEventListener('click', function (event) {
+                if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                if (loadPlayer(false)) event.preventDefault();
             });
-            button.hidden = false;
+            if (!window.matchMedia('(max-width: 700px)').matches) {
+                loadPlayer(true);
+            } else {
+                mobileScrollHandler = function () {
+                    if (!facade.isConnected) return;
+                    var rect = facade.getBoundingClientRect();
+                    var visible = Math.max(0, Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0));
+                    if (visible / rect.height >= .8 && !mobileAutoplayTimer) {
+                        mobileAutoplayTimer = setTimeout(function () { loadPlayer(true); }, 250);
+                    }
+                };
+                window.addEventListener('scroll', mobileScrollHandler, { passive: true });
+            }
         });
 
         enhance(function inboundAttribution() {

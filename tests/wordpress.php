@@ -30,7 +30,9 @@ check(!str_contains($public, ', assets/'), 'All responsive candidates resolved')
 check(str_contains($preview, 'href="/preview/dojo-v3/#pricing"'), 'Private pricing anchor');
 check(str_contains($preview, 'utm_source=private_preview'), 'Preview attribution');
 check(!str_contains($public, 'utm_source=private_preview'), 'Public attribution');
-check(str_contains($public, 'id="dojoVideo" src="https://www.youtube.com/embed/'), 'Native video source');
+check(str_contains($public, 'id="dojoVideoFacade"'), 'Accessible video facade');
+check(str_contains($public, 'href="https://www.youtube.com/watch?v=H7hYaHnT6ko"'), 'Native video fallback');
+check(!str_contains($public, '<iframe id="dojoVideo"'), 'YouTube iframe deferred');
 $health = slayerkey_website_health_response();
 check($health['tracking_sha256'] === hash_file('sha256', $plugin . '/' . SLAYERKEY_TRACKING_ASSET), 'Health tracking bytes');
 if (file_exists($plugin . '/DEPLOYED_ASSETS.json')) {

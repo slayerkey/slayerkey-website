@@ -44,6 +44,16 @@ try {
     result.headers=response.headers();
     const raw=await response.text();
     verifyHTML(raw,manifest,sha,rollback);
+    if (!rollback && width<500) {
+      assert.equal(await page.locator('#dojoVideo').count(),0,'Mobile YouTube must be deferred until interaction');
+      await page.evaluate(()=>scrollBy(0,1));
+      await page.waitForTimeout(50);
+      if (await page.locator('#dojoVideoFacade').count())
+        await page.evaluate(()=>document.getElementById('dojoVideoFacade').scrollIntoView({block:'center'}));
+      await page.locator('#dojoVideo').waitFor();
+    } else if (!rollback) {
+      await page.locator('#dojoVideo').waitFor();
+    }
     const playback=await verifyPlayback(page);
     result.playback=playback;
     if(await page.locator('#sk-ep').isVisible()) await page.locator('.sk-ep-x').click();
@@ -71,13 +81,18 @@ try {
     await page.screenshot({path:'artifacts/live/'+name+'.png'});
     // A reload must supply its own verified responses, including browser-cache responses.
     // Never let the preceding navigation's successful hashes satisfy this check.
+    await page.evaluate(()=>scrollTo(0,0));
     loaded.clear();
     const reload=await page.reload({waitUntil:'domcontentloaded',timeout:30000});
     verifyHTML(await reload.text(),manifest,sha,rollback);
     await Promise.all(hashes);
     assert.deepEqual(byteFailures,[]);
     for(const key of assetKeys) assert.equal(loaded.get(key),manifest[key+'_sha256'],'Reload bytes mismatch: '+key);
-    assert.equal(await page.locator('#dojoVideo').getAttribute('src').then(Boolean),true);
+    if (rollback || width>=500) assert.equal(await page.locator('#dojoVideo').getAttribute('src').then(Boolean),true);
+    else {
+      assert.equal(await page.locator('#dojoVideo').count(),0,'Reload must restore the lightweight facade');
+      assert.equal(await page.locator('#dojoVideoFacade').isVisible(),true);
+    }
     await page.locator('#sk-std [data-sk-checkout="true"]').first().click();
     assert.equal(await page.locator('#sk-plan-chooser').isVisible(),true);
     await page.locator('.sk-plan-close').click();

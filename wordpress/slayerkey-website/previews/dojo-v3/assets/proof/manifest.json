@@ -12,9 +12,24 @@
         "bytes": 19092
       },
       {
+        "file": "lazy-site-600.webp",
+        "width": 600,
+        "bytes": 34922
+      },
+      {
         "file": "lazy-site-800.webp",
         "width": 800,
         "bytes": 51132
+      },
+      {
+        "file": "lazy-site-960.webp",
+        "width": 960,
+        "bytes": 67246
+      },
+      {
+        "file": "lazy-site-1080.webp",
+        "width": 1080,
+        "bytes": 77654
       },
       {
         "file": "lazy-site-1200.webp",
@@ -36,9 +51,24 @@
         "bytes": 17674
       },
       {
+        "file": "dark-site-600.webp",
+        "width": 600,
+        "bytes": 32674
+      },
+      {
         "file": "dark-site-800.webp",
         "width": 800,
         "bytes": 48938
+      },
+      {
+        "file": "dark-site-960.webp",
+        "width": 960,
+        "bytes": 61978
+      },
+      {
+        "file": "dark-site-1080.webp",
+        "width": 1080,
+        "bytes": 72772
       },
       {
         "file": "dark-site-1200.webp",
@@ -60,9 +90,24 @@
         "bytes": 17144
       },
       {
+        "file": "chrake-site-600.webp",
+        "width": 600,
+        "bytes": 29776
+      },
+      {
         "file": "chrake-site-800.webp",
         "width": 800,
         "bytes": 42726
+      },
+      {
+        "file": "chrake-site-960.webp",
+        "width": 960,
+        "bytes": 52344
+      },
+      {
+        "file": "chrake-site-1080.webp",
+        "width": 1080,
+        "bytes": 58862
       },
       {
         "file": "chrake-site-1200.webp",
@@ -84,9 +129,24 @@
         "bytes": 19730
       },
       {
+        "file": "g09-site-600.webp",
+        "width": 600,
+        "bytes": 36638
+      },
+      {
         "file": "g09-site-800.webp",
         "width": 800,
         "bytes": 54588
+      },
+      {
+        "file": "g09-site-960.webp",
+        "width": 960,
+        "bytes": 72330
+      },
+      {
+        "file": "g09-site-1080.webp",
+        "width": 1080,
+        "bytes": 86482
       },
       {
         "file": "g09-site-1200.webp",
@@ -108,9 +168,19 @@
         "bytes": 12926
       },
       {
+        "file": "std-diawin-huge-600.webp",
+        "width": 600,
+        "bytes": 23202
+      },
+      {
         "file": "std-diawin-huge-800.webp",
         "width": 800,
         "bytes": 34376
+      },
+      {
+        "file": "std-diawin-huge-960.webp",
+        "width": 960,
+        "bytes": 42956
       },
       {
         "file": "std-diawin-huge-1054.webp",
@@ -132,9 +202,19 @@
         "bytes": 16300
       },
       {
+        "file": "std-10gamewinstreak-600.webp",
+        "width": 600,
+        "bytes": 28884
+      },
+      {
         "file": "std-10gamewinstreak-800.webp",
         "width": 800,
         "bytes": 44508
+      },
+      {
+        "file": "std-10gamewinstreak-960.webp",
+        "width": 960,
+        "bytes": 59904
       },
       {
         "file": "std-10gamewinstreak-1007.webp",
@@ -154,6 +234,11 @@
         "file": "std-46bomb-huge-400.webp",
         "width": 400,
         "bytes": 13398
+      },
+      {
+        "file": "std-46bomb-huge-600.webp",
+        "width": 600,
+        "bytes": 23674
       },
       {
         "file": "std-46bomb-huge-800.webp",
@@ -178,6 +263,11 @@
         "file": "std-bronzetosilverwinstreak-400.webp",
         "width": 400,
         "bytes": 13430
+      },
+      {
+        "file": "std-bronzetosilverwinstreak-600.webp",
+        "width": 600,
+        "bytes": 24708
       },
       {
         "file": "std-bronzetosilverwinstreak-800.webp",

@@ -40,6 +40,16 @@ try {
     const result={name,cpu,network:slow?'1.6 Mbps / 150 ms':'unthrottled',errors,failures,cache};results.push(result);
     await page.goto('https://127.0.0.1:4175/?utm_source=youtube&utm_medium=video&utm_campaign=integration',{waitUntil:'domcontentloaded',timeout:60000});
     result.dclMs=Date.now()-began;
+    if (width<500) {
+      assert.equal(await page.locator('#dojoVideo').count(),0,'Mobile YouTube must be deferred until interaction');
+      await page.evaluate(()=>scrollBy(0,1));
+      await page.waitForTimeout(50);
+      if (await page.locator('#dojoVideoFacade').count())
+        await page.evaluate(()=>document.getElementById('dojoVideoFacade').scrollIntoView({block:'center'}));
+      await page.locator('#dojoVideo').waitFor();
+    } else {
+      await page.locator('#dojoVideo').waitFor();
+    }
     result.playback=await verifyPlayback(page,60000);
     if(await page.locator('#sk-ep').isVisible()) await page.locator('.sk-ep-x').click();
     await page.screenshot({path:'artifacts/integration/'+name+'-hero.png'});

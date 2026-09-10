@@ -42,7 +42,7 @@ export function startServer(port = 4173) {
     if (!file.startsWith(plugin + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
       res.writeHead(404).end(); return;
     }
-    const types = {'.js':'text/javascript', '.css':'text/css', '.webp':'image/webp', '.json':'application/json'};
+    const types = {'.js':'text/javascript', '.css':'text/css', '.jpg':'image/jpeg', '.webp':'image/webp', '.json':'application/json'};
     res.setHeader('Content-Type', types[path.extname(file)] || 'application/octet-stream');
     res.setHeader('Cache-Control', 'public, max-age=600');
     fs.createReadStream(file).pipe(res);

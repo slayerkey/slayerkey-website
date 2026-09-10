@@ -15,7 +15,11 @@ async function readable(page) {
     getComputedStyle(el).opacity !== '1' || el.getBoundingClientRect().height === 0
   ).map(el => el.className))).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
-  await expect(page.locator('#dojoVideo')).toHaveAttribute('src', /youtube.com\/embed\/H7hYaHnT6ko/);
+  await expect.poll(()=>page.evaluate(() => {
+    const facade=document.getElementById('dojoVideoFacade'), iframe=document.getElementById('dojoVideo');
+    return facade ? /youtube\.com\/watch\?v=H7hYaHnT6ko/.test(facade.href) :
+      !!iframe && /youtube\.com\/embed\/H7hYaHnT6ko\?autoplay=1&mute=1/.test(iframe.src);
+  })).toBe(true);
 }
 test.beforeEach(async ({ context }) => {
   // Local regressions are deterministic and never create leads, checkouts or analytics traffic.
@@ -74,7 +78,7 @@ for (const fault of ['disabled', 'blocked', 'throws']) {
     }
     await page.goto('/');
     await readable(page);
-    await expect(page.locator('#unmuteBtn')).toBeHidden();
+    await expect(page.locator('#dojoVideoFacade')).toBeVisible();
     await page.locator(hero).first().click();
     await expect(page).toHaveURL(/#pricing$/);
     await expect(page.locator(checkout('monthly'))).toBeVisible();
@@ -106,6 +110,31 @@ test('missing chooser or checkout preserves pricing fallback; modified clicks st
   const prevented = await page.locator(hero).first().evaluate(el =>
     !el.dispatchEvent(new MouseEvent('click', {bubbles:true,cancelable:true,ctrlKey:true,button:0})));
   expect(prevented).toBe(false);
+});
+
+test('video preserves desktop autoplay and defers mobile YouTube until interaction', async ({ page, isMobile }) => {
+  const requests=[];
+  page.on('request',request=>{if(request.url().includes('youtube.com/embed/H7hYaHnT6ko'))requests.push(request.url())});
+  await page.goto('/');
+  if (isMobile) {
+    expect(requests).toEqual([]);
+    const facade=page.locator('#dojoVideoFacade');
+    await expect(facade).toHaveAccessibleName("Click for sound. Play Slayerkey's Training Dojo video");
+    await facade.click();
+    await expect(page.locator('#dojoVideo')).toHaveAttribute('src',/youtube.com\/embed\/H7hYaHnT6ko\?autoplay=1&mute=0/);
+    await page.evaluate(()=>scrollTo(0,0));
+    await page.reload();
+    await page.evaluate(()=>scrollBy(0,1));
+    await page.waitForTimeout(50);
+    if (await page.locator('#dojoVideoFacade').count())
+      await page.evaluate(()=>document.getElementById('dojoVideoFacade').scrollIntoView({block:'center'}));
+    await expect(page.locator('#dojoVideo')).toHaveAttribute('src',/youtube.com\/embed\/H7hYaHnT6ko\?autoplay=1&mute=1/);
+    await expect(page.locator('#unmuteBtn')).toBeVisible();
+  } else {
+    await expect(page.locator('#dojoVideo')).toHaveAttribute('src',/youtube.com\/embed\/H7hYaHnT6ko\?autoplay=1&mute=1/);
+    await expect(page.locator('#unmuteBtn')).toBeVisible();
+  }
+  await expect.poll(()=>requests.length).toBeGreaterThan(0);
 });
 
 test('repeat initialization and failing analytics cannot break checkout navigation', async ({ page }) => {
