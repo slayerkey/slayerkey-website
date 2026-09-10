@@ -1,0 +1,522 @@
+{
+  "scenario": {
+    "id": "control-mobile390",
+    "w": 390,
+    "h": 844,
+    "cpu": 1,
+    "slow": false
+  },
+  "dcl": 1450,
+  "elapsed": 35500,
+  "checks": {
+    "chooser": "sk-plan-modal open",
+    "proof": "dj-lightbox open",
+    "menu": true,
+    "footer": true,
+    "autoPopup": true,
+    "manualPopup": true
+  },
+  "state": {
+    "stats": {
+      "observers": [
+        {
+          "calls": 36,
+          "records": 113,
+          "stack": "Error\n    at Object.construct (<anonymous>:4:139)\n    at Ht (https://t.whop.tw/s.js:8:9425)\n    at we.startFormTracking (https://t.whop.tw/s.js:72:14950)\n    at we.setupAutoTracking (https://t.whop.tw/s.js:72:14176)\n    at https://t.whop.tw/s.js:72:19382\n    at https://t.whop.tw/s.js:72:19403\n    at https://t.whop.tw/s.js:72:19408"
+        },
+        {
+          "calls": 36,
+          "records": 113,
+          "stack": "Error\n    at Object.construct (<anonymous>:4:139)\n    at Zt (https://t.whop.tw/s.js:8:10706)\n    at we.startIframeSync (https://t.whop.tw/s.js:72:14784)\n    at we.setupAutoTracking (https://t.whop.tw/s.js:72:14287)\n    at https://t.whop.tw/s.js:72:19382\n    at https://t.whop.tw/s.js:72:19403\n    at https://t.whop.tw/s.js:72:19408"
+        },
+        {
+          "calls": 34,
+          "records": 109,
+          "stack": "Error\n    at Object.construct (<anonymous>:4:139)\n    at slayerkey-live-dojo-v3-js-after:2:402\n    at slayerkey-live-dojo-v3-js-after:2:510"
+        },
+        {
+          "calls": 3,
+          "records": 18,
+          "stack": "Error\n    at Object.construct (<anonymous>:4:139)\n    at suppressAutomaticEmailCapture (https://spcdn.shortpixel.ai/spio/ret_auto,v_1,q_cdnize,to_webp,s_webp/slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/dojo.f6a5cf6a26218d68.js?ver=0.1.28.601a2c09.1788921256:185:37)\n    at HTMLDocument.<anonymous> (https://spcdn.shortpixel.ai/spio/ret_auto,v_1,q_cdnize,to_webp,s_webp/slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/dojo.f6a5cf6a26218d68.js?ver=0.1.28.601a2c09.1788921256:188:11)"
+        },
+        {
+          "calls": 7,
+          "records": 21,
+          "stack": "Error\n    at Object.construct (<anonymous>:4:139)\n    at installPlanChooser (https://spcdn.shortpixel.ai/spio/ret_auto,v_1,q_cdnize,to_webp,s_webp/slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/dojo.f6a5cf6a26218d68.js?ver=0.1.28.601a2c09.1788921256:340:39)\n    at HTMLDocument.<anonymous> (https://spcdn.shortpixel.ai/spio/ret_auto,v_1,q_cdnize,to_webp,s_webp/slayerkey.com/wp-content/plugins/slayerkey-website/previews/dojo-v3/dojo.f6a5cf6a26218d68.js?ver=0.1.28.601a2c09.1788921256:352:11)"
+        },
+        {
+          "calls": 1,
+          "records": 2,
+          "stack": "Error\n    at Object.construct (<anonymous>:4:139)\n    at u (https://slayerkey.com/wp-includes/js/wp-emoji-release.min.js?ver=7.1:5:2225)\n    at new <anonymous> (https://slayerkey.com/wp-includes/js/wp-emoji-release.min.js?ver=7.1:5:2767)\n    at https://slayerkey.com/wp-includes/js/wp-emoji-release.min.js?ver=7.1:5:41\n    at https://slayerkey.com/wp-includes/js/wp-emoji-release.min.js?ver=7.1:5:2788"
+        },
+        {
+          "calls": 0,
+          "records": 0,
+          "stack": "Error\n    at Object.construct (<anonymous>:4:139)\n    at InjectedScript._setupGlobalListenersRemovalDetection (<anonymous>:7725:5)\n    at new InjectedScript (<anonymous>:6677:10)\n    at <anonymous>:8165:16\n    at <anonymous>:8166:11"
+        }
+      ],
+      "raf": 2036,
+      "heartbeats": 35,
+      "longTasks": [
+        {
+          "start": 513.5,
+          "duration": 123
+        },
+        {
+          "start": 761,
+          "duration": 57
+        },
+        {
+          "start": 831.1000000014901,
+          "duration": 83
+        },
+        {
+          "start": 921.6000000014901,
+          "duration": 59
+        }
+      ]
+    },
+    "ready": "complete",
+    "video": "https://www.youtube.com/embed/H7hYaHnT6ko?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1",
+    "hiddenReveals": [
+      {
+        "class": "dj-center reveal d2",
+        "section": "proof",
+        "height": 51.2197265625
+      },
+      {
+        "class": "dj-mech-close reveal d2",
+        "section": "how-it-works",
+        "height": 66.810546875
+      },
+      {
+        "class": "dj-mid-cta reveal d2",
+        "section": "how-it-works",
+        "height": 51.2197265625
+      },
+      {
+        "class": "dj-diagnosis-card reveal d3",
+        "section": "diagnosis",
+        "height": 260.5478515625
+      },
+      {
+        "class": "dj-section-head centered reveal",
+        "section": "community-wins",
+        "height": 154.505859375
+      },
+      {
+        "class": "dj-win-card reveal d3",
+        "section": "community-wins",
+        "height": 341.841796875
+      },
+      {
+        "class": "dj-center reveal d2",
+        "section": "community-wins",
+        "height": 51.220703125
+      }
+    ],
+    "width": [
+      390,
+      390
+    ],
+    "overflow": [
+      "hidden auto",
+      "visible"
+    ],
+    "scrollY": 0,
+    "height": 13903,
+    "overlays": [
+      {
+        "id": "sk-mobile",
+        "display": "none",
+        "opacity": "1",
+        "pointer": "auto"
+      },
+      {
+        "id": "sk-ep",
+        "display": "none",
+        "opacity": "1",
+        "pointer": "auto"
+      },
+      {
+        "id": "djLightbox",
+        "display": "none",
+        "opacity": "1",
+        "pointer": "auto"
+      },
+      {
+        "id": "sk-plan-chooser",
+        "display": "none",
+        "opacity": "1",
+        "pointer": "auto"
+      }
+    ],
+    "nav": [
+      {
+        "dcl": 1448.5,
+        "load": 2067.800000000745
+      }
+    ]
+  },
+  "metricsStart": [
+    {
+      "name": "Timestamp",
+      "value": 16147.493225
+    },
+    {
+      "name": "AudioHandlers",
+      "value": 3
+    },
+    {
+      "name": "AudioWorkletProcessors",
+      "value": 0
+    },
+    {
+      "name": "Documents",
+      "value": 17
+    },
+    {
+      "name": "Frames",
+      "value": 8
+    },
+    {
+      "name": "JSEventListeners",
+      "value": 490
+    },
+    {
+      "name": "LayoutObjects",
+      "value": 1688
+    },
+    {
+      "name": "MediaKeySessions",
+      "value": 0
+    },
+    {
+      "name": "MediaKeys",
+      "value": 0
+    },
+    {
+      "name": "Nodes",
+      "value": 4372
+    },
+    {
+      "name": "Resources",
+      "value": 109
+    },
+    {
+      "name": "ContextLifecycleStateObservers",
+      "value": 63
+    },
+    {
+      "name": "V8PerContextDatas",
+      "value": 15
+    },
+    {
+      "name": "WorkerGlobalScopes",
+      "value": 0
+    },
+    {
+      "name": "UACSSResources",
+      "value": 0
+    },
+    {
+      "name": "RTCPeerConnections",
+      "value": 0
+    },
+    {
+      "name": "ResourceFetchers",
+      "value": 17
+    },
+    {
+      "name": "AdSubframes",
+      "value": 0
+    },
+    {
+      "name": "DetachedScriptStates",
+      "value": 10
+    },
+    {
+      "name": "ArrayBufferContents",
+      "value": 323
+    },
+    {
+      "name": "LayoutCount",
+      "value": 51
+    },
+    {
+      "name": "RecalcStyleCount",
+      "value": 117
+    },
+    {
+      "name": "LayoutDuration",
+      "value": 0.256401
+    },
+    {
+      "name": "RecalcStyleDuration",
+      "value": 0.039623
+    },
+    {
+      "name": "DevToolsCommandDuration",
+      "value": 0.082576
+    },
+    {
+      "name": "ScriptDuration",
+      "value": 0.332917
+    },
+    {
+      "name": "V8CompileDuration",
+      "value": 0.002764
+    },
+    {
+      "name": "TaskDuration",
+      "value": 1.144092
+    },
+    {
+      "name": "TaskOtherDuration",
+      "value": 0.429811
+    },
+    {
+      "name": "ThreadTime",
+      "value": 0.953822
+    },
+    {
+      "name": "ProcessTime",
+      "value": 2.604561
+    },
+    {
+      "name": "JSHeapUsedSize",
+      "value": 23998912
+    },
+    {
+      "name": "JSHeapTotalSize",
+      "value": 35700736
+    },
+    {
+      "name": "FirstMeaningfulPaint",
+      "value": 0
+    },
+    {
+      "name": "DomContentLoaded",
+      "value": 16146.475156
+    },
+    {
+      "name": "NavigationStart",
+      "value": 16145.03168
+    }
+  ],
+  "metricsEnd": [
+    {
+      "name": "Timestamp",
+      "value": 16180.53086
+    },
+    {
+      "name": "AudioHandlers",
+      "value": 0
+    },
+    {
+      "name": "AudioWorkletProcessors",
+      "value": 0
+    },
+    {
+      "name": "Documents",
+      "value": 5
+    },
+    {
+      "name": "Frames",
+      "value": 5
+    },
+    {
+      "name": "JSEventListeners",
+      "value": 400
+    },
+    {
+      "name": "LayoutObjects",
+      "value": 1067
+    },
+    {
+      "name": "MediaKeySessions",
+      "value": 0
+    },
+    {
+      "name": "MediaKeys",
+      "value": 0
+    },
+    {
+      "name": "Nodes",
+      "value": 2674
+    },
+    {
+      "name": "Resources",
+      "value": 88
+    },
+    {
+      "name": "ContextLifecycleStateObservers",
+      "value": 36
+    },
+    {
+      "name": "V8PerContextDatas",
+      "value": 5
+    },
+    {
+      "name": "WorkerGlobalScopes",
+      "value": 0
+    },
+    {
+      "name": "UACSSResources",
+      "value": 0
+    },
+    {
+      "name": "RTCPeerConnections",
+      "value": 0
+    },
+    {
+      "name": "ResourceFetchers",
+      "value": 5
+    },
+    {
+      "name": "AdSubframes",
+      "value": 0
+    },
+    {
+      "name": "DetachedScriptStates",
+      "value": 2
+    },
+    {
+      "name": "ArrayBufferContents",
+      "value": 218
+    },
+    {
+      "name": "LayoutCount",
+      "value": 155
+    },
+    {
+      "name": "RecalcStyleCount",
+      "value": 2335
+    },
+    {
+      "name": "LayoutDuration",
+      "value": 0.28868
+    },
+    {
+      "name": "RecalcStyleDuration",
+      "value": 0.161506
+    },
+    {
+      "name": "DevToolsCommandDuration",
+      "value": 0.170562
+    },
+    {
+      "name": "ScriptDuration",
+      "value": 0.635907
+    },
+    {
+      "name": "V8CompileDuration",
+      "value": 0.002764
+    },
+    {
+      "name": "TaskDuration",
+      "value": 2.513778
+    },
+    {
+      "name": "TaskOtherDuration",
+      "value": 1.254359
+    },
+    {
+      "name": "ThreadTime",
+      "value": 2.316808
+    },
+    {
+      "name": "ProcessTime",
+      "value": 7.504949
+    },
+    {
+      "name": "JSHeapUsedSize",
+      "value": 20215908
+    },
+    {
+      "name": "JSHeapTotalSize",
+      "value": 26107904
+    },
+    {
+      "name": "FirstMeaningfulPaint",
+      "value": 16145.788237
+    },
+    {
+      "name": "DomContentLoaded",
+      "value": 16146.475156
+    },
+    {
+      "name": "NavigationStart",
+      "value": 16145.03168
+    }
+  ],
+  "errors": [],
+  "failed": [
+    {
+      "url": "https://www.clarity.ms/tag/v9sofegg9a",
+      "error": {
+        "errorText": "net::ERR_NAME_NOT_RESOLVED"
+      }
+    },
+    {
+      "url": "https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495",
+      "error": {
+        "errorText": "net::ERR_NAME_NOT_RESOLVED"
+      }
+    },
+    {
+      "url": "https://www.googletagmanager.com/gtag/js",
+      "error": {
+        "errorText": "net::ERR_NAME_NOT_RESOLVED"
+      }
+    },
+    {
+      "url": "https://googleads.g.doubleclick.net/pagead/id",
+      "error": {
+        "errorText": "net::ERR_NAME_NOT_RESOLVED"
+      }
+    },
+    {
+      "url": "https://static.doubleclick.net/instream/ad_status.js",
+      "error": {
+        "errorText": "net::ERR_NAME_NOT_RESOLVED"
+      }
+    },
+    {
+      "url": "https://yt3.ggpht.com/N1uvtLoGSaVclRyAhEaZqVqmFaMfb5BB4aC_K3U26wDyF6KrMt-Y0E9Q8Klel60NinIgQLDZdt8=s68-c-k-c0x00ffffff-no-rj",
+      "error": {
+        "errorText": "net::ERR_ABORTED"
+      }
+    },
+    {
+      "url": "https://www.youtube.com/api/timedtext",
+      "error": {
+        "errorText": "net::ERR_ABORTED"
+      }
+    },
+    {
+      "url": "https://www.youtube.com/api/stats/qoe",
+      "error": {
+        "errorText": "net::ERR_ABORTED"
+      }
+    },
+    {
+      "url": "https://www.youtube.com/api/stats/playback",
+      "error": {
+        "errorText": "net::ERR_ABORTED"
+      }
+    },
+    {
+      "url": "https://www.youtube.com/ptracking",
+      "error": {
+        "errorText": "net::ERR_ABORTED"
+      }
+    },
+    {
+      "url": "https://www.youtube.com/api/stats/watchtime",
+      "error": {
+        "errorText": "net::ERR_ABORTED"
+      }
+    }
+  ]
+}

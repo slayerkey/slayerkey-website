@@ -1,379 +1,89 @@
 name: Deploy Slayerkey Website to EasyWP
-
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
-
+    branches: [main]
+    paths:
+      - 'wordpress/**'
+      - 'tools/build_deploy.py'
+      - 'tools/publish_deploy.py'
+      - 'tools/verify-live.mjs'
+      - 'tools/release-contract.mjs'
+      - 'tools/playback.mjs'
+      - '.github/workflows/deploy.yml'
 permissions:
   contents: read
   statuses: write
-
 concurrency:
   group: slayerkey-easywp-production
-  cancel-in-progress: true
-
+  cancel-in-progress: false
 jobs:
+  checks:
+    uses: ./.github/workflows/checks.yml
   deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: checks
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
+    timeout-minutes: 20
+    env:
+      DEPLOY_SHA: ${{ github.sha }}
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Reclaim runner disk for release verification
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc || true
+          df -h /
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install -y lftp
       - name: Mark deployment pending
         uses: actions/github-script@v7
         with:
           script: |
             await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: context.sha,
-              state: 'pending',
-              context: 'easywp/deploy',
-              description: 'Deploying and verifying EasyWP',
-              target_url: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
+              ...context.repo, sha: context.sha, state: 'pending', context: 'easywp/deploy',
+              description: 'Publishing assets, then verifying ordinary homepage'
             });
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install SFTP client
-        run: sudo apt-get update && sudo apt-get install -y lftp
-
-      - name: Verify required secrets and source
+      - name: Build immutable release
+        run: python3 tools/build_deploy.py --commit "$DEPLOY_SHA"
+      - name: Archive immutable release when Actions storage is available
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.sha }}
+          path: build/
+          retention-days: 1
+      - name: Verify assets before publishing references
         env:
-          SFTP_HOST: ${{ secrets.EASYWP_HOST }}
-          SFTP_USER: ${{ secrets.EASYWP_USER }}
-          SFTP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
-          SFTP_PORT: ${{ secrets.EASYWP_PORT }}
-        run: |
-          set -euo pipefail
-          test -n "$SFTP_HOST"
-          test -n "$SFTP_USER"
-          test -n "$SFTP_PASSWORD"
-          test -n "$SFTP_PORT"
-          test -f wordpress/slayerkey-website/slayerkey-website.php
-          test -f wordpress/slayerkey-website/previews/dojo-v3/index.html
-          test -f wordpress/slayerkey-website/previews/dojo-v3/dojo.js
-          test -f wordpress/slayerkey-website/previews/dojo-v3/dojo.css
-          ! grep -q 'std-derekvictory.png' wordpress/slayerkey-website/previews/dojo-v3/index.html
-
-      - name: Build content addressed deployment
-        env:
-          DEPLOY_SHA: ${{ github.sha }}
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          import hashlib
-          import json
-          import os
-          import re
-          import shutil
-
-          root = Path('wordpress/slayerkey-website')
-          deploy_sha = os.environ['DEPLOY_SHA']
-          short_sha = deploy_sha[:8]
-          dojo_dir = root / 'previews/dojo-v3'
-          js_source = dojo_dir / 'dojo.js'
-          css_source = dojo_dir / 'dojo.css'
-
-          js_sha = hashlib.sha256(js_source.read_bytes()).hexdigest()
-          css_sha = hashlib.sha256(css_source.read_bytes()).hexdigest()
-          js_name = f'dojo.{js_sha[:16]}.js'
-          css_name = f'dojo.{css_sha[:16]}.css'
-          js_relative = f'previews/dojo-v3/{js_name}'
-          css_relative = f'previews/dojo-v3/{css_name}'
-
-          shutil.copy2(js_source, dojo_dir / js_name)
-          shutil.copy2(css_source, dojo_dir / css_name)
-
-          php_path = root / 'slayerkey-website.php'
-          php = php_path.read_text(encoding='utf-8')
-          version_match = re.search(
-              r"define\( 'SLAYERKEY_WEBSITE_VERSION', '([^']+)' \);",
-              php,
-          )
-          if not version_match:
-              raise SystemExit('Could not find authored plugin version')
-          base_version = version_match.group(1).split('+')[0]
-          php, version_count = re.subn(
-              r"define\( 'SLAYERKEY_WEBSITE_VERSION', '[^']+' \);",
-              "define( 'SLAYERKEY_WEBSITE_VERSION', '" + base_version + "." + short_sha + "' );",
-              php,
-              count=1,
-          )
-          if version_count != 1:
-              raise SystemExit('Could not stamp deployed plugin version')
-
-          php, style_count = re.subn(
-              r"'style'\s*=>\s*'previews/dojo-v3/dojo(?:\.[0-9a-f]{16})?\.css'",
-              "'style'       => '" + css_relative + "'",
-              php,
-              count=1,
-          )
-          php, script_count = re.subn(
-              r"'script'\s*=>\s*'previews/dojo-v3/dojo(?:\.[0-9a-f]{16})?\.js'",
-              "'script'      => '" + js_relative + "'",
-              php,
-              count=1,
-          )
-          if style_count != 1 or script_count != 1:
-              raise SystemExit(
-                  f'Could not rewrite Dojo content-addressed assets: style={style_count}, script={script_count}'
-              )
-
-          php_path.write_text(php, encoding='utf-8')
-
-          assets = {
-              'commit': deploy_sha,
-              'dojo_js': js_relative,
-              'dojo_js_sha256': js_sha,
-              'dojo_css': css_relative,
-              'dojo_css_sha256': css_sha,
-          }
-          assets_json = json.dumps(assets, indent=2) + '\n'
-          marker_name = f'DEPLOYED_COMMIT.{short_sha}.txt'
-          assets_name = f'DEPLOYED_ASSETS.{short_sha}.json'
-
-          (root / 'DEPLOYED_COMMIT.txt').write_text(deploy_sha + '\n', encoding='utf-8')
-          (root / marker_name).write_text(deploy_sha + '\n', encoding='utf-8')
-          (root / 'DEPLOYED_ASSETS.json').write_text(assets_json, encoding='utf-8')
-          (root / assets_name).write_text(assets_json, encoding='utf-8')
-
-          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as env:
-              env.write(f'DOJO_JS_FILE={js_relative}\n')
-              env.write(f'DOJO_JS_SHA={js_sha}\n')
-              env.write(f'DOJO_CSS_FILE={css_relative}\n')
-              env.write(f'DOJO_CSS_SHA={css_sha}\n')
-              env.write(f'DEPLOY_MARKER_FILE={marker_name}\n')
-              env.write(f'DEPLOY_ASSETS_FILE={assets_name}\n')
-          PY
-
-          grep "SLAYERKEY_WEBSITE_VERSION" wordpress/slayerkey-website/slayerkey-website.php | head -1
-          grep "previews/dojo-v3/dojo\." wordpress/slayerkey-website/slayerkey-website.php
-          cat wordpress/slayerkey-website/DEPLOYED_ASSETS.json
-
-      - name: Find EasyWP plugin directory
-        env:
-          SFTP_HOST: ${{ secrets.EASYWP_HOST }}
-          SFTP_USER: ${{ secrets.EASYWP_USER }}
-          SFTP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
-          SFTP_PORT: ${{ secrets.EASYWP_PORT }}
-        run: |
-          set -euo pipefail
-          check_remote_path() {
-            lftp -u "$SFTP_USER","$SFTP_PASSWORD" -p "$SFTP_PORT" "sftp://$SFTP_HOST" -e "set sftp:auto-confirm yes; cls -d '$1'; bye" >/dev/null 2>&1
-          }
-
-          if check_remote_path "/wptbox/wp-content/plugins"; then
-            echo "REMOTE_PLUGIN_ROOT=/wptbox/wp-content/plugins" >> "$GITHUB_ENV"
-          elif check_remote_path "wp-content/plugins"; then
-            echo "REMOTE_PLUGIN_ROOT=wp-content/plugins" >> "$GITHUB_ENV"
-          else
-            echo "Could not find the EasyWP WordPress plugin directory."
-            exit 1
-          fi
-
-      - name: Deploy plugin and force critical files
-        env:
-          SFTP_HOST: ${{ secrets.EASYWP_HOST }}
-          SFTP_USER: ${{ secrets.EASYWP_USER }}
-          SFTP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
-          SFTP_PORT: ${{ secrets.EASYWP_PORT }}
-        run: |
-          set -euo pipefail
-          lftp -u "$SFTP_USER","$SFTP_PASSWORD" -p "$SFTP_PORT" "sftp://$SFTP_HOST" <<EOF
-          set sftp:auto-confirm yes
-          set net:max-retries 2
-          set net:timeout 20
-          lcd "$GITHUB_WORKSPACE"
-          mirror --reverse --delete --verbose wordpress/slayerkey-website "$REMOTE_PLUGIN_ROOT/slayerkey-website"
-          put "wordpress/slayerkey-website/$DOJO_JS_FILE" -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/$DOJO_JS_FILE"
-          put "wordpress/slayerkey-website/$DOJO_CSS_FILE" -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/$DOJO_CSS_FILE"
-          put wordpress/slayerkey-website/slayerkey-website.php -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/slayerkey-website.php"
-          put wordpress/slayerkey-website/DEPLOYED_COMMIT.txt -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/DEPLOYED_COMMIT.txt"
-          put "wordpress/slayerkey-website/$DEPLOY_MARKER_FILE" -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/$DEPLOY_MARKER_FILE"
-          put wordpress/slayerkey-website/DEPLOYED_ASSETS.json -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/DEPLOYED_ASSETS.json"
-          put "wordpress/slayerkey-website/$DEPLOY_ASSETS_FILE" -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/$DEPLOY_ASSETS_FILE"
-          put wordpress/slayerkey-website/previews/dojo-v3/index.html -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/index.html"
-          put wordpress/slayerkey-website/previews/dojo-v3/dojo.js -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/dojo.js"
-          put wordpress/slayerkey-website/previews/dojo-v3/dojo.css -o "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/dojo.css"
-          bye
-          EOF
-
-      - name: Verify exact files over SFTP
-        env:
-          SFTP_HOST: ${{ secrets.EASYWP_HOST }}
-          SFTP_USER: ${{ secrets.EASYWP_USER }}
-          SFTP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
-          SFTP_PORT: ${{ secrets.EASYWP_PORT }}
-        run: |
-          set -euo pipefail
-          rm -rf /tmp/slayerkey-remote
-          mkdir -p /tmp/slayerkey-remote/previews/dojo-v3
-
-          lftp -u "$SFTP_USER","$SFTP_PASSWORD" -p "$SFTP_PORT" "sftp://$SFTP_HOST" <<EOF
-          set sftp:auto-confirm yes
-          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/slayerkey-website.php" -o /tmp/slayerkey-remote/slayerkey-website.php
-          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/DEPLOYED_COMMIT.txt" -o /tmp/slayerkey-remote/DEPLOYED_COMMIT.txt
-          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/$DEPLOY_MARKER_FILE" -o "/tmp/slayerkey-remote/$DEPLOY_MARKER_FILE"
-          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/DEPLOYED_ASSETS.json" -o /tmp/slayerkey-remote/DEPLOYED_ASSETS.json
-          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/$DEPLOY_ASSETS_FILE" -o "/tmp/slayerkey-remote/$DEPLOY_ASSETS_FILE"
-          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/index.html" -o /tmp/slayerkey-remote/previews/dojo-v3/index.html
-          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/dojo.js" -o /tmp/slayerkey-remote/previews/dojo-v3/dojo.js
-          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/previews/dojo-v3/dojo.css" -o /tmp/slayerkey-remote/previews/dojo-v3/dojo.css
-          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/$DOJO_JS_FILE" -o "/tmp/slayerkey-remote/$DOJO_JS_FILE"
-          get "$REMOTE_PLUGIN_ROOT/slayerkey-website/$DOJO_CSS_FILE" -o "/tmp/slayerkey-remote/$DOJO_CSS_FILE"
-          bye
-          EOF
-
-          cmp wordpress/slayerkey-website/slayerkey-website.php /tmp/slayerkey-remote/slayerkey-website.php
-          cmp wordpress/slayerkey-website/DEPLOYED_COMMIT.txt /tmp/slayerkey-remote/DEPLOYED_COMMIT.txt
-          cmp "wordpress/slayerkey-website/$DEPLOY_MARKER_FILE" "/tmp/slayerkey-remote/$DEPLOY_MARKER_FILE"
-          cmp wordpress/slayerkey-website/DEPLOYED_ASSETS.json /tmp/slayerkey-remote/DEPLOYED_ASSETS.json
-          cmp "wordpress/slayerkey-website/$DEPLOY_ASSETS_FILE" "/tmp/slayerkey-remote/$DEPLOY_ASSETS_FILE"
-          cmp wordpress/slayerkey-website/previews/dojo-v3/index.html /tmp/slayerkey-remote/previews/dojo-v3/index.html
-          cmp wordpress/slayerkey-website/previews/dojo-v3/dojo.js /tmp/slayerkey-remote/previews/dojo-v3/dojo.js
-          cmp wordpress/slayerkey-website/previews/dojo-v3/dojo.css /tmp/slayerkey-remote/previews/dojo-v3/dojo.css
-          cmp "wordpress/slayerkey-website/$DOJO_JS_FILE" "/tmp/slayerkey-remote/$DOJO_JS_FILE"
-          cmp "wordpress/slayerkey-website/$DOJO_CSS_FILE" "/tmp/slayerkey-remote/$DOJO_CSS_FILE"
-          ! grep -q 'std-derekvictory.png' /tmp/slayerkey-remote/previews/dojo-v3/index.html
-
-      - name: Verify public HTTP sees the exact deployment
-        env:
-          DEPLOY_SHA: ${{ github.sha }}
-        run: |
-          set -euo pipefail
-          BASE_URL="https://slayerkey.com/wp-content/plugins/slayerkey-website"
-          HEALTH_URL="https://slayerkey.com/wp-json/slayerkey/v1/health?cb=$DEPLOY_SHA"
-          MARKER_URL="$BASE_URL/$DEPLOY_MARKER_FILE"
-          ASSETS_URL="$BASE_URL/$DEPLOY_ASSETS_FILE"
-          JS_URL="$BASE_URL/$DOJO_JS_FILE"
-          CSS_URL="$BASE_URL/$DOJO_CSS_FILE"
-
-          marker_ok=0
-          for attempt in $(seq 1 12); do
-            marker="$(curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$MARKER_URL" 2>/dev/null | tr -d '\r\n' || true)"
-            if [ "$marker" = "$DEPLOY_SHA" ]; then
-              marker_ok=1
-              break
-            fi
-            echo "Public unique commit marker not current yet (attempt $attempt/12): ${marker:-missing}"
-            sleep 5
-          done
-          test "$marker_ok" = "1"
-
-          assets_ok=0
-          for attempt in $(seq 1 12); do
-            if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$ASSETS_URL" -o /tmp/public-assets.json; then
-              if cmp -s "wordpress/slayerkey-website/$DEPLOY_ASSETS_FILE" /tmp/public-assets.json; then
-                assets_ok=1
-                break
-              fi
-            fi
-            echo "Public unique asset manifest not current yet (attempt $attempt/12)."
-            sleep 5
-          done
-          test "$assets_ok" = "1"
-
-          js_ok=0
-          for attempt in $(seq 1 12); do
-            if curl -fsSL --connect-timeout 10 --max-time 20 "$JS_URL" -o /tmp/public-dojo.js; then
-              PUBLIC_JS_SHA="$(sha256sum /tmp/public-dojo.js | awk '{print $1}')"
-              if [ "$PUBLIC_JS_SHA" = "$DOJO_JS_SHA" ]; then
-                js_ok=1
-                break
-              fi
-            fi
-            echo "Public content-addressed dojo.js not current yet (attempt $attempt/12)."
-            sleep 5
-          done
-          test "$js_ok" = "1"
-
-          css_ok=0
-          for attempt in $(seq 1 12); do
-            if curl -fsSL --connect-timeout 10 --max-time 20 "$CSS_URL" -o /tmp/public-dojo.css; then
-              PUBLIC_CSS_SHA="$(sha256sum /tmp/public-dojo.css | awk '{print $1}')"
-              if [ "$PUBLIC_CSS_SHA" = "$DOJO_CSS_SHA" ]; then
-                css_ok=1
-                break
-              fi
-            fi
-            echo "Public content-addressed dojo.css not current yet (attempt $attempt/12)."
-            sleep 5
-          done
-          test "$css_ok" = "1"
-
-          health_ok=0
-          for attempt in $(seq 1 12); do
-            if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$HEALTH_URL" -o /tmp/slayerkey-health.json; then
-              if python3 - "$DEPLOY_SHA" "$DOJO_JS_SHA" <<'PY'
-          import json
-          import sys
-
-          expected_commit = sys.argv[1]
-          expected_js = sys.argv[2]
-          with open('/tmp/slayerkey-health.json', 'r', encoding='utf-8') as fh:
-              data = json.load(fh)
-
-          actual_commit = data.get('deployed_commit')
-          actual_version = str(data.get('version') or '')
-          actual_js = (data.get('dojo_assets') or {}).get('js_sha256')
-          contains_derek = (data.get('dojo_assets') or {}).get('contains_derek')
-
-          if actual_commit != expected_commit:
-              raise SystemExit(f'health deployed_commit mismatch: {actual_commit!r}')
-          if not actual_version.endswith('.' + expected_commit[:8]):
-              raise SystemExit(f'health plugin version mismatch: {actual_version!r}')
-          if actual_js != expected_js:
-              raise SystemExit(f'health dojo.js hash mismatch: {actual_js!r}')
-          if contains_derek is not False:
-              raise SystemExit(f'health contains_derek was not false: {contains_derek!r}')
-
-          print('Public health endpoint matches exact deployed commit, PHP version, and dojo.js hash.')
-          PY
-              then
-                health_ok=1
-                break
-              fi
-            fi
-            echo "Public health not current yet (attempt $attempt/12)."
-            sleep 5
-          done
-          test "$health_ok" = "1"
-
-          echo "Verified public EasyWP deployment: $DEPLOY_SHA"
-          echo "dojo.js asset: $DOJO_JS_FILE"
-          echo "dojo.js sha256: $DOJO_JS_SHA"
-          echo "dojo.css asset: $DOJO_CSS_FILE"
-          echo "dojo.css sha256: $DOJO_CSS_SHA"
-
-      - name: Mark deployment successful
+          EASYWP_HOST: ${{ secrets.EASYWP_HOST }}
+          EASYWP_USER: ${{ secrets.EASYWP_USER }}
+          EASYWP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
+          EASYWP_PORT: ${{ secrets.EASYWP_PORT }}
+        run: python3 tools/publish_deploy.py
+      - name: Verify ordinary URLs and browser runtime after publication
+        run: npm run test:live
+      - name: Save live verification when Actions storage is available
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-verification-${{ github.sha }}
+          path: artifacts/live/
+          retention-days: 1
+      - name: Record final deployment status
+        if: always()
         uses: actions/github-script@v7
+        env:
+          RESULT: ${{ job.status }}
         with:
           script: |
             await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: context.sha,
-              state: 'success',
+              ...context.repo, sha: context.sha,
+              state: process.env.RESULT === 'success' ? 'success' : 'failure',
               context: 'easywp/deploy',
-              description: 'EasyWP and public HTTP verified',
-              target_url: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
-            });
-
-      - name: Mark deployment failed
-        if: ${{ failure() }}
-        uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: context.sha,
-              state: 'failure',
-              context: 'easywp/deploy',
-              description: 'EasyWP deployment or verification failed',
-              target_url: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
+              description: process.env.RESULT === 'success' ? 'Ordinary URLs and browser runtime verified' : 'Release incomplete; inspect runtime/cache verification'
             });

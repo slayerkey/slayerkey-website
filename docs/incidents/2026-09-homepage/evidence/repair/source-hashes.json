@@ -1,0 +1,14 @@
+{
+  "tested_at_utc": "2026-09-10T03:43:12.356870+00:00",
+  "note": "Local working-file bytes. Git line-ending normalization can change release hashes; deployment checks the actual built manifest.",
+  "files": {
+    "wordpress/slayerkey-website/slayerkey-website.php": "b1dd8057f14fc0d0d6cb37a65a588258249db9e57c276331db84fbb782bbbb9a",
+    "wordpress/slayerkey-website/assets/js/tracking.js": "1a4cf5c7017b927571f3a982f3072e9c9201ede351e57a37704eed5777a56788",
+    "wordpress/slayerkey-website/previews/dojo-v3/dojo.css": "7e316be4a2a20d8552104f4d42d41d0bbf0a8fd249ebe2895d7d6daf67ed77aa",
+    "wordpress/slayerkey-website/previews/dojo-v3/dojo.js": "5e2e1078fce6fa9d2a7911945e7187f99ea9ea5365ee0271dd98beff3687dc10",
+    "wordpress/slayerkey-website/previews/dojo-v3/index.html": "e151ae8cd8c1803834794074c9ac93cc447cd085306547bf2101e5cb5df34d55",
+    "docs/wordpress/wpcode/body.html": "1e6a716f010ee42bd921e1ea404fe1ad7dc0ce26f9a1fd6685d56674877e1cb3",
+    "docs/wordpress/wpcode/footer.html": "00c57fc5d9982125d0c639ff4624da6140cc971de91781dd042562882d45fbb8",
+    "docs/wordpress/wpcode/header.html": "3984d42777383b95622ae9e832fa512424d6a36480736f21437d9073a68f0e6e"
+  }
+}

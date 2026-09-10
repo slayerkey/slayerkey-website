@@ -1,126 +1,47 @@
-name: Verify Live Dojo Homepage
-
+name: Scheduled Live Dojo Smoke
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
-
+  schedule:
+    - cron: '17 * * * *'
 permissions:
   contents: read
-  statuses: write
-
+  actions: read
+concurrency:
+  group: slayerkey-easywp-production
+  cancel-in-progress: false
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    env:
-      DEPLOY_SHA: ${{ github.sha }}
-
+    timeout-minutes: 8
     steps:
-      - name: Mark live Dojo verification pending
-        uses: actions/github-script@v7
+      - uses: actions/checkout@v4
         with:
-          script: |
-            const sha = process.env.DEPLOY_SHA;
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha,
-              state: 'pending',
-              context: 'live-dojo/verify',
-              description: 'Waiting for public Dojo homepage',
-              target_url: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
-            });
-
-      - name: Verify public homepage and health
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Determine expected release, excluding documentation-only changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APPROVED_ROLLBACK: ${{ vars.SLAYERKEY_EXPECTED_DEPLOY_SHA }}
         run: |
-          set -euo pipefail
-          HOME_URL="https://slayerkey.com/?cb=$DEPLOY_SHA"
-          HEALTH_URL="https://slayerkey.com/wp-json/slayerkey/v1/health?cb=$DEPLOY_SHA"
-          HOME_FILE="/tmp/slayerkey-home.html"
-          HEALTH_FILE="/tmp/slayerkey-health.json"
-
-          verified=0
-          for attempt in $(seq 1 24); do
-            echo "Live verification attempt $attempt"
-            rm -f "$HOME_FILE" "$HEALTH_FILE"
-
-            curl -fsSL --connect-timeout 10 --max-time 25 -H 'Cache-Control: no-cache' "$HOME_URL" -o "$HOME_FILE" 2>/dev/null || true
-            curl -fsSL --connect-timeout 10 --max-time 25 -H 'Cache-Control: no-cache' "$HEALTH_URL" -o "$HEALTH_FILE" 2>/dev/null || true
-
-            deployed_commit="$(jq -r '.deployed_commit // empty' "$HEALTH_FILE" 2>/dev/null || true)"
-            public_enabled="$(jq -r '.public_dojo_enabled // false' "$HEALTH_FILE" 2>/dev/null || true)"
-            public_hook="$(jq -r '.hooks.public_dojo_registered // false' "$HEALTH_FILE" 2>/dev/null || true)"
-
-            live_marker=false
-            dojo_root=false
-            pricing_marker=false
-            legacy_price=false
-
-            if [ -s "$HOME_FILE" ] && grep -Fq 'Slayerkey live Dojo v3' "$HOME_FILE"; then live_marker=true; fi
-            if [ -s "$HOME_FILE" ] && grep -Fq 'id="sk-std"' "$HOME_FILE"; then dojo_root=true; fi
-            if [ -s "$HOME_FILE" ] && grep -Fq 'Training Dojo Membership' "$HOME_FILE"; then pricing_marker=true; fi
-            if [ -s "$HOME_FILE" ] && grep -Fq '$15/month' "$HOME_FILE"; then legacy_price=true; fi
-
-            echo "  deployed_commit=$deployed_commit"
-            echo "  public_dojo_enabled=$public_enabled"
-            echo "  public_dojo_registered=$public_hook"
-            echo "  live_marker=$live_marker dojo_root=$dojo_root pricing_marker=$pricing_marker legacy_price=$legacy_price"
-
-            if [ "$deployed_commit" = "$DEPLOY_SHA" ] \
-              && [ "$public_enabled" = "true" ] \
-              && [ "$public_hook" = "true" ] \
-              && [ "$live_marker" = "true" ] \
-              && [ "$dojo_root" = "true" ] \
-              && [ "$pricing_marker" = "true" ] \
-              && [ "$legacy_price" = "false" ]; then
-              verified=1
-              break
-            fi
-
-            sleep 5
-          done
-
-          if [ "$verified" -ne 1 ]; then
-            echo "Public homepage and health endpoint did not converge on $DEPLOY_SHA"
-            echo "Final homepage title/markers:"
-            grep -Eo '<title>[^<]*|Slayerkey live Dojo v3|Training Dojo Membership|\$15/month' "$HOME_FILE" 2>/dev/null | head -20 || true
-            echo "Final health response:"
-            cat "$HEALTH_FILE" 2>/dev/null || true
-            exit 1
+          if [[ -n "$APPROVED_ROLLBACK" ]]; then
+            [[ "$APPROVED_ROLLBACK" == '0ff5f81f6337650e47b3d1a0e18e38117466f2e7' ]]
+            release="$APPROVED_ROLLBACK"
+            echo 'ROLLBACK_RUNTIME=1' >> "$GITHUB_ENV"
+          else
+            release=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/deploy.yml/runs?branch=main&per_page=1" --jq '.workflow_runs[0].head_sha')
           fi
-
-          echo "Public homepage and health endpoint both confirm $DEPLOY_SHA"
-
-      - name: Mark live Dojo verification successful
-        if: success()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const sha = process.env.DEPLOY_SHA;
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha,
-              state: 'success',
-              context: 'live-dojo/verify',
-              description: 'Public Dojo homepage verified',
-              target_url: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
-            });
-
-      - name: Mark live Dojo verification failed
+          [[ "$release" =~ ^[a-f0-9]{40}$ ]]
+          echo "DEPLOY_SHA=$release" >> "$GITHUB_ENV"
+      - run: npm run test:live
+      - uses: actions/upload-artifact@v4
         if: failure()
-        uses: actions/github-script@v7
+        continue-on-error: true
         with:
-          script: |
-            const sha = process.env.DEPLOY_SHA;
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha,
-              state: 'failure',
-              context: 'live-dojo/verify',
-              description: 'Public Dojo homepage verification failed',
-              target_url: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
-            });
+          name: scheduled-live-evidence-${{ github.run_id }}
+          path: artifacts/live/
+          retention-days: 1

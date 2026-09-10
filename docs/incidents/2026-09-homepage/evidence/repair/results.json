@@ -1,0 +1,1026 @@
+[
+  {
+    "name": "desktop",
+    "cpu": 1,
+    "network": "unthrottled",
+    "errors": [],
+    "failures": [
+      {
+        "url": "https://www.googletagmanager.com/gtag/js",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://www.clarity.ms/tag/v9sofegg9a",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://googleads.g.doubleclick.net/pagead/id",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://static.doubleclick.net/instream/ad_status.js",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://yt3.ggpht.com/N1uvtLoGSaVclRyAhEaZqVqmFaMfb5BB4aC_K3U26wDyF6KrMt-Y0E9Q8Klel60NinIgQLDZdt8=s68-c-k-c0x00ffffff-no-rj",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/qoe",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/ptracking",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/playback",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/watchtime",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/qoe",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/watchtime",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/watchtime",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/youtubei/v1/log_event",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/watchtime",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/qoe",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/youtubei/v1/log_event",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://t.whop.tw/conversions",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.clarity.ms/tag/v9sofegg9a",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/embed/H7hYaHnT6ko",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      }
+    ],
+    "cache": [],
+    "dclMs": 3099,
+    "playback": {
+      "first": 0.086554,
+      "last": 1.111692,
+      "advanced": 1.0251379999999999
+    },
+    "scrollStart": 5826,
+    "scrollEnd": 7902.199999999255,
+    "elapsedMs": 35014,
+    "runtime": {
+      "beats": 139,
+      "maxGap": 299.69999999925494,
+      "mutations": 1262,
+      "observerCalls": 6,
+      "ownRaf": 0,
+      "longTasks": [
+        {
+          "start": 2910.7999999970198,
+          "duration": 105,
+          "name": "unknown",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": ""
+            }
+          ]
+        },
+        {
+          "start": 3116.7999999970198,
+          "duration": 63,
+          "name": "unknown",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": ""
+            }
+          ]
+        },
+        {
+          "start": 3194,
+          "duration": 74,
+          "name": "multiple-contexts",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": ""
+            }
+          ]
+        },
+        {
+          "start": 3438.699999999255,
+          "duration": 52,
+          "name": "cross-origin-descendant",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": "https://www.youtube.com/embed/H7hYaHnT6ko?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1"
+            }
+          ]
+        }
+      ]
+    },
+    "metrics": {
+      "Timestamp": 20042.315501,
+      "AudioHandlers": 0,
+      "AudioWorkletProcessors": 0,
+      "Documents": 4,
+      "Frames": 3,
+      "JSEventListeners": 347,
+      "LayoutObjects": 1081,
+      "MediaKeySessions": 0,
+      "MediaKeys": 0,
+      "Nodes": 2355,
+      "Resources": 46,
+      "ContextLifecycleStateObservers": 43,
+      "V8PerContextDatas": 4,
+      "WorkerGlobalScopes": 0,
+      "UACSSResources": 0,
+      "RTCPeerConnections": 0,
+      "ResourceFetchers": 4,
+      "AdSubframes": 0,
+      "DetachedScriptStates": 2,
+      "ArrayBufferContents": 214,
+      "LayoutCount": 95,
+      "RecalcStyleCount": 400,
+      "LayoutDuration": 0.276318,
+      "RecalcStyleDuration": 0.030342,
+      "DevToolsCommandDuration": 0.126433,
+      "ScriptDuration": 0.487161,
+      "V8CompileDuration": 0.005057,
+      "TaskDuration": 1.43957,
+      "TaskOtherDuration": 0.514259,
+      "ThreadTime": 1.523773,
+      "ProcessTime": 6.237238,
+      "JSHeapUsedSize": 19137268,
+      "JSHeapTotalSize": 20717568,
+      "FirstMeaningfulPaint": 20010.404018,
+      "DomContentLoaded": 20010.392585,
+      "NavigationStart": 20007.300055
+    },
+    "warmDclMs": 65,
+    "warmResources": [
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/dojo.css",
+        "transferSize": 0,
+        "decodedBodySize": 19943
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/lazy-site-1200.webp",
+        "transferSize": 0,
+        "decodedBodySize": 85780
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/dark-site-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 17674
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/chrake-site-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 17144
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/g09-site-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 19730
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/std-diawin-huge-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 12926
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/std-10gamewinstreak-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 16300
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/std-46bomb-huge-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 13398
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/std-bronzetosilverwinstreak-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 13430
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/assets/js/tracking.js",
+        "transferSize": 0,
+        "decodedBodySize": 4178
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/dojo.js",
+        "transferSize": 0,
+        "decodedBodySize": 8588
+      }
+    ]
+  },
+  {
+    "name": "mobile390",
+    "cpu": 1,
+    "network": "unthrottled",
+    "errors": [],
+    "failures": [
+      {
+        "url": "https://www.googletagmanager.com/gtag/js",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://www.clarity.ms/tag/v9sofegg9a",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://googleads.g.doubleclick.net/pagead/id",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://static.doubleclick.net/instream/ad_status.js",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://yt3.ggpht.com/N1uvtLoGSaVclRyAhEaZqVqmFaMfb5BB4aC_K3U26wDyF6KrMt-Y0E9Q8Klel60NinIgQLDZdt8=s68-c-k-c0x00ffffff-no-rj",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/qoe",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/ptracking",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/playback",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/watchtime",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/qoe",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/watchtime",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/watchtime",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://rr9---sn-bvvbaxivnuxqjvm-2ime.googlevideo.com/videoplayback",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/youtubei/v1/log_event",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/qoe",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/youtubei/v1/log_event",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/watchtime",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://t.whop.tw/conversions",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://www.clarity.ms/tag/v9sofegg9a",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://googleads.g.doubleclick.net/pagead/id",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://static.doubleclick.net/instream/ad_status.js",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      }
+    ],
+    "cache": [],
+    "dclMs": 281,
+    "playback": {
+      "first": 0.063571,
+      "last": 1.085114,
+      "advanced": 1.0215429999999999
+    },
+    "scrollStart": 2918.39999999851,
+    "scrollEnd": 4897.099999997765,
+    "elapsedMs": 35014,
+    "runtime": {
+      "beats": 140,
+      "maxGap": 266.8999999985099,
+      "mutations": 1262,
+      "observerCalls": 14,
+      "ownRaf": 0,
+      "longTasks": [
+        {
+          "start": 149.30000000074506,
+          "duration": 103,
+          "name": "unknown",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": ""
+            }
+          ]
+        },
+        {
+          "start": 290.69999999925494,
+          "duration": 54,
+          "name": "unknown",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": ""
+            }
+          ]
+        },
+        {
+          "start": 358.5,
+          "duration": 70,
+          "name": "multiple-contexts",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": ""
+            }
+          ]
+        }
+      ]
+    },
+    "metrics": {
+      "Timestamp": 20077.651873,
+      "AudioHandlers": 0,
+      "AudioWorkletProcessors": 0,
+      "Documents": 4,
+      "Frames": 3,
+      "JSEventListeners": 343,
+      "LayoutObjects": 1098,
+      "MediaKeySessions": 0,
+      "MediaKeys": 0,
+      "Nodes": 2355,
+      "Resources": 46,
+      "ContextLifecycleStateObservers": 43,
+      "V8PerContextDatas": 4,
+      "WorkerGlobalScopes": 0,
+      "UACSSResources": 0,
+      "RTCPeerConnections": 0,
+      "ResourceFetchers": 4,
+      "AdSubframes": 0,
+      "DetachedScriptStates": 2,
+      "ArrayBufferContents": 227,
+      "LayoutCount": 158,
+      "RecalcStyleCount": 617,
+      "LayoutDuration": 0.259462,
+      "RecalcStyleDuration": 0.033722,
+      "DevToolsCommandDuration": 0.122924,
+      "ScriptDuration": 0.497088,
+      "V8CompileDuration": 0.004826,
+      "TaskDuration": 1.410241,
+      "TaskOtherDuration": 0.492219,
+      "ThreadTime": 1.553569,
+      "ProcessTime": 5.296397,
+      "JSHeapUsedSize": 19334080,
+      "JSHeapTotalSize": 20979712,
+      "FirstMeaningfulPaint": 20042.900563,
+      "DomContentLoaded": 20042.913484,
+      "NavigationStart": 20042.636288
+    },
+    "warmDclMs": 41,
+    "warmResources": [
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/dojo.css",
+        "transferSize": 0,
+        "decodedBodySize": 19943
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/lazy-site-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 19092
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/dark-site-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 17674
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/chrake-site-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 17144
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/g09-site-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 19730
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/std-diawin-huge-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 12926
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/std-10gamewinstreak-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 16300
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/std-46bomb-huge-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 13398
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/std-bronzetosilverwinstreak-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 13430
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/assets/js/tracking.js",
+        "transferSize": 0,
+        "decodedBodySize": 4178
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/dojo.js",
+        "transferSize": 0,
+        "decodedBodySize": 8588
+      }
+    ]
+  },
+  {
+    "name": "mobile430-slow4g-cpu4",
+    "cpu": 4,
+    "network": "1.6 Mbps / 150 ms",
+    "errors": [],
+    "failures": [
+      {
+        "url": "https://www.googletagmanager.com/gtag/js",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://www.clarity.ms/tag/v9sofegg9a",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://googleads.g.doubleclick.net/pagead/id",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://static.doubleclick.net/instream/ad_status.js",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/timedtext",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/qoe",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/ptracking",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/playback",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://yt3.ggpht.com/N1uvtLoGSaVclRyAhEaZqVqmFaMfb5BB4aC_K3U26wDyF6KrMt-Y0E9Q8Klel60NinIgQLDZdt8=s88-c-k-c0x00ffffff-no-rj",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/qoe",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/watchtime",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/watchtime",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://rr9---sn-bvvbaxivnuxqjvm-2ime.googlevideo.com/videoplayback",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/youtubei/v1/log_event",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/watchtime",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/qoe",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://t.whop.tw/conversions",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://www.clarity.ms/tag/v9sofegg9a",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://googleads.g.doubleclick.net/pagead/id",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://static.doubleclick.net/instream/ad_status.js",
+        "error": {
+          "errorText": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      },
+      {
+        "url": "https://yt3.ggpht.com/N1uvtLoGSaVclRyAhEaZqVqmFaMfb5BB4aC_K3U26wDyF6KrMt-Y0E9Q8Klel60NinIgQLDZdt8=s68-c-k-c0x00ffffff-no-rj",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/timedtext",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://yt3.ggpht.com/N1uvtLoGSaVclRyAhEaZqVqmFaMfb5BB4aC_K3U26wDyF6KrMt-Y0E9Q8Klel60NinIgQLDZdt8=s68-c-k-c0x00ffffff-no-rj",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/api/stats/qoe",
+        "error": {
+          "errorText": "net::ERR_ABORTED"
+        }
+      }
+    ],
+    "cache": [],
+    "dclMs": 2451,
+    "playback": {
+      "first": 0.232785,
+      "last": 1.250442,
+      "advanced": 1.017657
+    },
+    "scrollStart": 10290.300000000745,
+    "scrollEnd": 12538.800000000745,
+    "elapsedMs": 35009,
+    "runtime": {
+      "beats": 137,
+      "maxGap": 533.5,
+      "mutations": 1265,
+      "observerCalls": 16,
+      "ownRaf": 0,
+      "longTasks": [
+        {
+          "start": 896.5,
+          "duration": 66,
+          "name": "unknown",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": ""
+            }
+          ]
+        },
+        {
+          "start": 981.7000000029802,
+          "duration": 303,
+          "name": "unknown",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": ""
+            }
+          ]
+        },
+        {
+          "start": 1323.300000000745,
+          "duration": 173,
+          "name": "unknown",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": ""
+            }
+          ]
+        },
+        {
+          "start": 1518.4000000022352,
+          "duration": 148,
+          "name": "unknown",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": ""
+            }
+          ]
+        },
+        {
+          "start": 1674.4000000022352,
+          "duration": 78,
+          "name": "self",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": ""
+            }
+          ]
+        },
+        {
+          "start": 1762.7000000029802,
+          "duration": 226,
+          "name": "multiple-contexts",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": ""
+            }
+          ]
+        },
+        {
+          "start": 2003.300000000745,
+          "duration": 58,
+          "name": "self",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": ""
+            }
+          ]
+        },
+        {
+          "start": 2087.10000000149,
+          "duration": 231,
+          "name": "unknown",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": ""
+            }
+          ]
+        },
+        {
+          "start": 2322.400000002235,
+          "duration": 52,
+          "name": "self",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": ""
+            }
+          ]
+        },
+        {
+          "start": 4224.10000000149,
+          "duration": 57,
+          "name": "cross-origin-descendant",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": "https://www.youtube.com/embed/H7hYaHnT6ko?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1"
+            }
+          ]
+        },
+        {
+          "start": 6000.20000000298,
+          "duration": 66,
+          "name": "cross-origin-descendant",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": "https://www.youtube.com/embed/H7hYaHnT6ko?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1"
+            }
+          ]
+        },
+        {
+          "start": 6154.300000000745,
+          "duration": 267,
+          "name": "cross-origin-descendant",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": "https://www.youtube.com/embed/H7hYaHnT6ko?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1"
+            }
+          ]
+        },
+        {
+          "start": 6737.10000000149,
+          "duration": 178,
+          "name": "cross-origin-descendant",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": "https://www.youtube.com/embed/H7hYaHnT6ko?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1"
+            }
+          ]
+        },
+        {
+          "start": 8452.5,
+          "duration": 86,
+          "name": "cross-origin-descendant",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": "https://www.youtube.com/embed/H7hYaHnT6ko?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1"
+            }
+          ]
+        },
+        {
+          "start": 8648.800000000745,
+          "duration": 257,
+          "name": "cross-origin-descendant",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": "https://www.youtube.com/embed/H7hYaHnT6ko?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1"
+            }
+          ]
+        },
+        {
+          "start": 12565.20000000298,
+          "duration": 51,
+          "name": "self",
+          "attribution": [
+            {
+              "name": "unknown",
+              "src": ""
+            }
+          ]
+        }
+      ]
+    },
+    "metrics": {
+      "Timestamp": 20113.252904,
+      "AudioHandlers": 0,
+      "AudioWorkletProcessors": 0,
+      "Documents": 4,
+      "Frames": 3,
+      "JSEventListeners": 337,
+      "LayoutObjects": 1133,
+      "MediaKeySessions": 0,
+      "MediaKeys": 0,
+      "Nodes": 2372,
+      "Resources": 46,
+      "ContextLifecycleStateObservers": 43,
+      "V8PerContextDatas": 4,
+      "WorkerGlobalScopes": 0,
+      "UACSSResources": 0,
+      "RTCPeerConnections": 0,
+      "ResourceFetchers": 4,
+      "AdSubframes": 0,
+      "DetachedScriptStates": 2,
+      "ArrayBufferContents": 324,
+      "LayoutCount": 135,
+      "RecalcStyleCount": 566,
+      "LayoutDuration": 1.273615,
+      "RecalcStyleDuration": 0.150684,
+      "DevToolsCommandDuration": 0.566971,
+      "ScriptDuration": 2.384246,
+      "V8CompileDuration": 0.023415,
+      "TaskDuration": 7.192878,
+      "TaskOtherDuration": 2.793947,
+      "ThreadTime": 2.081175,
+      "ProcessTime": 41.710234,
+      "JSHeapUsedSize": 17828224,
+      "JSHeapTotalSize": 20959232,
+      "FirstMeaningfulPaint": 20079.579108,
+      "DomContentLoaded": 20080.676825,
+      "NavigationStart": 20078.238885
+    },
+    "warmDclMs": 1124,
+    "warmResources": [
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/dojo.css",
+        "transferSize": 0,
+        "decodedBodySize": 19943
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/lazy-site-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 19092
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/dark-site-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 17674
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/chrake-site-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 17144
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/g09-site-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 19730
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/std-diawin-huge-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 12926
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/std-10gamewinstreak-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 16300
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/std-46bomb-huge-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 13398
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/assets/proof/std-bronzetosilverwinstreak-400.webp",
+        "transferSize": 0,
+        "decodedBodySize": 13430
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/assets/js/tracking.js",
+        "transferSize": 0,
+        "decodedBodySize": 4178
+      },
+      {
+        "url": "https://127.0.0.1:4175/wp-content/plugins/slayerkey-website/previews/dojo-v3/dojo.js",
+        "transferSize": 0,
+        "decodedBodySize": 8588
+      }
+    ]
+  }
+]

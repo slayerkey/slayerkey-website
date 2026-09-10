@@ -10,6 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+define( 'SLAYERKEY_TRACKING_ASSET', 'assets/js/tracking.js' );
+
 define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.28' );
 
 // Public /system now uses the approved GitHub managed live refresh page.
@@ -147,8 +149,8 @@ function slayerkey_website_prepare_preview_html( $html, $slug ) {
     $shared_base = plugin_dir_url( __FILE__ ) . 'previews/shared/';
 
     $html = str_replace(
-        array( 'src="assets/', "src='assets/", 'href="assets/', "href='assets/" ),
-        array( 'src="' . esc_url( $asset_base ), "src='" . esc_url( $asset_base ), 'href="' . esc_url( $asset_base ), "href='" . esc_url( $asset_base ) ),
+        array( 'src="assets/', "src='assets/", 'href="assets/', "href='assets/", 'srcset="assets/', ', assets/' ),
+        array( 'src="' . esc_url( $asset_base ), "src='" . esc_url( $asset_base ), 'href="' . esc_url( $asset_base ), "href='" . esc_url( $asset_base ), 'srcset="' . esc_url( $asset_base ), ', ' . esc_url( $asset_base ) ),
         $html
     );
     $html = str_replace( '__SLAYERKEY_PREVIEW_SHARED__', esc_url( $shared_base ), $html );
@@ -327,12 +329,7 @@ function slayerkey_website_render_public_dojo() {
             true
         );
 
-        // The chooser is created by dojo.js. Keep preview attribution private, but rewrite live links.
-        wp_add_inline_script(
-            $script_handle,
-            "(function(){function fixDojoAttribution(){document.querySelectorAll('#sk-plan-chooser a[href*=\"utm_source=private_preview\"]').forEach(function(link){link.href=link.href.replace('utm_source=private_preview','utm_source=slayerkey_site');});}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',fixDojoAttribution);}else{fixDojoAttribution();}if('MutationObserver' in window){new MutationObserver(fixDojoAttribution).observe(document.documentElement,{childList:true,subtree:true});}})();",
-            'after'
-        );
+
     }
 
     global $wp_query;
@@ -644,7 +641,8 @@ function slayerkey_website_health_response() {
             'deployed_commit' => $deployed_commit,
             'posthog_host' => SLAYERKEY_POSTHOG_HOST,
             'posthog_ui_host' => SLAYERKEY_POSTHOG_UI_HOST,
-            'tracking_asset' => plugin_dir_url( __FILE__ ) . 'assets/js/tracking.js',
+            'tracking_asset' => plugin_dir_url( __FILE__ ) . SLAYERKEY_TRACKING_ASSET,
+            'tracking_sha256' => slayerkey_website_file_sha256( SLAYERKEY_TRACKING_ASSET ),
             'private_previews_enabled' => true,
             'public_dojo_enabled' => true,
             'public_system_enabled' => SLAYERKEY_PUBLIC_SYSTEM_ENABLED,
@@ -718,9 +716,9 @@ function slayerkey_website_enqueue_tracking() {
 
     wp_enqueue_script(
         'slayerkey-website-tracking',
-        plugin_dir_url( __FILE__ ) . 'assets/js/tracking.js',
+        plugin_dir_url( __FILE__ ) . SLAYERKEY_TRACKING_ASSET,
         array(),
-        slayerkey_website_asset_version( 'assets/js/tracking.js' ),
+        slayerkey_website_asset_version( SLAYERKEY_TRACKING_ASSET ),
         true
     );
 }

@@ -1,7 +1,5 @@
 (function () {
     'use strict';
-    if (window.SK_TRACKING_INITIALIZED) return;
-    window.SK_TRACKING_INITIALIZED = true;
 
     function updateLegacyDojoPrice() {
         var path = window.location.pathname.replace(/\/+$/, '') || '/';
@@ -30,11 +28,10 @@
                 continue;
             }
 
-            var updated = node.nodeValue
+            node.nodeValue = node.nodeValue
                 .replace(/\$15/g, '$20')
                 .replace(/Fifteen dollars/g, 'Twenty dollars')
                 .replace(/fifteen dollars/g, 'twenty dollars');
-            if (updated !== node.nodeValue) node.nodeValue = updated;
         }
     }
 
@@ -82,10 +79,57 @@
         });
     }
 
+    function setText(root, selector, text) {
+        var element = root.querySelector(selector);
+
+        if (element && element.textContent !== text) {
+            element.textContent = text;
+        }
+    }
+
+    function updateLeadMagnetCopy() {
+        var popup = document.getElementById('sk-ep');
+
+        if (popup) {
+            setText(popup, '.sk-ep-title', 'Get Your Free 30-Day Valorant Rank-Up Routine.');
+            setText(popup, '.sk-ep-desc', 'Know what to practice, what to focus on, and what to review for the next 30 days.');
+            setText(popup, '.sk-ep-fine', "You'll also get my weekly Valorant improvement emails. Unsubscribe anytime.");
+            setText(popup, '.sk-ep-ok-msg', "Check your inbox and click confirm to get the routine. Check spam if you don't see it.");
+
+            var submit = popup.querySelector('.sk-ep-btn');
+            if (submit && !submit.disabled && submit.textContent !== 'Send Me the Routine') {
+                submit.textContent = 'Send Me the Routine';
+            }
+        }
+
+        document.querySelectorAll('.sk-fp-float[data-ep-open]').forEach(function (link) {
+            link.textContent = '🎯 Free 30-Day Rank-Up Routine';
+            link.setAttribute('data-sk-cta', 'lead-magnet-open');
+            link.setAttribute('data-sk-location', 'floating');
+            link.setAttribute('data-sk-offer', '30-day-rank-up-routine');
+        });
+
+        document.querySelectorAll('a').forEach(function (link) {
+            var label = (link.textContent || '').replace(/\s+/g, ' ').trim();
+            var href = link.getAttribute('href') || '';
+
+            if (label === 'Free Improvement Plan' || href.indexOf('ko-fi.com/s/05c066f8a7') !== -1) {
+                link.textContent = 'Free 30-Day Rank-Up Routine';
+                link.setAttribute('href', '#free-plan');
+                link.setAttribute('data-ep-open', '');
+                link.setAttribute('data-sk-cta', 'lead-magnet-open');
+                link.setAttribute('data-sk-location', 'footer');
+                link.setAttribute('data-sk-offer', '30-day-rank-up-routine');
+                link.removeAttribute('target');
+            }
+        });
+    }
+
     function initialize() {
         updateLegacyDojoPrice();
         alignDojoPricingCards();
         updateWelcomeDiscordLink();
+        updateLeadMagnetCopy();
     }
 
     if (document.readyState === 'loading') {
@@ -97,6 +141,25 @@
     window.setTimeout(updateLegacyDojoPrice, 750);
     window.setTimeout(alignDojoPricingCards, 750);
     window.setTimeout(updateWelcomeDiscordLink, 750);
+    window.setTimeout(updateLeadMagnetCopy, 250);
+    window.setTimeout(updateLeadMagnetCopy, 1000);
+
+    if ('MutationObserver' in window) {
+        var leadMagnetObserver = new MutationObserver(function () {
+            updateLeadMagnetCopy();
+        });
+
+        if (document.documentElement) {
+            leadMagnetObserver.observe(document.documentElement, {
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
+            window.setTimeout(function () {
+                leadMagnetObserver.disconnect();
+            }, 5000);
+        }
+    }
 
     document.addEventListener('click', function (event) {
         if (!(event.target instanceof Element)) {
@@ -109,12 +172,12 @@
             return;
         }
 
-        try { window.posthog.capture('cta_click', {
+        window.posthog.capture('cta_click', {
             cta_id: element.getAttribute('data-sk-cta'),
             cta_location: element.getAttribute('data-sk-location') || null,
             offer: element.getAttribute('data-sk-offer') || null,
             plan_direct: element.getAttribute('data-sk-plan-direct') === 'true',
             page_path: window.location.pathname
-        }); } catch (error) { /* Analytics must never interrupt navigation. */ }
+        });
     }, true);
 })();

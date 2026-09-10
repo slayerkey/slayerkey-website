@@ -1,0 +1,386 @@
+{
+  "scenario": {
+    "id": "baseline-desktop",
+    "w": 1440,
+    "h": 900,
+    "cpu": 1
+  },
+  "dcl": false,
+  "snapshot": {
+    "stats": {
+      "observers": [
+        {
+          "calls": 202466,
+          "records": 202499,
+          "stack": "Error\n    at Object.construct (<anonymous>:4:139)\n    at Ht (https://t.whop.tw/s.js:8:9425)\n    at we.startFormTracking (https://t.whop.tw/s.js:72:14950)\n    at we.setupAutoTracking (https://t.whop.tw/s.js:72:14176)\n    at https://t.whop.tw/s.js:72:19382\n    at https://t.whop.tw/s.js:72:19403\n    at https://t.whop.tw/s.js:72:19408"
+        },
+        {
+          "calls": 202466,
+          "records": 202499,
+          "stack": "Error\n    at Object.construct (<anonymous>:4:139)\n    at Zt (https://t.whop.tw/s.js:8:10706)\n    at we.startIframeSync (https://t.whop.tw/s.js:72:14784)\n    at we.setupAutoTracking (https://t.whop.tw/s.js:72:14287)\n    at https://t.whop.tw/s.js:72:19382\n    at https://t.whop.tw/s.js:72:19403\n    at https://t.whop.tw/s.js:72:19408"
+        },
+        {
+          "calls": 202464,
+          "records": 202495,
+          "stack": "Error\n    at Object.construct (<anonymous>:4:139)\n    at slayerkey-live-dojo-v3-js-after:2:402\n    at slayerkey-live-dojo-v3-js-after:2:510"
+        },
+        {
+          "calls": 202445,
+          "records": 202453,
+          "stack": "Error\n    at Object.construct (<anonymous>:4:139)\n    at https://spcdn.shortpixel.ai/spio/ret_auto,v_1,q_cdnize,to_webp,s_webp/slayerkey.com/wp-content/plugins/slayerkey-website/assets/js/tracking.js?ver=0.1.28.601a2c09.1788921256:148:34\n    at https://spcdn.shortpixel.ai/spio/ret_auto,v_1,q_cdnize,to_webp,s_webp/slayerkey.com/wp-content/plugins/slayerkey-website/assets/js/tracking.js?ver=0.1.28.601a2c09.1788921256:183:3"
+        }
+      ],
+      "raf": 0,
+      "heartbeats": 1,
+      "longTasks": [
+        {
+          "start": 577.1000000014901,
+          "duration": 124
+        },
+        {
+          "start": 714.4000000003725,
+          "duration": 69
+        },
+        {
+          "start": 814.1000000014901,
+          "duration": 59
+        },
+        {
+          "start": 896.5,
+          "duration": 136
+        },
+        {
+          "start": 1037.1000000014901,
+          "duration": 86
+        }
+      ]
+    },
+    "ready": "loading",
+    "video": null,
+    "reveals": [
+      {
+        "height": 456.578125,
+        "opacity": "0"
+      },
+      {
+        "height": 268.671875,
+        "opacity": "0"
+      },
+      {
+        "height": 140.046875,
+        "opacity": "0"
+      },
+      {
+        "height": 1033.265625,
+        "opacity": "0"
+      },
+      {
+        "height": 52,
+        "opacity": "0"
+      },
+      {
+        "height": 347.859375,
+        "opacity": "0"
+      },
+      {
+        "height": 329.359375,
+        "opacity": "0"
+      },
+      {
+        "height": 140.046875,
+        "opacity": "0"
+      },
+      {
+        "height": 205.109375,
+        "opacity": "0"
+      },
+      {
+        "height": 24.796875,
+        "opacity": "0"
+      },
+      {
+        "height": 52,
+        "opacity": "0"
+      },
+      {
+        "height": 213.9375,
+        "opacity": "0"
+      },
+      {
+        "height": 238.890625,
+        "opacity": "0"
+      },
+      {
+        "height": 238.890625,
+        "opacity": "0"
+      },
+      {
+        "height": 218.15625,
+        "opacity": "0"
+      },
+      {
+        "height": 218.15625,
+        "opacity": "0"
+      },
+      {
+        "height": 190.140625,
+        "opacity": "0"
+      },
+      {
+        "height": 278.8125,
+        "opacity": "0"
+      },
+      {
+        "height": 190.140625,
+        "opacity": "0"
+      },
+      {
+        "height": 353.171875,
+        "opacity": "0"
+      },
+      {
+        "height": 116.25,
+        "opacity": "0"
+      },
+      {
+        "height": 116.3125,
+        "opacity": "0"
+      },
+      {
+        "height": 116.3125,
+        "opacity": "0"
+      },
+      {
+        "height": 98.21875,
+        "opacity": "0"
+      },
+      {
+        "height": 98.21875,
+        "opacity": "0"
+      },
+      {
+        "height": 52,
+        "opacity": "0"
+      },
+      {
+        "height": 90.359375,
+        "opacity": "0"
+      },
+      {
+        "height": 236.9375,
+        "opacity": "0"
+      },
+      {
+        "height": 152,
+        "opacity": "0"
+      },
+      {
+        "height": 725.25,
+        "opacity": "0"
+      },
+      {
+        "height": 261.796875,
+        "opacity": "0"
+      },
+      {
+        "height": 79.453125,
+        "opacity": "0"
+      },
+      {
+        "height": 546.34375,
+        "opacity": "0"
+      },
+      {
+        "height": 270.140625,
+        "opacity": "0"
+      }
+    ],
+    "overflow": [
+      "hidden auto",
+      "visible"
+    ]
+  },
+  "stack": [
+    {
+      "name": "",
+      "line": 4
+    }
+  ],
+  "metrics": [
+    {
+      "name": "Timestamp",
+      "value": 16016.278691
+    },
+    {
+      "name": "AudioHandlers",
+      "value": 0
+    },
+    {
+      "name": "AudioWorkletProcessors",
+      "value": 0
+    },
+    {
+      "name": "Documents",
+      "value": 2
+    },
+    {
+      "name": "Frames",
+      "value": 2
+    },
+    {
+      "name": "JSEventListeners",
+      "value": 81
+    },
+    {
+      "name": "LayoutObjects",
+      "value": 892
+    },
+    {
+      "name": "MediaKeySessions",
+      "value": 0
+    },
+    {
+      "name": "MediaKeys",
+      "value": 0
+    },
+    {
+      "name": "Nodes",
+      "value": 16984
+    },
+    {
+      "name": "Resources",
+      "value": 62
+    },
+    {
+      "name": "ContextLifecycleStateObservers",
+      "value": 27
+    },
+    {
+      "name": "V8PerContextDatas",
+      "value": 5
+    },
+    {
+      "name": "WorkerGlobalScopes",
+      "value": 0
+    },
+    {
+      "name": "UACSSResources",
+      "value": 0
+    },
+    {
+      "name": "RTCPeerConnections",
+      "value": 0
+    },
+    {
+      "name": "ResourceFetchers",
+      "value": 2
+    },
+    {
+      "name": "AdSubframes",
+      "value": 0
+    },
+    {
+      "name": "DetachedScriptStates",
+      "value": 0
+    },
+    {
+      "name": "ArrayBufferContents",
+      "value": 7
+    },
+    {
+      "name": "LayoutCount",
+      "value": 14
+    },
+    {
+      "name": "RecalcStyleCount",
+      "value": 23
+    },
+    {
+      "name": "LayoutDuration",
+      "value": 0.251446
+    },
+    {
+      "name": "RecalcStyleDuration",
+      "value": 0.010833
+    },
+    {
+      "name": "DevToolsCommandDuration",
+      "value": 0.006665
+    },
+    {
+      "name": "ScriptDuration",
+      "value": 7.959574
+    },
+    {
+      "name": "V8CompileDuration",
+      "value": 0.009134
+    },
+    {
+      "name": "TaskDuration",
+      "value": 9.17262
+    },
+    {
+      "name": "TaskOtherDuration",
+      "value": 0.934968
+    },
+    {
+      "name": "ThreadTime",
+      "value": 8.736657
+    },
+    {
+      "name": "ProcessTime",
+      "value": 10.977544
+    },
+    {
+      "name": "JSHeapUsedSize",
+      "value": 4683904
+    },
+    {
+      "name": "JSHeapTotalSize",
+      "value": 9437184
+    },
+    {
+      "name": "FirstMeaningfulPaint",
+      "value": 0
+    },
+    {
+      "name": "DomContentLoaded",
+      "value": 0
+    },
+    {
+      "name": "NavigationStart",
+      "value": 16006.065168
+    }
+  ],
+  "profileSamples": 6764,
+  "topSamples": [
+    [
+      "https://spcdn.shortpixel.ai/spio/ret_auto,v_1,q_cdnize,to_webp,s_webp/slayerkey.com/wp-content/plugins/slayerkey-website/assets/js/tracking.js?ver=0.1.28.601a2c09.1788921256 ",
+      2419
+    ],
+    [
+      "https://spcdn.shortpixel.ai/spio/ret_auto,v_1,q_cdnize,to_webp,s_webp/slayerkey.com/wp-content/plugins/slayerkey-website/assets/js/tracking.js?ver=0.1.28.601a2c09.1788921256 updateLeadMagnetCopy",
+      1073
+    ],
+    [
+      " querySelectorAll",
+      1005
+    ],
+    [
+      " (program)",
+      790
+    ],
+    [
+      " (idle)",
+      698
+    ],
+    [
+      "https://t.whop.tw/s.js ",
+      253
+    ],
+    [
+      " RegExp: \\s+",
+      177
+    ]
+  ]
+}
