@@ -1,0 +1,36 @@
+name: Homepage Reliability Checks
+on:
+  workflow_call:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  reliability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run test:unit
+      - run: python3 tests/publish_test.py
+      - run: npm run test:php
+      - run: python3 tools/build_deploy.py --output build/php-check/plugin
+      - run: php tests/wordpress.php build/php-check/plugin
+      - run: npm test
+      - run: npm run test:soak
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reliability-evidence
+          path: |
+            artifacts/
+            playwright-report/
+            test-results/
