@@ -1,6 +1,7 @@
 <?php
 // Exercise real plugin functions with a minimal WordPress API boundary, no database.
-define('ABSPATH', __DIR__);\ndefine('DAY_IN_SECONDS', 86400);
+define('ABSPATH', __DIR__);
+define('DAY_IN_SECONDS', 86400);
 function add_action(...$args) {}
 function add_filter(...$args) {}
 function add_shortcode(...$args) {}
