@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.28
+ * Version: 0.1.29
  * Author: Slayerkey
  */
 
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'SLAYERKEY_TRACKING_ASSET', 'assets/js/tracking.js' );
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.28' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.29' );
 
 // Public /system now uses the approved GitHub managed live refresh page.
 // /system/welcome (the Stripe post-purchase page) and the native /terms route are always on;
@@ -677,6 +677,19 @@ function slayerkey_website_health_response() {
     );
 }
 
+function slayerkey_website_whop_webhook_response( $request ) {
+    require_once __DIR__ . '/sales-webhook-common.php';
+
+    $result = slayerkey_sales_handle_whop_webhook(
+        $request->get_body(),
+        $request->get_header( 'webhook-id' ),
+        $request->get_header( 'webhook-timestamp' ),
+        $request->get_header( 'webhook-signature' )
+    );
+
+    return new WP_REST_Response( $result['body'], $result['status'] );
+}
+
 function slayerkey_website_register_health_route() {
     register_rest_route(
         'slayerkey/v1',
@@ -684,6 +697,16 @@ function slayerkey_website_register_health_route() {
         array(
             'methods' => 'GET',
             'callback' => 'slayerkey_website_health_response',
+            'permission_callback' => '__return_true',
+        )
+    );
+
+    register_rest_route(
+        'slayerkey/v1',
+        '/whop-webhook',
+        array(
+            'methods' => 'POST',
+            'callback' => 'slayerkey_website_whop_webhook_response',
             'permission_callback' => '__return_true',
         )
     );
