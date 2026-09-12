@@ -41,8 +41,8 @@ if ( 'POST' === strtoupper( isset( $_SERVER['REQUEST_METHOD'] ) ? $_SERVER['REQU
     $stripe_input = isset( $_POST['stripe_secret'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['stripe_secret'] ) ) ) : '';
 
     if ( '' !== $whop_input ) {
-        if ( 0 !== strpos( $whop_input, 'ws_' ) ) {
-            $errors[] = 'Whop secret was not saved because it should begin with ws_.';
+        if ( 0 !== strpos( $whop_input, 'whsec_' ) && 0 !== strpos( $whop_input, 'ws_' ) ) {
+            $errors[] = 'Whop secret was not saved because it should begin with whsec_ (live) or ws_ (sandbox).';
         } else {
             update_option( 'slayerkey_whop_webhook_secret', $whop_input, false );
             $messages[] = 'Whop signing secret saved.';
@@ -71,7 +71,8 @@ if ( 'POST' === strtoupper( isset( $_SERVER['REQUEST_METHOD'] ) ? $_SERVER['REQU
 
 $whop_configured   = '' !== slayerkey_sales_get_secret( 'whop' );
 $stripe_configured = '' !== slayerkey_sales_get_secret( 'stripe' );
-$whop_endpoint     = home_url( '/wp-content/plugins/slayerkey-website/whop-webhook.php' );
+$whop_endpoint     = rest_url( 'slayerkey/v1/whop-webhook' );
+$whop_fallback     = home_url( '/wp-content/plugins/slayerkey-website/whop-webhook.php' );
 $stripe_endpoint   = home_url( '/wp-content/plugins/slayerkey-website/stripe-webhook.php' );
 
 ?><!doctype html>
@@ -104,6 +105,8 @@ $stripe_endpoint   = home_url( '/wp-content/plugins/slayerkey-website/stripe-web
         <p class="small">Use only the <strong>payment.succeeded</strong> event.</p>
         <label>Endpoint URL</label>
         <code><?php echo esc_html( $whop_endpoint ); ?></code>
+        <p class="small">Compatibility URL (also supported):</p>
+        <code><?php echo esc_html( $whop_fallback ); ?></code>
     </div>
 
     <div class="card">
@@ -122,7 +125,7 @@ $stripe_endpoint   = home_url( '/wp-content/plugins/slayerkey-website/stripe-web
         <p class="small">Leave a field blank to keep the currently saved value.</p>
 
         <label for="whop_secret">Whop signing secret</label>
-        <input id="whop_secret" name="whop_secret" type="password" autocomplete="off" placeholder="ws_...">
+        <input id="whop_secret" name="whop_secret" type="password" autocomplete="off" placeholder="whsec_... or ws_...">
         <?php if ( $whop_configured ) : ?>
             <label class="clear"><input type="checkbox" name="clear_whop" value="1"> Clear saved Whop secret</label>
         <?php endif; ?>
