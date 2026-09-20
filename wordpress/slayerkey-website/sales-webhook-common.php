@@ -258,14 +258,20 @@ function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_t
         }
     }
 
-    $whop_distinct_id = '';
+    $whop_user_id = '';
 
-    if ( isset( $payment['user'] ) && is_array( $payment['user'] ) && ! empty( $payment['user']['id'] ) ) {
-        $whop_distinct_id = slayerkey_sales_pseudonymous_id( 'whop_user', $payment['user']['id'] );
+    if ( isset( $payment['user_id'] ) && is_scalar( $payment['user_id'] ) ) {
+        $whop_user_id = trim( (string) $payment['user_id'] );
+    } elseif ( isset( $payment['user'] ) && is_string( $payment['user'] ) ) {
+        $whop_user_id = trim( $payment['user'] );
+    } elseif ( isset( $payment['user'] ) && is_array( $payment['user'] ) && ! empty( $payment['user']['id'] ) ) {
+        $whop_user_id = trim( (string) $payment['user']['id'] );
+    }
 
-        if ( '' !== $whop_distinct_id ) {
-            $properties['identity_source'] = 'whop_user_id_hash';
-        }
+    $whop_distinct_id = slayerkey_sales_pseudonymous_id( 'whop_user', $whop_user_id );
+
+    if ( '' !== $whop_distinct_id ) {
+        $properties['identity_source'] = 'whop_user_id_hash';
     }
 
     $result = slayerkey_sales_posthog_capture( 'whop', $event_id, $properties, $whop_distinct_id );
