@@ -405,29 +405,38 @@ The existing reliability suite also includes build, publication, browser matrix,
 
 ## CI status
 
-Draft PR #53 repeatedly creates the Homepage Reliability Checks workflow, but the GitHub hosted reliability job fails before any workflow step starts.
+The normal GitHub hosted Homepage Reliability Checks workflow completed successfully after the repository runner issue was resolved.
 
-Latest observed run:
+Verified successful run:
 
-35507521588
+35531439249
 
-Branch head at that run:
+Validated branch head:
 
-56d27aca4620c561968dffa31f65ed0f3abae4cc
+2a510398b1228aa0e231ae682946c3ec14c3a931
 
-Observed behavior:
+The successful workflow completed:
 
-1. The run starts and fails in approximately three seconds.
-2. A reliability job object exists.
-3. The job contains zero recorded steps.
-4. Checkout, npm, PHP, Playwright, and repository test commands never start.
-5. GitHub provides no downloadable job log for the failed job through the available connection.
+1. Repository checkout
+2. Node setup
+3. Runner disk reclamation
+4. npm ci
+5. Chromium and WebKit installation
+6. Unit build tests
+7. Publisher tests
+8. PHP regression tests
+9. Fingerprinted plugin build
+10. Built plugin PHP tests
+11. Full Playwright browser matrix
+12. Five minute soak test
 
-This is a pre runner GitHub Actions startup failure, not a repository test assertion.
+Every substantive step completed successfully.
 
-The repository alone cannot identify whether the account level subtype is billing, Actions budget, policy, entitlement, or hosted runner provisioning.
+The browser matrix runs 15 authored browser tests across six browser/device projects, producing 90 browser test executions before retries.
 
-GitHub Actions must successfully start a runner before this PR can be called CI green.
+The soak test runs for five minutes and verifies heartbeat continuity, retained DOM growth, event listener growth, retained heap growth, mutation volume, long tasks, dialog cleanup, and JavaScript errors.
+
+A temporary Windows self hosted validation workflow was used only to diagnose the original runner startup problem and was removed before final review. It is not intended to be merged.
 
 ## Deployment architecture
 
@@ -502,19 +511,17 @@ wordpress/slayerkey-website/stripe-webhook.php
 
 No Discord repository or Discord implementation is touched.
 
-## Manual production steps after CI is unblocked
+## Manual production steps
 
-1. Resolve the GitHub Actions pre runner startup failure so the reliability workflow can actually execute.
-2. Require the complete PR #53 reliability suite to pass.
-3. Review the final PR diff.
-4. Verify the PostHog project receiving edge.slayerkey.com traffic is the intended Slayerkey project.
-5. Compare the live WordPress WPCode footer with docs/wordpress/wpcode/footer.html.
-6. Manually apply only the reviewed WPCode changes for lead_submitted and the current GA4 checkout map.
-7. Test a safe free routine submission and verify lead_submitted without PII.
-8. Click a safe Whop checkout link and Stripe checkout link and verify checkout_started.
-9. Verify a real or provider safe test payment produces one sale_confirmed event from each configured provider.
-10. Confirm repeated webhook delivery does not create a second sale_confirmed event.
-11. Only after those checks, merge PR #53 and allow the normal main branch deployment workflow to publish the GitHub managed plugin changes.
+1. Review the final PR #53 diff.
+2. Verify the PostHog project receiving edge.slayerkey.com traffic is the intended Slayerkey project.
+3. Compare the live WordPress WPCode footer with docs/wordpress/wpcode/footer.html.
+4. Manually apply only the reviewed WPCode changes for lead_submitted and the current GA4 checkout map.
+5. Test a safe free routine submission and verify lead_submitted without PII.
+6. Click a safe Whop checkout link and Stripe checkout link and verify checkout_started.
+7. Verify a real or provider safe test payment produces one sale_confirmed event from each configured provider.
+8. Confirm repeated webhook delivery does not create a second sale_confirmed event.
+9. Only after those checks and explicit Slayerkey approval, merge PR #53 and allow the normal main branch deployment workflow to publish the GitHub managed plugin changes.
 
 ## Deliberately deferred
 
@@ -532,7 +539,7 @@ Any change outside slayerkey/slayerkey-website.
 
 Repository implementation:
 
-Prepared.
+READY FOR MANUAL PRODUCTION STEPS
 
 Production:
 
@@ -540,6 +547,8 @@ Not changed.
 
 CI:
 
-Blocked before runner startup.
+The complete normal reliability suite has passed on the audited implementation. The final cleaned documentation-only head must retain a green reliability result before merge.
 
-The next required action is outside repository code: restore GitHub Actions runner execution, then allow the complete reliability suite to run before any production step.
+Remaining work:
+
+Manual production validation and explicit approval only.
