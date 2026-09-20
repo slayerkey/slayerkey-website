@@ -10,9 +10,9 @@ Reconciliation branch:
 
 audit/non-discord-analytics-reconcile
 
-Base commit:
+Current main base after reconciliation:
 
-2910bab41898f56459ffad0389b1f1dc683856bd
+ef0f23de69cbf33efa5c7f8c527e388318e6214b
 
 The branch must not be merged or deployed without explicit Slayerkey approval.
 
@@ -332,19 +332,27 @@ The cross-browser edge test now validates both real chooser destinations, UTM at
 
 ## Production status discovered during reconciliation
 
-Main commit 2910bab41898f56459ffad0389b1f1dc683856bd passed its full pre-deploy reliability gate.
+Two successive main releases passed their pre-deploy reliability gates and were uploaded to EasyWP:
 
-Its EasyWP deployment subsequently uploaded the release and logged:
+2910bab41898f56459ffad0389b1f1dc683856bd
+
+ef0f23de69cbf33efa5c7f8c527e388318e6214b
+
+The deployment logs recorded:
 
 Published 2910bab41898f56459ffad0389b1f1dc683856bd
 
-The deployment then failed ordinary live verification with:
+and later:
+
+Published ef0f23de69cbf33efa5c7f8c527e388318e6214b
+
+Both deployments then failed ordinary live verification with the same assertion:
 
 Cached HTML release marker mismatch
 
-Therefore the deployment cannot be described as cleanly verified.
+This isolates the observed deployment failure to post-upload live HTML/cache verification rather than the repository reliability gate or upload step.
 
-The upload occurred before the failure, so production may contain some or all of that main release while Cloudflare or EasyWP continued serving stale cached HTML during verification.
+Neither release can be described as cleanly verified at the ordinary public URL. The latest uploaded main release is ef0f23de69cbf33efa5c7f8c527e388318e6214b, while Cloudflare or EasyWP continued serving HTML without the expected release marker during verification.
 
 This reconciliation branch has not been deployed.
 
