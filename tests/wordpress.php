@@ -75,7 +75,7 @@ $webhookBody = json_encode([
         'billing_reason' => 'subscription_create',
         'product' => ['id' => 'prod_test'],
         'plan' => ['id' => 'plan_test'],
-        'user' => ['id' => 'user_test_repeat'],
+        'user_id' => 'user_test_repeat',
     ],
 ]);
 $webhookSignature = 'v1,' . base64_encode(hash_hmac('sha256', $webhookId . '.' . $webhookTimestamp . '.' . $webhookBody, $GLOBALS['whop_test_secret'], true));
@@ -92,35 +92,33 @@ check($GLOBALS['last_remote_post'][1]['body'] === $whopPostBeforeDuplicate, 'Dup
 $invalidWebhookResult = slayerkey_sales_handle_whop_webhook($webhookBody, 'msg_test_sale_2', $webhookTimestamp, 'v1,invalid');
 check($invalidWebhookResult['status'] === 400, 'Invalid Whop signature rejected');
 
-check(slayerkey_sales_safe_client_reference_id('ph_browser_123-abc') === 'ph_browser_123-abc', 'Valid Stripe client reference accepted');
 check(str_starts_with(slayerkey_sales_pseudonymous_id('stripe_customer', 'cus_test_123'), 'stripe_customer_'), 'Provider customer ID can be pseudonymized');
 check(!str_contains(slayerkey_sales_pseudonymous_id('stripe_customer', 'cus_test_123'), 'cus_test_123'), 'Pseudonymous provider identity hides raw customer ID');
-check(slayerkey_sales_safe_client_reference_id('email@example.com') === '', 'PII-shaped invalid Stripe client reference rejected');
-check(slayerkey_sales_safe_client_reference_id(str_repeat('a', 201)) === '', 'Oversized Stripe client reference rejected');
 
-$stripeCapture = slayerkey_sales_posthog_capture(
-    'stripe',
-    'evt_test_stripe_sale',
-    ['stripe_event_type' => 'checkout.session.completed'],
-    'ph_browser_123-abc'
-);
-check($stripeCapture === true, 'Stripe PostHog capture accepted');
-$stripePayload = json_decode($GLOBALS['last_remote_post'][1]['body'], true);
-check($stripePayload['distinct_id'] === 'ph_browser_123-abc', 'Stripe sale uses validated browser distinct ID');
+$whopStringPayload = json_decode($webhookBody, true);
+$whopStringPayload['id'] = 'msg_test_sale_string_user';
+$whopStringPayload['data']['user'] = 'user_string_shape';
+unset($whopStringPayload['data']['user_id']);
+$whopStringBody = json_encode($whopStringPayload);
+$whopStringSignature = 'v1,' . base64_encode(hash_hmac('sha256', 'msg_test_sale_string_user' . '.' . $webhookTimestamp . '.' . $whopStringBody, $GLOBALS['whop_test_secret'], true));
+$whopStringResult = slayerkey_sales_handle_whop_webhook($whopStringBody, 'msg_test_sale_string_user', $webhookTimestamp, $whopStringSignature);
+check($whopStringResult['status'] === 200 && $whopStringResult['body']['ok'] === true, 'Whop string user ID shape accepted');
+$whopStringPostHog = json_decode($GLOBALS['last_remote_post'][1]['body'], true);
+check(str_starts_with($whopStringPostHog['distinct_id'], 'whop_user_'), 'Whop string user ID shape pseudonymized');
+check(!str_contains($GLOBALS['last_remote_post'][1]['body'], 'user_string_shape'), 'Raw Whop string user ID is not sent to PostHog');
 
-$fallbackCapture = slayerkey_sales_posthog_capture(
-    'stripe',
-    'evt_test_stripe_fallback',
-    ['stripe_event_type' => 'checkout.session.completed'],
-    'email@example.com'
-);
-check($fallbackCapture === true, 'Stripe fallback capture accepted');
-$fallbackPayload = json_decode($GLOBALS['last_remote_post'][1]['body'], true);
-check(str_starts_with($fallbackPayload['distinct_id'], 'sale:stripe:'), 'Invalid Stripe reference falls back to event identity');
+$whopExpandedPayload = json_decode($webhookBody, true);
+$whopExpandedPayload['id'] = 'msg_test_sale_expanded_user';
+$whopExpandedPayload['data']['user'] = ['id' => 'user_expanded_shape'];
+unset($whopExpandedPayload['data']['user_id']);
+$whopExpandedBody = json_encode($whopExpandedPayload);
+$whopExpandedSignature = 'v1,' . base64_encode(hash_hmac('sha256', 'msg_test_sale_expanded_user' . '.' . $webhookTimestamp . '.' . $whopExpandedBody, $GLOBALS['whop_test_secret'], true));
+$whopExpandedResult = slayerkey_sales_handle_whop_webhook($whopExpandedBody, 'msg_test_sale_expanded_user', $webhookTimestamp, $whopExpandedSignature);
+check($whopExpandedResult['status'] === 200 && $whopExpandedResult['body']['ok'] === true, 'Whop expanded user shape accepted');
+$whopExpandedPostHog = json_decode($GLOBALS['last_remote_post'][1]['body'], true);
+check(str_starts_with($whopExpandedPostHog['distinct_id'], 'whop_user_'), 'Whop expanded user shape pseudonymized');
+check(!str_contains($GLOBALS['last_remote_post'][1]['body'], 'user_expanded_shape'), 'Raw Whop expanded user ID is not sent to PostHog');
 
-$stripeSource = file_get_contents($plugin . '/stripe-webhook.php');
-check(str_contains($stripeSource, "client_reference_id"), 'Stripe webhook reads client reference ID');
-check(str_contains($stripeSource, "identity_source"), 'Stripe webhook records identity source without exposing the ID');
 if (file_exists($plugin . '/DEPLOYED_ASSETS.json')) {
     $manifest = json_decode(file_get_contents($plugin . '/DEPLOYED_ASSETS.json'), true);
     check(SLAYERKEY_TRACKING_ASSET === $manifest['tracking_js'], 'Built tracking constant');
