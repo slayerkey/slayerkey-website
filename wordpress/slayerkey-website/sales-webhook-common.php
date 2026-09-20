@@ -35,6 +35,44 @@ function slayerkey_sales_get_secret( $provider ) {
     return is_string( $value ) ? trim( $value ) : '';
 }
 
+function slayerkey_sales_whop_signing_key( $secret ) {
+    if ( ! is_string( $secret ) ) {
+        return '';
+    }
+
+    $secret = trim( $secret );
+
+    if ( '' === $secret ) {
+        return '';
+    }
+
+    // Current Whop webhook secrets use the ws_ prefix and the literal secret
+    // bytes as the HMAC key. Legacy/Standard Webhooks whsec_ secrets serialize
+    // the key bytes as base64 after the prefix.
+    if ( 0 === strpos( $secret, 'whsec_' ) ) {
+        $encoded = substr( $secret, 6 );
+
+        if ( '' === $encoded ) {
+            return '';
+        }
+
+        $padding = strlen( $encoded ) % 4;
+        if ( 0 !== $padding ) {
+            $encoded .= str_repeat( '=', 4 - $padding );
+        }
+
+        $decoded = base64_decode( $encoded, true );
+
+        return false === $decoded ? '' : $decoded;
+    }
+
+    if ( 0 === strpos( $secret, 'ws_' ) ) {
+        return $secret;
+    }
+
+    return '';
+}
+
 function slayerkey_sales_processed_key( $provider, $event_id ) {
     return 'sk_sale_' . $provider . '_' . md5( $event_id );
 }
@@ -180,8 +218,17 @@ function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_t
         );
     }
 
+    $signing_key = slayerkey_sales_whop_signing_key( $secret );
+
+    if ( '' === $signing_key ) {
+        return array(
+            'status' => 503,
+            'body'   => array( 'ok' => false, 'error' => 'Whop webhook secret format is not supported.' ),
+        );
+    }
+
     $signed_payload      = $webhook_id . '.' . $webhook_timestamp . '.' . $raw_body;
-    $expected_signature  = base64_encode( hash_hmac( 'sha256', $signed_payload, $secret, true ) );
+    $expected_signature  = base64_encode( hash_hmac( 'sha256', $signed_payload, $signing_key, true ) );
     $provided_signatures = array();
 
     if ( preg_match_all( '/v1,([A-Za-z0-9+\\/=]+)/', $signature_header, $matches ) ) {
