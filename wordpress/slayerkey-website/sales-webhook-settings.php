@@ -149,7 +149,7 @@ $stripe_endpoint   = home_url( '/wp-content/plugins/slayerkey-website/stripe-web
 
         <label for="whop_api_key">Whop Company API key</label>
         <input id="whop_api_key" name="whop_api_key" type="password" autocomplete="off" placeholder="Paste Company API key">
-        <p class="small">Create this in Whop Developer settings. It needs permission to create checkout configurations for your existing plans. The key stays in a non-autoloaded WordPress option and is never sent to the browser.</p>
+        <p class="small">Create this in Whop Developer settings with checkout configuration permissions: checkout_configuration:create, checkout_configuration:basic:read, plan:create, access_pass:create, and access_pass:update. The key stays in a non-autoloaded WordPress option and is never sent to the browser.</p>
         <?php if ( $whop_api_configured ) : ?>
             <label class="clear"><input type="checkbox" name="clear_whop_api" value="1"> Clear saved Whop API key</label>
         <?php endif; ?>
