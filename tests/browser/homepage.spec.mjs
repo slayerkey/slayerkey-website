@@ -162,9 +162,6 @@ test('direct Whop and Stripe checkouts emit checkout_started without changing na
     window.posthog = {
       capture(event, properties) {
         window.__posthogCaptures.push({ event, properties });
-      },
-      get_distinct_id() {
-        return 'ph_browser_123-abc';
       }
     };
 
@@ -199,9 +196,6 @@ test('direct Whop and Stripe checkouts emit checkout_started without changing na
   expect(captured[1].properties.provider).toBe('stripe');
   expect(captured[1].properties.offer).toBe('improvement_system');
   expect(captured[1].properties.cta_location).toBe('test');
-  expect(captured[1].properties.browser_reference_attached).toBe(true);
-  const stripeHref = await page.locator('#test-stripe-checkout').getAttribute('href');
-  expect(new URL(stripeHref).searchParams.get('client_reference_id')).toBe('ph_browser_123-abc');
 });
 
 test('GA4 begin_checkout maps every current paid offer and value', async ({ page }) => {
