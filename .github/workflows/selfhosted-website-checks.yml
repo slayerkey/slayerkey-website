@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   selfhosted-reliability:
-    runs-on: [self-hosted, Windows, X64, slayerkey-website]
+    runs-on: self-hosted
     timeout-minutes: 45
 
     steps:
