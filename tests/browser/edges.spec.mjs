@@ -1,7 +1,26 @@
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ context }) => {
-  await context.route('**/*', r => new URL(r.request().url()).hostname === '127.0.0.1' ? r.continue() : r.abort());
+  await context.route('**/*', r => {
+    const url = new URL(r.request().url());
+
+    if (url.hostname === '127.0.0.1') {
+      return r.continue();
+    }
+
+    // The checkout-destination test intentionally clicks the real Whop anchors.
+    // Returning a tiny deterministic document keeps that navigation real while
+    // avoiding WebKit instability caused by aborting a top-level checkout target.
+    if (url.hostname === 'whop.com' && url.pathname.startsWith('/checkout/')) {
+      return r.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<!doctype html><title>Checkout test target</title>'
+      });
+    }
+
+    return r.abort();
+  });
 });
 
 test('campaign attribution and both chooser checkouts use the existing pricing destinations', async ({ page, context }) => {
