@@ -234,6 +234,88 @@ test('Dojo plan chooser preserves checkout analytics metadata', async ({ page })
   expect(captured.properties.cta_location).toBe('plan_chooser_monthly');
 });
 
+test('enabled Whop attribution hands browser identity and campaign metadata to checkout configuration', async ({ page }) => {
+  await page.goto('/?utm_source=youtube&utm_medium=video&utm_campaign=guide&utm_content=description');
+  await page.locator(hero).first().click();
+  await expect(page.locator('#sk-plan-chooser')).toBeVisible();
+
+  await page.evaluate(() => {
+    window.__posthogCaptures = [];
+    window.__checkoutRequest = null;
+    window.__checkoutWindow = null;
+
+    window.SK_TRACKING_CONFIG = {
+      whop_attribution_enabled: true,
+      whop_checkout_endpoint: '/wp-json/slayerkey/v1/whop-checkout'
+    };
+
+    window.posthog = {
+      get_distinct_id() { return 'visitor_test'; },
+      get_session_id() { return 'session_test'; },
+      capture(event, properties) {
+        window.__posthogCaptures.push({ event, properties });
+      }
+    };
+
+    window.open = () => {
+      window.__checkoutWindow = {
+        closed: false,
+        opener: window,
+        location: { href: 'about:blank' }
+      };
+      return window.__checkoutWindow;
+    };
+
+    window.fetch = async (url, options) => {
+      window.__checkoutRequest = {
+        url,
+        method: options.method,
+        credentials: options.credentials,
+        body: JSON.parse(options.body)
+      };
+
+      return {
+        ok: true,
+        async json() {
+          return {
+            purchase_url: 'https://whop.com/checkout/plan_eVop6pXsIhHlf/?session=ch_browser_test'
+          };
+        }
+      };
+    };
+  });
+
+  await page.locator('.sk-plan-action').first().click();
+
+  await expect.poll(async () => page.evaluate(() => window.__checkoutRequest !== null)).toBe(true);
+
+  const result = await page.evaluate(() => ({
+    request: window.__checkoutRequest,
+    checkoutHref: window.__checkoutWindow && window.__checkoutWindow.location.href,
+    captures: window.__posthogCaptures
+  }));
+
+  expect(result.request.url).toBe('/wp-json/slayerkey/v1/whop-checkout');
+  expect(result.request.method).toBe('POST');
+  expect(result.request.credentials).toBe('same-origin');
+  expect(result.request.body.plan_id).toBe('plan_eVop6pXsIhHlf');
+  expect(result.request.body.metadata.posthog_distinct_id).toBe('visitor_test');
+  expect(result.request.body.metadata.posthog_session_id).toBe('session_test');
+  expect(result.request.body.metadata.utm_source).toBe('youtube');
+  expect(result.request.body.metadata.utm_medium).toBe('video');
+  expect(result.request.body.metadata.utm_campaign).toBe('guide');
+  expect(result.request.body.metadata.utm_content).toBe('description');
+  expect(result.request.body.metadata.cta_id).toBe('dojo-plan-monthly');
+  expect(result.request.body.metadata.cta_location).toBe('plan_chooser_monthly');
+  expect(result.request.body.metadata.route).toBe('website');
+  expect(result.checkoutHref).toBe('https://whop.com/checkout/plan_eVop6pXsIhHlf/?session=ch_browser_test');
+
+  const checkoutEvents = result.captures.filter(item => item.event === 'checkout_started');
+  expect(checkoutEvents).toHaveLength(1);
+  expect(checkoutEvents[0].properties.provider).toBe('whop');
+  expect(checkoutEvents[0].properties.cta_location).toBe('plan_chooser_monthly');
+});
+
 test('GA4 begin_checkout maps every current paid offer and value', async ({ page }) => {
   await page.goto('/');
   const cases = [
