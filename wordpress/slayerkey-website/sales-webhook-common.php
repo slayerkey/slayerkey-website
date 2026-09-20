@@ -73,6 +73,24 @@ function slayerkey_sales_safe_client_reference_id( $value ) {
     return $value;
 }
 
+function slayerkey_sales_pseudonymous_id( $namespace, $value ) {
+    if ( ! is_string( $namespace ) || ! preg_match( '/^[A-Za-z0-9_]+$/D', $namespace ) ) {
+        return '';
+    }
+
+    if ( ! is_scalar( $value ) ) {
+        return '';
+    }
+
+    $value = trim( (string) $value );
+
+    if ( '' === $value ) {
+        return '';
+    }
+
+    return $namespace . '_' . hash( 'sha256', $value );
+}
+
 function slayerkey_sales_posthog_capture( $provider, $event_id, $properties = array(), $distinct_id = '' ) {
     if ( ! defined( 'SLAYERKEY_POSTHOG_TOKEN' ) || '' === SLAYERKEY_POSTHOG_TOKEN ) {
         return new WP_Error( 'posthog_not_configured', 'PostHog project token is not configured.' );
@@ -240,7 +258,17 @@ function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_t
         }
     }
 
-    $result = slayerkey_sales_posthog_capture( 'whop', $event_id, $properties );
+    $whop_distinct_id = '';
+
+    if ( isset( $payment['user'] ) && is_array( $payment['user'] ) && ! empty( $payment['user']['id'] ) ) {
+        $whop_distinct_id = slayerkey_sales_pseudonymous_id( 'whop_user', $payment['user']['id'] );
+
+        if ( '' !== $whop_distinct_id ) {
+            $properties['identity_source'] = 'whop_user_id_hash';
+        }
+    }
+
+    $result = slayerkey_sales_posthog_capture( 'whop', $event_id, $properties, $whop_distinct_id );
 
     if ( is_wp_error( $result ) ) {
         error_log( '[Slayerkey Whop webhook] PostHog capture failed: ' . $result->get_error_message() );
