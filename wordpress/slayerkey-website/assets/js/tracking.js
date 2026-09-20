@@ -99,18 +99,36 @@
     window.setTimeout(updateWelcomeDiscordLink, 750);
 
     function currentAttribution() {
+        var empty = { utm_source: null, utm_medium: null, utm_campaign: null, utm_content: null };
         try {
             var q = new URLSearchParams(window.location.search);
-            return {
+            var current = {
                 utm_source: q.get('utm_source') || null,
                 utm_medium: q.get('utm_medium') || null,
                 utm_campaign: q.get('utm_campaign') || null,
                 utm_content: q.get('utm_content') || null
             };
-        } catch (error) {
-            return { utm_source: null, utm_medium: null, utm_campaign: null, utm_content: null };
-        }
+            var hasCurrent = current.utm_source || current.utm_medium || current.utm_campaign || current.utm_content;
+            if (hasCurrent) {
+                try { sessionStorage.setItem('sk_attribution_v1', JSON.stringify(current)); } catch (storageError) {}
+                return current;
+            }
+            try {
+                var saved = JSON.parse(sessionStorage.getItem('sk_attribution_v1') || 'null');
+                if (saved && typeof saved === 'object') {
+                    return {
+                        utm_source: saved.utm_source || null,
+                        utm_medium: saved.utm_medium || null,
+                        utm_campaign: saved.utm_campaign || null,
+                        utm_content: saved.utm_content || null
+                    };
+                }
+            } catch (storageError) {}
+        } catch (error) {}
+        return empty;
     }
+
+    currentAttribution();
 
     function whopPlanId(href) {
         try {
