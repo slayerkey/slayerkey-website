@@ -27,6 +27,37 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+      - name: Setup portable PHP
+        shell: powershell
+        run: |
+          $phpVersion = '8.5.10'
+          $phpUrl = 'https://downloads.php.net/~windows/releases/archives/php-8.5.10-nts-Win32-vs17-x64.zip'
+          $phpSha256 = '22ec430195984d233eb9e62c637a945bbcda06efca2f392d9d96d62c6acd34f8'
+          $phpDir = Join-Path $env:RUNNER_TEMP "php-$phpVersion"
+          $phpZip = Join-Path $env:RUNNER_TEMP "php-$phpVersion.zip"
+
+          if (-not (Test-Path (Join-Path $phpDir 'php.exe'))) {
+            Remove-Item $phpDir -Recurse -Force -ErrorAction SilentlyContinue
+            Remove-Item $phpZip -Force -ErrorAction SilentlyContinue
+
+            Invoke-WebRequest -Uri $phpUrl -OutFile $phpZip
+
+            $actualHash = (Get-FileHash $phpZip -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($actualHash -ne $phpSha256) {
+              throw "Portable PHP SHA256 mismatch. Expected $phpSha256 but got $actualHash."
+            }
+
+            Expand-Archive -LiteralPath $phpZip -DestinationPath $phpDir -Force
+          }
+
+          $phpExe = Join-Path $phpDir 'php.exe'
+          if (-not (Test-Path $phpExe)) {
+            throw "Portable PHP executable was not created."
+          }
+
+          $phpDir | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "PHP_EXE=$phpExe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          & $phpExe --version
 
       - name: Preflight
         shell: powershell
@@ -76,11 +107,11 @@ jobs:
           "PYTHON_EXE=$pythonExe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           & $pythonExe --version
 
-          if (-not (Get-Command php -ErrorAction SilentlyContinue)) {
-            throw "PHP is required for the WordPress regression suite but was not found on this self-hosted runner."
+          if (-not $env:PHP_EXE -or -not (Test-Path $env:PHP_EXE)) {
+            throw "Portable PHP setup did not expose a usable executable."
           }
 
-          php --version
+          & $env:PHP_EXE --version
 
       - run: npm ci
 
