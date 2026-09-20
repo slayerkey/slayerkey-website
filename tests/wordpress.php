@@ -21,6 +21,7 @@ class WP_Error {
 function is_wp_error($value) { return $value instanceof WP_Error; }
 function get_option($name, $default = '') {
     if ($name === 'slayerkey_whop_webhook_secret') return $GLOBALS['whop_test_secret'] ?? $default;
+    if ($name === 'slayerkey_stripe_webhook_secret') return $GLOBALS['stripe_test_secret'] ?? $default;
     return $default;
 }
 function get_transient($key) { return $GLOBALS['transients'][$key] ?? false; }
@@ -134,6 +135,78 @@ check($whopExpandedResult['status'] === 200 && $whopExpandedResult['body']['ok']
 $whopExpandedPostHog = json_decode($GLOBALS['last_remote_post'][1]['body'], true);
 check(str_starts_with($whopExpandedPostHog['distinct_id'], 'whop_user_'), 'Whop expanded user shape pseudonymized');
 check(!str_contains($GLOBALS['last_remote_post'][1]['body'], 'user_expanded_shape'), 'Raw Whop expanded user ID is not sent to PostHog');
+
+$GLOBALS['stripe_test_secret'] = 'whsec_stripe_test_secret';
+$stripeWebhookTimestamp = (string) time();
+$stripeWebhookBody = json_encode([
+    'id' => 'evt_test_stripe_1',
+    'type' => 'checkout.session.completed',
+    'data' => [
+        'object' => [
+            'payment_status' => 'paid',
+            'mode' => 'payment',
+            'customer' => 'cus_repeat_buyer_123',
+        ],
+    ],
+]);
+$stripeWebhookSignature = 't=' . $stripeWebhookTimestamp . ',v1=' . hash_hmac(
+    'sha256',
+    $stripeWebhookTimestamp . '.' . $stripeWebhookBody,
+    $GLOBALS['stripe_test_secret']
+);
+$stripeWebhookResult = slayerkey_sales_handle_stripe_webhook($stripeWebhookBody, $stripeWebhookSignature);
+check($stripeWebhookResult['status'] === 200 && $stripeWebhookResult['body']['ok'] === true, 'Valid Stripe payment webhook accepted');
+$stripeWebhookPostHog = json_decode($GLOBALS['last_remote_post'][1]['body'], true);
+check($stripeWebhookPostHog['event'] === 'sale_confirmed', 'Stripe payment captured to PostHog');
+check(str_starts_with($stripeWebhookPostHog['distinct_id'], 'stripe_customer_'), 'Stripe sale uses pseudonymous customer identity when available');
+check(!str_contains($GLOBALS['last_remote_post'][1]['body'], 'cus_repeat_buyer_123'), 'Raw Stripe customer ID is not sent to PostHog');
+check(($stripeWebhookPostHog['properties']['identity_source'] ?? '') === 'stripe_customer_id_hash', 'Stripe identity source is recorded without exposing identity');
+
+$stripePostBeforeDuplicate = $GLOBALS['last_remote_post'][1]['body'];
+$stripeDuplicateResult = slayerkey_sales_handle_stripe_webhook($stripeWebhookBody, $stripeWebhookSignature);
+check(!empty($stripeDuplicateResult['body']['duplicate']), 'Duplicate Stripe webhook ignored');
+check($GLOBALS['last_remote_post'][1]['body'] === $stripePostBeforeDuplicate, 'Duplicate Stripe webhook does not recapture PostHog event');
+
+$stripeInvalidResult = slayerkey_sales_handle_stripe_webhook($stripeWebhookBody, 't=' . $stripeWebhookTimestamp . ',v1=invalid');
+check($stripeInvalidResult['status'] === 400, 'Invalid Stripe signature rejected');
+
+$stripeUnpaidBody = json_encode([
+    'id' => 'evt_test_stripe_unpaid',
+    'type' => 'checkout.session.completed',
+    'data' => [
+        'object' => [
+            'payment_status' => 'unpaid',
+            'mode' => 'payment',
+        ],
+    ],
+]);
+$stripeUnpaidSignature = 't=' . $stripeWebhookTimestamp . ',v1=' . hash_hmac(
+    'sha256',
+    $stripeWebhookTimestamp . '.' . $stripeUnpaidBody,
+    $GLOBALS['stripe_test_secret']
+);
+$stripeUnpaidResult = slayerkey_sales_handle_stripe_webhook($stripeUnpaidBody, $stripeUnpaidSignature);
+check(!empty($stripeUnpaidResult['body']['ignored']) && ($stripeUnpaidResult['body']['reason'] ?? '') === 'not_paid', 'Unpaid Stripe Checkout Session ignored');
+
+$stripeNoCustomerBody = json_encode([
+    'id' => 'evt_test_stripe_no_customer',
+    'type' => 'checkout.session.completed',
+    'data' => [
+        'object' => [
+            'payment_status' => 'paid',
+            'mode' => 'payment',
+        ],
+    ],
+]);
+$stripeNoCustomerSignature = 't=' . $stripeWebhookTimestamp . ',v1=' . hash_hmac(
+    'sha256',
+    $stripeWebhookTimestamp . '.' . $stripeNoCustomerBody,
+    $GLOBALS['stripe_test_secret']
+);
+$stripeNoCustomerResult = slayerkey_sales_handle_stripe_webhook($stripeNoCustomerBody, $stripeNoCustomerSignature);
+check($stripeNoCustomerResult['status'] === 200 && $stripeNoCustomerResult['body']['ok'] === true, 'Stripe sale without Customer still accepted');
+$stripeNoCustomerPostHog = json_decode($GLOBALS['last_remote_post'][1]['body'], true);
+check(str_starts_with($stripeNoCustomerPostHog['distinct_id'], 'sale:stripe:'), 'Stripe sale without Customer falls back to event identity');
 
 if (file_exists($plugin . '/DEPLOYED_ASSETS.json')) {
     $manifest = json_decode(file_get_contents($plugin . '/DEPLOYED_ASSETS.json'), true);
