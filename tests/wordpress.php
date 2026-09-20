@@ -61,9 +61,9 @@ function check($value, $message) { if (!$value) throw new RuntimeException($mess
 
 $plugin = $argv[1] ?? __DIR__ . '/../wordpress/slayerkey-website';
 require $plugin . '/slayerkey-website.php';
+$GLOBALS['whop_api_key'] = 'test_whop_company_api_key_1234567890';
 $_SERVER['REQUEST_URI'] = '/';
 slayerkey_website_enqueue_tracking();
-$GLOBALS['whop_api_key'] = 'test_whop_company_api_key_1234567890';
 check($GLOBALS['enqueued'][0][1] === plugin_dir_url('') . SLAYERKEY_TRACKING_ASSET, 'Tracking enqueue URL');
 check(($GLOBALS['localized']['SK_TRACKING_CONFIG']['whop_attribution_enabled'] ?? false) === true, 'Whop attribution localized when API key exists');
 $html = file_get_contents($plugin . '/previews/dojo-v3/index.html');
