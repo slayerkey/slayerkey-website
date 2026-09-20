@@ -58,6 +58,33 @@
             '#sk-std #pricing .dj-price-card{align-self:stretch!important}';
     }
 
+    function checkoutProviderForElement(element) {
+        if (!element || element.tagName !== 'A') {
+            return null;
+        }
+
+        var href = element.getAttribute('href');
+        if (!href) {
+            return null;
+        }
+
+        try {
+            var url = new URL(href, window.location.href);
+
+            if (url.hostname === 'whop.com' && url.pathname.indexOf('/checkout/') === 0) {
+                return 'whop';
+            }
+
+            if (url.hostname === 'buy.stripe.com') {
+                return 'stripe';
+            }
+        } catch (error) {
+            return null;
+        }
+
+        return null;
+    }
+
     function updateWelcomeDiscordLink() {
         var path = window.location.pathname.replace(/\/+$/, '') || '/';
 
@@ -109,12 +136,27 @@
             return;
         }
 
-        try { window.posthog.capture('cta_click', {
+        var properties = {
             cta_id: element.getAttribute('data-sk-cta'),
             cta_location: element.getAttribute('data-sk-location') || null,
             offer: element.getAttribute('data-sk-offer') || null,
             plan_direct: element.getAttribute('data-sk-plan-direct') === 'true',
             page_path: window.location.pathname
-        }); } catch (error) { /* Analytics must never interrupt navigation. */ }
+        };
+
+        try {
+            window.posthog.capture('cta_click', properties);
+
+            var checkoutProvider = checkoutProviderForElement(element);
+            if (checkoutProvider) {
+                window.posthog.capture('checkout_started', {
+                    provider: checkoutProvider,
+                    cta_id: properties.cta_id,
+                    cta_location: properties.cta_location,
+                    offer: properties.offer,
+                    page_path: properties.page_path
+                });
+            }
+        } catch (error) { /* Analytics must never interrupt navigation. */ }
     }, true);
 })();
