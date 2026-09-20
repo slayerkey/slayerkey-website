@@ -277,11 +277,15 @@ Browser coverage includes:
 1. checkout_started on direct Whop checkout
 2. checkout_started on direct Stripe checkout
 3. provider, offer, CTA location, and route properties
-4. GA4 begin_checkout mapping for all five current paid offers
-5. lead_submitted after the existing Kit submission path
-6. no lead email in PostHog event properties
-7. deterministic chooser destination assertions without opening external Whop popups in the cross-browser edge test
-8. separate checkout-click tests that exercise the real browser analytics path
+4. chooser-specific CTA metadata
+5. enabled browser-to-Whop Checkout Configuration handoff
+6. PostHog distinct ID, session ID, UTM, CTA, and route metadata sent into that handoff
+7. returned Whop purchase URL used by the checkout flow
+8. GA4 begin_checkout mapping for all five current paid offers
+9. lead_submitted after the existing Kit submission path
+10. no lead email in PostHog event properties
+11. deterministic chooser destination assertions without opening external Whop popups in the cross-browser edge test
+12. separate checkout-click tests that exercise the real browser analytics path
 
 PHP coverage includes:
 
