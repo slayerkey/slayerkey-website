@@ -112,15 +112,9 @@ if ( isset( $session['mode'] ) && is_string( $session['mode'] ) ) {
     $properties['checkout_mode'] = $session['mode'];
 }
 
-$client_reference_id = slayerkey_sales_safe_client_reference_id(
-    isset( $session['client_reference_id'] ) ? $session['client_reference_id'] : ''
-);
+$stripe_distinct_id = '';
 
-$stripe_distinct_id = $client_reference_id;
-
-if ( '' !== $client_reference_id ) {
-    $properties['identity_source'] = 'stripe_client_reference_id';
-} elseif ( isset( $session['customer'] ) && is_string( $session['customer'] ) ) {
+if ( isset( $session['customer'] ) && is_string( $session['customer'] ) ) {
     $stripe_distinct_id = slayerkey_sales_pseudonymous_id( 'stripe_customer', $session['customer'] );
 
     if ( '' !== $stripe_distinct_id ) {
