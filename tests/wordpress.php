@@ -63,7 +63,12 @@ check(isset($GLOBALS['rest_routes']['slayerkey/v1/whop-webhook']), 'Whop REST ro
 check($GLOBALS['rest_routes']['slayerkey/v1/whop-webhook']['methods'] === 'POST', 'Whop REST route is POST-only');
 
 require_once $plugin . '/sales-webhook-common.php';
-$GLOBALS['whop_test_secret'] = 'whsec_test_secret';
+$GLOBALS['whop_test_secret'] = 'ws_test_secret';
+check(slayerkey_sales_whop_signing_key('ws_test_secret') === 'ws_test_secret', 'Current Whop ws_ secret uses literal HMAC key bytes');
+$legacyKeyBytes = 'legacy_test_key_bytes_1234567890';
+$legacySecret = 'whsec_' . rtrim(base64_encode($legacyKeyBytes), '=');
+check(slayerkey_sales_whop_signing_key($legacySecret) === $legacyKeyBytes, 'Legacy whsec_ secret decodes Standard Webhooks key bytes');
+
 $webhookId = 'msg_test_sale_1';
 $webhookTimestamp = (string) time();
 $webhookBody = json_encode([
@@ -89,6 +94,17 @@ $whopPostBeforeDuplicate = $GLOBALS['last_remote_post'][1]['body'];
 $duplicateWebhookResult = slayerkey_sales_handle_whop_webhook($webhookBody, $webhookId, $webhookTimestamp, $webhookSignature);
 check(!empty($duplicateWebhookResult['body']['duplicate']), 'Duplicate Whop webhook ignored');
 check($GLOBALS['last_remote_post'][1]['body'] === $whopPostBeforeDuplicate, 'Duplicate Whop webhook does not recapture PostHog event');
+$legacyWebhookId = 'msg_test_legacy_whsec';
+$legacyPayload = json_decode($webhookBody, true);
+$legacyPayload['id'] = $legacyWebhookId;
+$legacyPayload['data']['user_id'] = 'user_legacy_secret';
+$legacyBody = json_encode($legacyPayload);
+$GLOBALS['whop_test_secret'] = $legacySecret;
+$legacySignature = 'v1,' . base64_encode(hash_hmac('sha256', $legacyWebhookId . '.' . $webhookTimestamp . '.' . $legacyBody, $legacyKeyBytes, true));
+$legacyResult = slayerkey_sales_handle_whop_webhook($legacyBody, $legacyWebhookId, $webhookTimestamp, $legacySignature);
+check($legacyResult['status'] === 200 && $legacyResult['body']['ok'] === true, 'Legacy whsec_ Whop signature accepted with decoded key bytes');
+$GLOBALS['whop_test_secret'] = 'ws_test_secret';
+
 $invalidWebhookResult = slayerkey_sales_handle_whop_webhook($webhookBody, 'msg_test_sale_2', $webhookTimestamp, 'v1,invalid');
 check($invalidWebhookResult['status'] === 400, 'Invalid Whop signature rejected');
 
