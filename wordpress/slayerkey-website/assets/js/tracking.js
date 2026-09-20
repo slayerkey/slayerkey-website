@@ -85,55 +85,6 @@
         return null;
     }
 
-    function getSafePostHogDistinctId() {
-        if (!window.posthog || typeof window.posthog.get_distinct_id !== 'function') {
-            return null;
-        }
-
-        try {
-            var distinctId = window.posthog.get_distinct_id();
-
-            if (typeof distinctId !== 'string') {
-                return null;
-            }
-
-            distinctId = distinctId.trim();
-
-            return /^[A-Za-z0-9_-]{1,200}$/.test(distinctId) ? distinctId : null;
-        } catch (error) {
-            return null;
-        }
-    }
-
-    function attachStripeClientReference(element) {
-        if (!element || element.tagName !== 'A') {
-            return false;
-        }
-
-        try {
-            var url = new URL(element.getAttribute('href') || '', window.location.href);
-
-            if (url.hostname !== 'buy.stripe.com') {
-                return false;
-            }
-
-            if (url.searchParams.has('client_reference_id')) {
-                return true;
-            }
-
-            var distinctId = getSafePostHogDistinctId();
-            if (!distinctId) {
-                return false;
-            }
-
-            url.searchParams.set('client_reference_id', distinctId);
-            element.href = url.toString();
-            return true;
-        } catch (error) {
-            return false;
-        }
-    }
-
     function updateWelcomeDiscordLink() {
         var path = window.location.pathname.replace(/\/+$/, '') || '/';
 
@@ -198,17 +149,12 @@
 
             var checkoutProvider = checkoutProviderForElement(element);
             if (checkoutProvider) {
-                var browserReferenceAttached = checkoutProvider === 'stripe'
-                    ? attachStripeClientReference(element)
-                    : false;
-
                 window.posthog.capture('checkout_started', {
                     provider: checkoutProvider,
                     cta_id: properties.cta_id,
                     cta_location: properties.cta_location,
                     offer: properties.offer,
-                    page_path: properties.page_path,
-                    browser_reference_attached: browserReferenceAttached
+                    page_path: properties.page_path
                 });
             }
         } catch (error) { /* Analytics must never interrupt navigation. */ }
