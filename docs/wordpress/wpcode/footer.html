@@ -378,6 +378,16 @@
         });
       }
 
+      if (window.posthog && typeof window.posthog.capture === 'function') {
+        try {
+          window.posthog.capture('lead_submitted', {
+            lead_magnet: '30_day_rank_up_routine',
+            method: 'popup',
+            page_path: window.location.pathname
+          });
+        } catch(e) {}
+      }
+
       /* Whop sees checkouts and purchases on its own, but not leads captured on our site. */
       if (window.whop && typeof window.whop.track === 'function') {
         try {
