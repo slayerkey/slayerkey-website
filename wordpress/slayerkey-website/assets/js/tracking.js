@@ -141,6 +141,18 @@
         }
     }
 
+    function checkoutProviderForElement(element) {
+        if (!element || element.tagName !== 'A') return null;
+
+        try {
+            var url = new URL(element.getAttribute('href') || '', window.location.href);
+            if (url.hostname === 'whop.com' && url.pathname.indexOf('/checkout/') === 0) return 'whop';
+            if (url.hostname === 'buy.stripe.com') return 'stripe';
+        } catch (error) {}
+
+        return null;
+    }
+
     function attributedWhopCheckout(element, event) {
         var config = window.SK_TRACKING_CONFIG || {};
         if (!config.whop_attribution_enabled || !config.whop_checkout_endpoint) return false;
@@ -175,20 +187,7 @@
                 if (typeof window.posthog.get_session_id === 'function') {
                     metadata.posthog_session_id = window.posthog.get_session_id();
                 }
-                if (typeof window.posthog.capture === 'function') {
-                    window.posthog.capture('begin_checkout', {
-                        plan_id: planId,
-                        cta_id: metadata.cta_id,
-                        cta_location: metadata.cta_location,
-                        page_path: metadata.page_path,
-                        route: metadata.route,
-                        utm_source: metadata.utm_source,
-                        utm_medium: metadata.utm_medium,
-                        utm_campaign: metadata.utm_campaign,
-                        utm_content: metadata.utm_content
-                    });
-                }
-            } catch (error) { /* Analytics must never interrupt checkout. */ }
+            } catch (error) { /* Analytics identity must never interrupt checkout. */ }
         }
 
         var checkoutWindow = null;
@@ -234,13 +233,34 @@
         }
 
         if (window.posthog && typeof window.posthog.capture === 'function') {
-            try { window.posthog.capture('cta_click', {
-            cta_id: element.getAttribute('data-sk-cta'),
-            cta_location: element.getAttribute('data-sk-location') || null,
-            offer: element.getAttribute('data-sk-offer') || null,
-            plan_direct: element.getAttribute('data-sk-plan-direct') === 'true',
-                page_path: window.location.pathname
-            }); } catch (error) { /* Analytics must never interrupt navigation. */ }
+            try {
+                var ctaProperties = {
+                    cta_id: element.getAttribute('data-sk-cta'),
+                    cta_location: element.getAttribute('data-sk-location') || null,
+                    offer: element.getAttribute('data-sk-offer') || null,
+                    plan_direct: element.getAttribute('data-sk-plan-direct') === 'true',
+                    page_path: window.location.pathname
+                };
+
+                window.posthog.capture('cta_click', ctaProperties);
+
+                var checkoutProvider = checkoutProviderForElement(element);
+                if (checkoutProvider) {
+                    var attribution = currentAttribution();
+                    window.posthog.capture('checkout_started', {
+                        provider: checkoutProvider,
+                        cta_id: ctaProperties.cta_id,
+                        cta_location: ctaProperties.cta_location,
+                        offer: ctaProperties.offer,
+                        page_path: ctaProperties.page_path,
+                        route: 'website',
+                        utm_source: attribution.utm_source,
+                        utm_medium: attribution.utm_medium,
+                        utm_campaign: attribution.utm_campaign,
+                        utm_content: attribution.utm_content
+                    });
+                }
+            } catch (error) { /* Analytics must never interrupt navigation. */ }
         }
 
         attributedWhopCheckout(element, event);
