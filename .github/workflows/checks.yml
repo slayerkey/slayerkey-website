@@ -7,7 +7,7 @@ permissions:
   contents: read
 jobs:
   reliability:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64, key-pc]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -17,16 +17,15 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - name: Reclaim runner disk for browser matrix
-        run: |
-          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc || true
-          df -h /
+      - name: Show runner disk
+        shell: powershell
+        run: Get-PSDrive -PSProvider FileSystem
       - run: npm ci
-      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright install chromium webkit
       - run: npm run test:unit
-      - run: python3 tests/publish_test.py
+      - run: python tests/publish_test.py
       - run: npm run test:php
-      - run: python3 tools/build_deploy.py --output build/php-check/plugin
+      - run: python tools/build_deploy.py --output build/php-check/plugin
       - run: php tests/wordpress.php build/php-check/plugin
       - run: npm test
       - run: npm run test:soak
