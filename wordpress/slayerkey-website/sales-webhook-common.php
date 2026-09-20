@@ -180,6 +180,154 @@ function slayerkey_sales_posthog_capture( $provider, $event_id, $properties = ar
     return true;
 }
 
+function slayerkey_sales_handle_stripe_webhook( $raw_body, $signature_header ) {
+    $secret = slayerkey_sales_get_secret( 'stripe' );
+
+    if ( '' === $secret ) {
+        return array(
+            'status' => 503,
+            'body'   => array( 'ok' => false, 'error' => 'Stripe webhook secret is not configured.' ),
+        );
+    }
+
+    $raw_body        = is_string( $raw_body ) ? $raw_body : '';
+    $signature_header = is_string( $signature_header ) ? trim( $signature_header ) : '';
+
+    if ( '' === $raw_body || '' === $signature_header ) {
+        return array(
+            'status' => 400,
+            'body'   => array( 'ok' => false, 'error' => 'Missing Stripe payload or signature.' ),
+        );
+    }
+
+    $timestamp  = null;
+    $signatures = array();
+
+    foreach ( explode( ',', $signature_header ) as $part ) {
+        $part = trim( $part );
+        $pair = explode( '=', $part, 2 );
+
+        if ( 2 !== count( $pair ) ) {
+            continue;
+        }
+
+        if ( 't' === $pair[0] ) {
+            $timestamp = ctype_digit( $pair[1] ) ? (int) $pair[1] : null;
+        } elseif ( 'v1' === $pair[0] && '' !== $pair[1] ) {
+            $signatures[] = strtolower( $pair[1] );
+        }
+    }
+
+    if ( null === $timestamp || empty( $signatures ) ) {
+        return array(
+            'status' => 400,
+            'body'   => array( 'ok' => false, 'error' => 'Malformed Stripe signature header.' ),
+        );
+    }
+
+    if ( abs( time() - $timestamp ) > 300 ) {
+        return array(
+            'status' => 400,
+            'body'   => array( 'ok' => false, 'error' => 'Stripe signature timestamp is outside the allowed window.' ),
+        );
+    }
+
+    $expected_signature = hash_hmac( 'sha256', (string) $timestamp . '.' . $raw_body, $secret );
+    $verified           = false;
+
+    foreach ( $signatures as $signature ) {
+        if ( hash_equals( $expected_signature, $signature ) ) {
+            $verified = true;
+            break;
+        }
+    }
+
+    if ( ! $verified ) {
+        return array(
+            'status' => 400,
+            'body'   => array( 'ok' => false, 'error' => 'Invalid Stripe signature.' ),
+        );
+    }
+
+    $event = json_decode( $raw_body, true );
+
+    if ( ! is_array( $event ) || empty( $event['id'] ) || empty( $event['type'] ) ) {
+        return array(
+            'status' => 400,
+            'body'   => array( 'ok' => false, 'error' => 'Invalid Stripe event payload.' ),
+        );
+    }
+
+    $event_id   = (string) $event['id'];
+    $event_type = (string) $event['type'];
+
+    if ( 'checkout.session.completed' !== $event_type ) {
+        return array(
+            'status' => 200,
+            'body'   => array( 'ok' => true, 'ignored' => true ),
+        );
+    }
+
+    if ( slayerkey_sales_is_processed( 'stripe', $event_id ) ) {
+        return array(
+            'status' => 200,
+            'body'   => array( 'ok' => true, 'duplicate' => true ),
+        );
+    }
+
+    $session        = isset( $event['data']['object'] ) && is_array( $event['data']['object'] ) ? $event['data']['object'] : array();
+    $payment_status = isset( $session['payment_status'] ) ? (string) $session['payment_status'] : '';
+
+    if ( 'paid' !== $payment_status ) {
+        return array(
+            'status' => 200,
+            'body'   => array( 'ok' => true, 'ignored' => true, 'reason' => 'not_paid' ),
+        );
+    }
+
+    $properties = array(
+        'stripe_event_type' => $event_type,
+        'payment_status'    => 'paid',
+    );
+
+    if ( isset( $session['mode'] ) && is_string( $session['mode'] ) ) {
+        $properties['checkout_mode'] = $session['mode'];
+    }
+
+    $stripe_distinct_id = '';
+
+    if ( isset( $session['customer'] ) && is_string( $session['customer'] ) ) {
+        $stripe_distinct_id = slayerkey_sales_pseudonymous_id( 'stripe_customer', $session['customer'] );
+
+        if ( '' !== $stripe_distinct_id ) {
+            $properties['identity_source'] = 'stripe_customer_id_hash';
+        }
+    }
+
+    $result = slayerkey_sales_posthog_capture(
+        'stripe',
+        $event_id,
+        $properties,
+        $stripe_distinct_id
+    );
+
+    if ( is_wp_error( $result ) ) {
+        error_log( '[Slayerkey Stripe webhook] PostHog capture failed: ' . $result->get_error_message() );
+
+        return array(
+            'status' => 500,
+            'body'   => array( 'ok' => false, 'error' => 'Analytics delivery failed; Stripe should retry.' ),
+        );
+    }
+
+    slayerkey_sales_mark_processed( 'stripe', $event_id );
+
+    return array(
+        'status' => 200,
+        'body'   => array( 'ok' => true ),
+    );
+}
+
 function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_timestamp, $signature_header ) {
     $secret = slayerkey_sales_get_secret( 'whop' );
 
