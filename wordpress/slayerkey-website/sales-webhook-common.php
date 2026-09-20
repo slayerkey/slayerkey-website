@@ -59,7 +59,21 @@ function slayerkey_sales_mark_processed( $provider, $event_id ) {
     );
 }
 
-function slayerkey_sales_posthog_capture( $provider, $event_id, $properties = array() ) {
+function slayerkey_sales_safe_client_reference_id( $value ) {
+    if ( ! is_string( $value ) ) {
+        return '';
+    }
+
+    $value = trim( $value );
+
+    if ( '' === $value || strlen( $value ) > 200 || ! preg_match( '/^[A-Za-z0-9_-]+$/D', $value ) ) {
+        return '';
+    }
+
+    return $value;
+}
+
+function slayerkey_sales_posthog_capture( $provider, $event_id, $properties = array(), $distinct_id = '' ) {
     if ( ! defined( 'SLAYERKEY_POSTHOG_TOKEN' ) || '' === SLAYERKEY_POSTHOG_TOKEN ) {
         return new WP_Error( 'posthog_not_configured', 'PostHog project token is not configured.' );
     }
@@ -73,10 +87,16 @@ function slayerkey_sales_posthog_capture( $provider, $event_id, $properties = ar
         $properties
     );
 
+    $analytics_distinct_id = slayerkey_sales_safe_client_reference_id( $distinct_id );
+
+    if ( '' === $analytics_distinct_id ) {
+        $analytics_distinct_id = 'sale:' . $provider . ':' . hash( 'sha256', $event_id );
+    }
+
     $payload = array(
         'api_key'     => SLAYERKEY_POSTHOG_TOKEN,
         'event'       => 'sale_confirmed',
-        'distinct_id' => 'sale:' . $provider . ':' . hash( 'sha256', $event_id ),
+        'distinct_id' => $analytics_distinct_id,
         'properties'  => $safe_properties,
     );
 
