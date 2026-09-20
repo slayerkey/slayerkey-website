@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.29
+ * Version: 0.1.30
  * Author: Slayerkey
  */
 
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'SLAYERKEY_TRACKING_ASSET', 'assets/js/tracking.js' );
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.29' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.30' );
 
 // Public /system now uses the approved GitHub managed live refresh page.
 // /system/welcome (the Stripe post-purchase page) and the native /terms route are always on;
@@ -642,6 +642,7 @@ function slayerkey_website_health_response() {
             'posthog_host' => SLAYERKEY_POSTHOG_HOST,
             'posthog_ui_host' => SLAYERKEY_POSTHOG_UI_HOST,
             'tracking_asset' => plugin_dir_url( __FILE__ ) . SLAYERKEY_TRACKING_ASSET,
+            'whop_checkout_endpoint' => rest_url( 'slayerkey/v1/whop-checkout' ),
             'tracking_sha256' => slayerkey_website_file_sha256( SLAYERKEY_TRACKING_ASSET ),
             'private_previews_enabled' => true,
             'public_dojo_enabled' => true,
@@ -690,6 +691,52 @@ function slayerkey_website_whop_webhook_response( $request ) {
     return new WP_REST_Response( $result['body'], $result['status'] );
 }
 
+function slayerkey_website_whop_checkout_response( $request ) {
+    require_once __DIR__ . '/sales-webhook-common.php';
+
+    $client_ip = '';
+    if ( ! empty( $_SERVER['HTTP_CF_CONNECTING_IP'] ) ) {
+        $client_ip = sanitize_text_field( wp_unslash( $_SERVER['HTTP_CF_CONNECTING_IP'] ) );
+    } elseif ( ! empty( $_SERVER['REMOTE_ADDR'] ) ) {
+        $client_ip = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) );
+    }
+
+    $rate_key = 'sk_whop_checkout_rate_' . md5( $client_ip ?: 'unknown' );
+    $rate     = (int) get_transient( $rate_key );
+    if ( $rate >= 20 ) {
+        return new WP_REST_Response( array( 'ok' => false, 'error' => 'Too many checkout requests.' ), 429 );
+    }
+    set_transient( $rate_key, $rate + 1, 5 * MINUTE_IN_SECONDS );
+
+    $body = $request->get_json_params();
+    if ( ! is_array( $body ) ) {
+        $body = array();
+    }
+
+    $plan_id  = isset( $body['plan_id'] ) && is_scalar( $body['plan_id'] ) ? sanitize_text_field( (string) $body['plan_id'] ) : '';
+    $metadata = isset( $body['metadata'] ) && is_array( $body['metadata'] ) ? $body['metadata'] : array();
+
+    $result = slayerkey_sales_create_whop_checkout_configuration( $plan_id, $metadata );
+
+    if ( is_wp_error( $result ) ) {
+        return new WP_REST_Response(
+            array(
+                'ok'    => false,
+                'error' => $result->get_error_message(),
+            ),
+            503
+        );
+    }
+
+    return new WP_REST_Response(
+        array(
+            'ok'           => true,
+            'purchase_url' => $result['purchase_url'],
+        ),
+        200
+    );
+}
+
 function slayerkey_website_register_health_route() {
     register_rest_route(
         'slayerkey/v1',
@@ -707,6 +754,16 @@ function slayerkey_website_register_health_route() {
         array(
             'methods' => 'POST',
             'callback' => 'slayerkey_website_whop_webhook_response',
+            'permission_callback' => '__return_true',
+        )
+    );
+
+    register_rest_route(
+        'slayerkey/v1',
+        '/whop-checkout',
+        array(
+            'methods' => 'POST',
+            'callback' => 'slayerkey_website_whop_checkout_response',
             'permission_callback' => '__return_true',
         )
     );
@@ -743,6 +800,17 @@ function slayerkey_website_enqueue_tracking() {
         array(),
         slayerkey_website_asset_version( SLAYERKEY_TRACKING_ASSET ),
         true
+    );
+
+    require_once __DIR__ . '/sales-webhook-common.php';
+
+    wp_localize_script(
+        'slayerkey-website-tracking',
+        'SK_TRACKING_CONFIG',
+        array(
+            'whop_checkout_endpoint' => rest_url( 'slayerkey/v1/whop-checkout' ),
+            'whop_attribution_enabled' => '' !== slayerkey_sales_get_whop_api_key(),
+        )
     );
 }
 add_action( 'wp_enqueue_scripts', 'slayerkey_website_enqueue_tracking' );

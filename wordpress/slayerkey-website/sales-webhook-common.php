@@ -35,6 +35,108 @@ function slayerkey_sales_get_secret( $provider ) {
     return is_string( $value ) ? trim( $value ) : '';
 }
 
+function slayerkey_sales_get_whop_api_key() {
+    $value = get_option( 'slayerkey_whop_api_key', '' );
+    return is_string( $value ) ? trim( $value ) : '';
+}
+
+function slayerkey_sales_whop_checkout_plans() {
+    return array(
+        'plan_eVop6pXsIhHlf' => 'https://whop.com/checkout/plan_eVop6pXsIhHlf/',
+        'plan_kaaoYadRlBi4n' => 'https://whop.com/checkout/plan_kaaoYadRlBi4n/',
+    );
+}
+
+function slayerkey_sales_sanitize_attribution_metadata( $metadata ) {
+    if ( ! is_array( $metadata ) ) {
+        return array();
+    }
+
+    $allowed = array(
+        'posthog_distinct_id',
+        'posthog_session_id',
+        'utm_source',
+        'utm_medium',
+        'utm_campaign',
+        'utm_content',
+        'cta_id',
+        'cta_location',
+        'page_path',
+        'route',
+    );
+
+    $safe = array();
+    foreach ( $allowed as $key ) {
+        if ( ! isset( $metadata[ $key ] ) || ! is_scalar( $metadata[ $key ] ) ) {
+            continue;
+        }
+
+        $value = trim( (string) $metadata[ $key ] );
+        if ( '' === $value ) {
+            continue;
+        }
+
+        $safe[ $key ] = substr( $value, 0, 200 );
+    }
+
+    return $safe;
+}
+
+function slayerkey_sales_create_whop_checkout_configuration( $plan_id, $metadata = array() ) {
+    $plans = slayerkey_sales_whop_checkout_plans();
+
+    if ( ! isset( $plans[ $plan_id ] ) ) {
+        return new WP_Error( 'whop_plan_not_allowed', 'Checkout plan is not allowed.' );
+    }
+
+    $api_key = slayerkey_sales_get_whop_api_key();
+    if ( '' === $api_key ) {
+        return new WP_Error( 'whop_api_not_configured', 'Whop API key is not configured.' );
+    }
+
+    $body = array(
+        'plan_id'      => $plan_id,
+        'mode'         => 'payment',
+        'redirect_url' => home_url( '/welcome' ),
+        'metadata'     => slayerkey_sales_sanitize_attribution_metadata( $metadata ),
+    );
+
+    $response = wp_remote_post(
+        'https://api.whop.com/api/v1/checkout_configurations',
+        array(
+            'timeout' => 5,
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $api_key,
+                'Content-Type'  => 'application/json',
+            ),
+            'body'    => wp_json_encode( $body ),
+        )
+    );
+
+    if ( is_wp_error( $response ) ) {
+        return $response;
+    }
+
+    $status = wp_remote_retrieve_response_code( $response );
+    $data   = json_decode( wp_remote_retrieve_body( $response ), true );
+
+    if ( $status < 200 || $status >= 300 || ! is_array( $data ) || empty( $data['purchase_url'] ) ) {
+        return new WP_Error( 'whop_checkout_create_failed', 'Whop checkout configuration could not be created.' );
+    }
+
+    $purchase_url = esc_url_raw( (string) $data['purchase_url'] );
+    $host         = wp_parse_url( $purchase_url, PHP_URL_HOST );
+
+    if ( '' === $purchase_url || ! is_string( $host ) || ! preg_match( '/(^|\.)whop\.com$/i', $host ) ) {
+        return new WP_Error( 'whop_checkout_invalid_url', 'Whop returned an invalid checkout URL.' );
+    }
+
+    return array(
+        'purchase_url' => $purchase_url,
+        'id'           => isset( $data['id'] ) && is_scalar( $data['id'] ) ? (string) $data['id'] : '',
+    );
+}
+
 function slayerkey_sales_processed_key( $provider, $event_id ) {
     return 'sk_sale_' . $provider . '_' . md5( $event_id );
 }
@@ -59,7 +161,7 @@ function slayerkey_sales_mark_processed( $provider, $event_id ) {
     );
 }
 
-function slayerkey_sales_posthog_capture( $provider, $event_id, $properties = array() ) {
+function slayerkey_sales_posthog_capture( $provider, $event_id, $properties = array(), $distinct_id = '' ) {
     if ( ! defined( 'SLAYERKEY_POSTHOG_TOKEN' ) || '' === SLAYERKEY_POSTHOG_TOKEN ) {
         return new WP_Error( 'posthog_not_configured', 'PostHog project token is not configured.' );
     }
@@ -73,10 +175,15 @@ function slayerkey_sales_posthog_capture( $provider, $event_id, $properties = ar
         $properties
     );
 
+    $capture_distinct_id = is_string( $distinct_id ) ? trim( $distinct_id ) : '';
+    if ( '' === $capture_distinct_id ) {
+        $capture_distinct_id = 'sale:' . $provider . ':' . hash( 'sha256', $event_id );
+    }
+
     $payload = array(
         'api_key'     => SLAYERKEY_POSTHOG_TOKEN,
         'event'       => 'sale_confirmed',
-        'distinct_id' => 'sale:' . $provider . ':' . hash( 'sha256', $event_id ),
+        'distinct_id' => $capture_distinct_id,
         'properties'  => $safe_properties,
     );
 
@@ -220,7 +327,27 @@ function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_t
         }
     }
 
-    $result = slayerkey_sales_posthog_capture( 'whop', $event_id, $properties );
+    $metadata = isset( $payment['metadata'] ) && is_array( $payment['metadata'] )
+        ? slayerkey_sales_sanitize_attribution_metadata( $payment['metadata'] )
+        : array();
+
+    $posthog_distinct_id = '';
+    if ( ! empty( $metadata['posthog_distinct_id'] ) ) {
+        $posthog_distinct_id = $metadata['posthog_distinct_id'];
+        $properties['journey_linked'] = true;
+    }
+
+    if ( ! empty( $metadata['posthog_session_id'] ) ) {
+        $properties['$session_id'] = $metadata['posthog_session_id'];
+    }
+
+    foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'cta_id', 'cta_location', 'page_path', 'route' ) as $field ) {
+        if ( ! empty( $metadata[ $field ] ) ) {
+            $properties[ $field ] = $metadata[ $field ];
+        }
+    }
+
+    $result = slayerkey_sales_posthog_capture( 'whop', $event_id, $properties, $posthog_distinct_id );
 
     if ( is_wp_error( $result ) ) {
         error_log( '[Slayerkey Whop webhook] PostHog capture failed: ' . $result->get_error_message() );

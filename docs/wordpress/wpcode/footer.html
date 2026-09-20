@@ -160,9 +160,11 @@
     measurable step on our side. The purchase event fires on /welcome.
   */
   const CHECKOUTS = [
-    { match:'whop.com/checkout/plan_TOSvOOLdpQXzi', value:15,  name:'Training Dojo Monthly',   id:'plan_TOSvOOLdpQXzi' },
-    { match:'ko-fi.com/s/e34dd9cdef',               value:197, name:'Improvement System',      id:'kofi_e34dd9cdef'    },
-    { match:'ko-fi.com/s/cd324493ce',               value:870, name:'Performance Mentorship',  id:'kofi_cd324493ce'    }
+    { match:'whop.com/checkout/plan_eVop6pXsIhHlf', value:19.99,  name:'Training Dojo Monthly',  id:'plan_eVop6pXsIhHlf' },
+    { match:'whop.com/checkout/plan_kaaoYadRlBi4n', value:199.99, name:'Training Dojo Annual',   id:'plan_kaaoYadRlBi4n' },
+    { match:'whop.com/checkout/plan_TOSvOOLdpQXzi', value:15,     name:'Training Dojo Legacy',   id:'plan_TOSvOOLdpQXzi' },
+    { match:'ko-fi.com/s/e34dd9cdef',               value:197,    name:'Improvement System',      id:'kofi_e34dd9cdef'    },
+    { match:'ko-fi.com/s/cd324493ce',               value:870,    name:'Performance Mentorship',  id:'kofi_cd324493ce'    }
   ];
   function checkoutFor(href){
     return CHECKOUTS.find(c => href.indexOf(c.match) !== -1) || null;
@@ -235,7 +237,10 @@
     <form id="sk-ep-form" novalidate>
       <input type="email" name="email_address" class="sk-ep-input" placeholder="Your email address" required autocomplete="email">
 
-      <button type="submit" class="btn sk-ep-btn">
+      <button type="submit" class="btn sk-ep-btn"
+        data-sk-cta="free-plan-submit"
+        data-sk-location="lead_popup"
+        data-sk-offer="free_plan">
         Send Me the Routine
       </button>
     </form>
@@ -289,11 +294,54 @@
   } catch(e) {}
 
   var autoShown = false;
+  var openTrigger = 'unknown';
 
-  function show() {
+  function attributionProps() {
+    var empty = {utm_source:null,utm_medium:null,utm_campaign:null,utm_content:null};
+    try {
+      var q = new URLSearchParams(location.search);
+      var current = {
+        utm_source: q.get('utm_source') || null,
+        utm_medium: q.get('utm_medium') || null,
+        utm_campaign: q.get('utm_campaign') || null,
+        utm_content: q.get('utm_content') || null
+      };
+      if (current.utm_source || current.utm_medium || current.utm_campaign || current.utm_content) {
+        try { sessionStorage.setItem('sk_attribution_v1', JSON.stringify(current)); } catch(e) {}
+        return current;
+      }
+      try {
+        var saved = JSON.parse(sessionStorage.getItem('sk_attribution_v1') || 'null');
+        if (saved && typeof saved === 'object') {
+          return {
+            utm_source: saved.utm_source || null,
+            utm_medium: saved.utm_medium || null,
+            utm_campaign: saved.utm_campaign || null,
+            utm_content: saved.utm_content || null
+          };
+        }
+      } catch(e) {}
+    } catch(e) {}
+    return empty;
+  }
+
+  function posthogCapture(name, props) {
+    if (!window.posthog || typeof window.posthog.capture !== 'function') return;
+    try {
+      var base = attributionProps();
+      base.lead_magnet = '30_day_rank_up_routine';
+      base.page_path = location.pathname;
+      Object.keys(props || {}).forEach(function(key){ base[key] = props[key]; });
+      window.posthog.capture(name, base);
+    } catch(e) {}
+  }
+
+  function show(trigger) {
     if (!ep.hidden) return;
+    openTrigger = trigger || 'manual';
     ep.hidden = false;
     document.documentElement.style.overflow = 'hidden';
+    posthogCapture('free_plan_opened', {trigger: openTrigger});
     var inp = ep.querySelector('.sk-ep-input');
     if (inp) setTimeout(function(){ inp.focus(); }, 50);
   }
@@ -312,22 +360,25 @@
     if (e.key === 'Escape' && !ep.hidden) hide(true);
   });
 
-  function autoShow(){
+  function autoShow(trigger){
     if (autoShown || suppressed) return;
     autoShown = true;
-    show();
+    show(trigger || 'automatic');
   }
 
   /* Manual open: any [data-ep-open] button, the #free-plan hash, or window.SK_openFreePlan() */
-  window.SK_openFreePlan = show;
+  window.SK_openFreePlan = function(){ show('manual'); };
 
   document.addEventListener('click', function(e){
     var t = e.target.closest && e.target.closest('[data-ep-open]');
-    if (t) { e.preventDefault(); show(); }
+    if (t) {
+      e.preventDefault();
+      show(t.getAttribute('data-ep-trigger') || 'button');
+    }
   });
 
   function hashOpen(){
-    if (location.hash === '#free-plan') show();
+    if (location.hash === '#free-plan') show('hash');
   }
 
   window.addEventListener('hashchange', hashOpen);
@@ -378,6 +429,11 @@
         });
       }
 
+      posthogCapture('email_signup', {
+        method: 'popup',
+        trigger: openTrigger
+      });
+
       /* Whop sees checkouts and purchases on its own, but not leads captured on our site. */
       if (window.whop && typeof window.whop.track === 'function') {
         try {
@@ -399,10 +455,10 @@
 
   if (!isMobile) {
     document.addEventListener('mouseleave', function(e){
-      if (e.clientY <= 10) autoShow();
+      if (e.clientY <= 10) autoShow('exit_intent');
     });
   } else {
-    setTimeout(autoShow, 30000);
+    setTimeout(function(){ autoShow('mobile_timer'); }, 30000);
   }
 })();
 </script>
@@ -425,6 +481,11 @@
 .sk-fp-float:hover,.sk-fp-float:focus{transform:translateX(-50%) translateY(-1px)}
 </style>
 
-<a class="btn sk-fp-float show" href="#free-plan" data-ep-open="">
+<a class="btn sk-fp-float show" href="#free-plan"
+  data-ep-open=""
+  data-ep-trigger="floating_button"
+  data-sk-cta="free-plan-floating"
+  data-sk-location="floating_free_plan"
+  data-sk-offer="free_plan">
   🎯 Free 30-Day Rank-Up Routine
 </a>
