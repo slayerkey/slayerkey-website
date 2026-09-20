@@ -214,6 +214,7 @@ test('Dojo plan chooser preserves checkout analytics metadata', async ({ page })
   await expect(page.locator('#sk-plan-chooser')).toBeVisible();
 
   const chooser = page.locator('.sk-plan-action').first();
+  await expect(chooser).toHaveAttribute('data-sk-cta', 'dojo-plan-monthly');
   await expect(chooser).toHaveAttribute('data-sk-offer', 'dojo');
   await expect(chooser).toHaveAttribute('data-sk-plan-direct', 'true');
   await expect(chooser).toHaveAttribute('data-sk-location', 'plan_chooser_monthly');
