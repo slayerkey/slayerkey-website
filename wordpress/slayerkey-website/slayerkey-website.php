@@ -694,6 +694,20 @@ function slayerkey_website_whop_webhook_response( $request ) {
 function slayerkey_website_whop_checkout_response( $request ) {
     require_once __DIR__ . '/sales-webhook-common.php';
 
+    $client_ip = '';
+    if ( ! empty( $_SERVER['HTTP_CF_CONNECTING_IP'] ) ) {
+        $client_ip = sanitize_text_field( wp_unslash( $_SERVER['HTTP_CF_CONNECTING_IP'] ) );
+    } elseif ( ! empty( $_SERVER['REMOTE_ADDR'] ) ) {
+        $client_ip = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) );
+    }
+
+    $rate_key = 'sk_whop_checkout_rate_' . md5( $client_ip ?: 'unknown' );
+    $rate     = (int) get_transient( $rate_key );
+    if ( $rate >= 20 ) {
+        return new WP_REST_Response( array( 'ok' => false, 'error' => 'Too many checkout requests.' ), 429 );
+    }
+    set_transient( $rate_key, $rate + 1, 5 * MINUTE_IN_SECONDS );
+
     $body = $request->get_json_params();
     if ( ! is_array( $body ) ) {
         $body = array();
