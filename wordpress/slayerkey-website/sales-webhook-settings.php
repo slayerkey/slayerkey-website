@@ -37,8 +37,9 @@ $errors   = array();
 if ( 'POST' === strtoupper( isset( $_SERVER['REQUEST_METHOD'] ) ? $_SERVER['REQUEST_METHOD'] : '' ) ) {
     check_admin_referer( 'slayerkey_sales_webhook_settings' );
 
-    $whop_input   = isset( $_POST['whop_secret'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['whop_secret'] ) ) ) : '';
-    $stripe_input = isset( $_POST['stripe_secret'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['stripe_secret'] ) ) ) : '';
+    $whop_input     = isset( $_POST['whop_secret'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['whop_secret'] ) ) ) : '';
+    $whop_api_input = isset( $_POST['whop_api_key'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['whop_api_key'] ) ) ) : '';
+    $stripe_input   = isset( $_POST['stripe_secret'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['stripe_secret'] ) ) ) : '';
 
     if ( '' !== $whop_input ) {
         if ( 0 !== strpos( $whop_input, 'whsec_' ) && 0 !== strpos( $whop_input, 'ws_' ) ) {
@@ -46,6 +47,15 @@ if ( 'POST' === strtoupper( isset( $_SERVER['REQUEST_METHOD'] ) ? $_SERVER['REQU
         } else {
             update_option( 'slayerkey_whop_webhook_secret', $whop_input, false );
             $messages[] = 'Whop signing secret saved.';
+        }
+    }
+
+    if ( '' !== $whop_api_input ) {
+        if ( strlen( $whop_api_input ) < 20 ) {
+            $errors[] = 'Whop API key was not saved because it is unexpectedly short.';
+        } else {
+            update_option( 'slayerkey_whop_api_key', $whop_api_input, false );
+            $messages[] = 'Whop API key saved.';
         }
     }
 
@@ -63,14 +73,20 @@ if ( 'POST' === strtoupper( isset( $_SERVER['REQUEST_METHOD'] ) ? $_SERVER['REQU
         $messages[] = 'Whop signing secret cleared.';
     }
 
+    if ( isset( $_POST['clear_whop_api'] ) && '1' === $_POST['clear_whop_api'] ) {
+        delete_option( 'slayerkey_whop_api_key' );
+        $messages[] = 'Whop API key cleared.';
+    }
+
     if ( isset( $_POST['clear_stripe'] ) && '1' === $_POST['clear_stripe'] ) {
         delete_option( 'slayerkey_stripe_webhook_secret' );
         $messages[] = 'Stripe signing secret cleared.';
     }
 }
 
-$whop_configured   = '' !== slayerkey_sales_get_secret( 'whop' );
-$stripe_configured = '' !== slayerkey_sales_get_secret( 'stripe' );
+$whop_configured     = '' !== slayerkey_sales_get_secret( 'whop' );
+$whop_api_configured = '' !== slayerkey_sales_get_whop_api_key();
+$stripe_configured   = '' !== slayerkey_sales_get_secret( 'stripe' );
 $whop_endpoint     = rest_url( 'slayerkey/v1/whop-webhook' );
 $whop_fallback     = home_url( '/wp-content/plugins/slayerkey-website/whop-webhook.php' );
 $stripe_endpoint   = home_url( '/wp-content/plugins/slayerkey-website/stripe-webhook.php' );
@@ -102,7 +118,8 @@ $stripe_endpoint   = home_url( '/wp-content/plugins/slayerkey-website/stripe-web
             <h2>Whop</h2>
             <span class="status <?php echo $whop_configured ? 'ok' : 'bad'; ?>"><?php echo $whop_configured ? 'Configured' : 'Not configured'; ?></span>
         </div>
-        <p class="small">Use only the <strong>payment.succeeded</strong> event.</p>
+        <p class="small">Use only the <strong>payment.succeeded</strong> webhook event.</p>
+        <p class="small">Checkout attribution API: <strong><?php echo $whop_api_configured ? 'Configured' : 'Not configured'; ?></strong>. This is used only to create short-lived checkout configurations that carry PostHog + UTM metadata into the payment webhook.</p>
         <label>Endpoint URL</label>
         <code><?php echo esc_html( $whop_endpoint ); ?></code>
         <p class="small">Compatibility URL (also supported):</p>
@@ -128,6 +145,13 @@ $stripe_endpoint   = home_url( '/wp-content/plugins/slayerkey-website/stripe-web
         <input id="whop_secret" name="whop_secret" type="password" autocomplete="off" placeholder="whsec_... or ws_...">
         <?php if ( $whop_configured ) : ?>
             <label class="clear"><input type="checkbox" name="clear_whop" value="1"> Clear saved Whop secret</label>
+        <?php endif; ?>
+
+        <label for="whop_api_key">Whop Company API key</label>
+        <input id="whop_api_key" name="whop_api_key" type="password" autocomplete="off" placeholder="Paste Company API key">
+        <p class="small">Create this in Whop Developer settings. It needs permission to create checkout configurations for your existing plans. The key stays in a non-autoloaded WordPress option and is never sent to the browser.</p>
+        <?php if ( $whop_api_configured ) : ?>
+            <label class="clear"><input type="checkbox" name="clear_whop_api" value="1"> Clear saved Whop API key</label>
         <?php endif; ?>
 
         <div class="sep"></div>
