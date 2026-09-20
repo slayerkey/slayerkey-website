@@ -162,6 +162,9 @@ test('direct Whop and Stripe checkouts emit checkout_started without changing na
     window.posthog = {
       capture(event, properties) {
         window.__posthogCaptures.push({ event, properties });
+      },
+      get_distinct_id() {
+        return 'ph_browser_123-abc';
       }
     };
 
@@ -196,6 +199,50 @@ test('direct Whop and Stripe checkouts emit checkout_started without changing na
   expect(captured[1].properties.provider).toBe('stripe');
   expect(captured[1].properties.offer).toBe('improvement_system');
   expect(captured[1].properties.cta_location).toBe('test');
+  expect(captured[1].properties.browser_reference_attached).toBe(true);
+  const stripeHref = await page.locator('#test-stripe-checkout').getAttribute('href');
+  expect(new URL(stripeHref).searchParams.get('client_reference_id')).toBe('ph_browser_123-abc');
+});
+
+test('GA4 begin_checkout maps every current paid offer and value', async ({ page }) => {
+  await page.goto('/');
+  const cases = [
+    ['https://whop.com/checkout/plan_eVop6pXsIhHlf/', 19.99, 'plan_eVop6pXsIhHlf'],
+    ['https://whop.com/checkout/plan_kaaoYadRlBi4n/', 199.99, 'plan_kaaoYadRlBi4n'],
+    ['https://buy.stripe.com/28EbJ04MV4ege3j8VH04804', 249, 'stripe_system_249'],
+    ['https://buy.stripe.com/00w28q3IR4eg8IZ8VH04806', 1200, 'stripe_coaching_full'],
+    ['https://buy.stripe.com/4gM00i3IR4eg3oF0pb04805', 1300, 'stripe_coaching_plan']
+  ];
+
+  await page.evaluate(cases => {
+    window.dataLayer.length = 0;
+    cases.forEach(([href], index) => {
+      const link = document.createElement('a');
+      link.id = 'ga-checkout-' + index;
+      link.className = 'btn';
+      link.href = href;
+      link.textContent = 'Checkout ' + index;
+      link.addEventListener('click', event => event.preventDefault(), { once: true });
+      document.body.appendChild(link);
+    });
+  }, cases);
+
+  for (let index = 0; index < cases.length; index += 1) {
+    await page.locator('#ga-checkout-' + index).click();
+  }
+
+  const events = await page.evaluate(() => window.dataLayer
+    .map(entry => Array.from(entry))
+    .filter(entry => entry[0] === 'event' && entry[1] === 'begin_checkout')
+    .map(entry => entry[2]));
+
+  expect(events).toHaveLength(cases.length);
+  cases.forEach(([, value, itemId], index) => {
+    expect(events[index].currency).toBe('USD');
+    expect(events[index].value).toBe(value);
+    expect(events[index].items[0].item_id).toBe(itemId);
+    expect(events[index].items[0].price).toBe(value);
+  });
 });
 
 test('popup manual/hash/timer/exit paths and overlapping dialogs retain independent locks', async ({ page, isMobile }) => {
@@ -255,6 +302,7 @@ test('Kit submission uses the existing form and endpoint, without creating a sub
   const captured = await page.evaluate(() => window.__posthogCaptures.find(item => item.event === 'lead_submitted'));
   expect(captured.properties.lead_magnet).toBe('30_day_rank_up_routine');
   expect(captured.properties.method).toBe('popup');
+  expect(JSON.stringify(captured)).not.toContain('smoke@example.invalid');
   await expect(page.locator('#sk-ep')).toBeHidden({timeout:6000});
   await unlockCheck(page);
 });
