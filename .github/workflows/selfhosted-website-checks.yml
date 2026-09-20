@@ -29,7 +29,7 @@ jobs:
           cache: npm
 
       - name: Preflight
-        shell: pwsh
+        shell: powershell
         run: |
           node --version
           npm --version
@@ -85,23 +85,23 @@ jobs:
       - run: npm ci
 
       - name: Install Playwright browsers
-        shell: pwsh
+        shell: powershell
         run: npx playwright install chromium webkit
 
       - run: npm run test:unit
 
       - name: Publisher tests
-        shell: pwsh
+        shell: powershell
         run: '& $env:PYTHON_EXE tests/publish_test.py'
 
       - run: npm run test:php
 
       - name: Build fingerprinted plugin
-        shell: pwsh
+        shell: powershell
         run: '& $env:PYTHON_EXE tools/build_deploy.py --output build/php-check/plugin'
 
       - name: Test built plugin
-        shell: pwsh
+        shell: powershell
         run: php tests/wordpress.php build/php-check/plugin
 
       - name: Browser matrix
