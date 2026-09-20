@@ -75,16 +75,26 @@ $webhookBody = json_encode([
         'billing_reason' => 'subscription_create',
         'product' => ['id' => 'prod_test'],
         'plan' => ['id' => 'plan_test'],
+        'user' => ['id' => 'user_test_repeat'],
     ],
 ]);
 $webhookSignature = 'v1,' . base64_encode(hash_hmac('sha256', $webhookId . '.' . $webhookTimestamp . '.' . $webhookBody, $GLOBALS['whop_test_secret'], true));
 $webhookResult = slayerkey_sales_handle_whop_webhook($webhookBody, $webhookId, $webhookTimestamp, $webhookSignature);
 check($webhookResult['status'] === 200 && $webhookResult['body']['ok'] === true, 'Valid Whop payment webhook accepted');
 check(isset($GLOBALS['last_remote_post'][1]['body']) && str_contains($GLOBALS['last_remote_post'][1]['body'], 'sale_confirmed'), 'Whop payment captured to PostHog');
+$whopPayload = json_decode($GLOBALS['last_remote_post'][1]['body'], true);
+check(str_starts_with($whopPayload['distinct_id'], 'whop_user_'), 'Whop sale uses pseudonymous buyer identity');
+check(!str_contains($GLOBALS['last_remote_post'][1]['body'], 'user_test_repeat'), 'Raw Whop user ID is not sent to PostHog');
+$whopPostBeforeDuplicate = $GLOBALS['last_remote_post'][1]['body'];
+$duplicateWebhookResult = slayerkey_sales_handle_whop_webhook($webhookBody, $webhookId, $webhookTimestamp, $webhookSignature);
+check(!empty($duplicateWebhookResult['body']['duplicate']), 'Duplicate Whop webhook ignored');
+check($GLOBALS['last_remote_post'][1]['body'] === $whopPostBeforeDuplicate, 'Duplicate Whop webhook does not recapture PostHog event');
 $invalidWebhookResult = slayerkey_sales_handle_whop_webhook($webhookBody, 'msg_test_sale_2', $webhookTimestamp, 'v1,invalid');
 check($invalidWebhookResult['status'] === 400, 'Invalid Whop signature rejected');
 
 check(slayerkey_sales_safe_client_reference_id('ph_browser_123-abc') === 'ph_browser_123-abc', 'Valid Stripe client reference accepted');
+check(str_starts_with(slayerkey_sales_pseudonymous_id('stripe_customer', 'cus_test_123'), 'stripe_customer_'), 'Provider customer ID can be pseudonymized');
+check(!str_contains(slayerkey_sales_pseudonymous_id('stripe_customer', 'cus_test_123'), 'cus_test_123'), 'Pseudonymous provider identity hides raw customer ID');
 check(slayerkey_sales_safe_client_reference_id('email@example.com') === '', 'PII-shaped invalid Stripe client reference rejected');
 check(slayerkey_sales_safe_client_reference_id(str_repeat('a', 201)) === '', 'Oversized Stripe client reference rejected');
 
