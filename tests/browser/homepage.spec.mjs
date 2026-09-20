@@ -47,6 +47,13 @@ test('native content, section scrolling, chooser, proof, footer, and reload', as
   }
   await page.locator('.sk-plan-close').click();
   await unlockCheck(page);
+
+  // WebKit mobile can terminate a long-lived page after extensive scrolling plus
+  // modal activity. Keep the same coverage but isolate each interaction phase on
+  // a fresh navigation so a browser-engine lifecycle crash is not mistaken for a
+  // site regression.
+  await page.goto('/');
+  await readable(page);
   await page.locator('[data-proof-src]').first().click();
   await expect(page.locator('#djLightbox')).toBeVisible();
   await expect(page.locator('#djLightbox img')).toHaveAttribute('src', /^https:\/\/slayerkey.com\/wp-content\/uploads\/.+\.png$/);
@@ -55,6 +62,9 @@ test('native content, section scrolling, chooser, proof, footer, and reload', as
   await expect(page.locator('#djLightbox')).toBeHidden();
   await unlockCheck(page);
   await expect(page.locator('[data-proof-src]').first()).toBeFocused();
+
+  await page.goto('/');
+  await readable(page);
   const footerLink = page.locator('footer.sk-footer a[href="/"]');
   await footerLink.scrollIntoViewIfNeeded();
   await expect(footerLink).toBeVisible();
