@@ -155,7 +155,7 @@ test('repeat initialization and failing analytics cannot break checkout navigati
   expect(errors).toEqual([]);
 });
 
-test('direct checkout emits checkout_started without blocking navigation', async ({ page }) => {
+test('direct Whop and Stripe checkouts emit checkout_started without changing navigation behavior', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => {
     window.__posthogCaptures = [];
@@ -164,16 +164,38 @@ test('direct checkout emits checkout_started without blocking navigation', async
         window.__posthogCaptures.push({ event, properties });
       }
     };
+
+    // Keep the test local without aborting an external navigation. The sitewide
+    // tracking listener runs during capture before these element listeners cancel
+    // the test-only default navigation.
+    document.querySelector('[data-sk-location="pricing_monthly"]').addEventListener('click', event => {
+      event.preventDefault();
+    }, { once: true });
+
+    var stripe = document.createElement('a');
+    stripe.id = 'test-stripe-checkout';
+    stripe.href = 'https://buy.stripe.com/test_checkout';
+    stripe.setAttribute('data-sk-cta', 'test-stripe-buy');
+    stripe.setAttribute('data-sk-offer', 'improvement_system');
+    stripe.setAttribute('data-sk-location', 'test');
+    stripe.addEventListener('click', event => event.preventDefault(), { once: true });
+    document.body.appendChild(stripe);
   });
-  await page.route('https://whop.com/**', route => route.abort());
+
   await page.locator(checkout('monthly')).click();
+  await page.locator('#test-stripe-checkout').click();
+
   await expect.poll(async () => {
     return page.evaluate(() => window.__posthogCaptures.filter(item => item.event === 'checkout_started').length);
-  }).toBe(1);
-  const captured = await page.evaluate(() => window.__posthogCaptures.find(item => item.event === 'checkout_started'));
-  expect(captured.properties.provider).toBe('whop');
-  expect(captured.properties.offer).toBe('dojo');
-  expect(captured.properties.cta_location).toBe('pricing_monthly');
+  }).toBe(2);
+
+  const captured = await page.evaluate(() => window.__posthogCaptures.filter(item => item.event === 'checkout_started'));
+  expect(captured[0].properties.provider).toBe('whop');
+  expect(captured[0].properties.offer).toBe('dojo');
+  expect(captured[0].properties.cta_location).toBe('pricing_monthly');
+  expect(captured[1].properties.provider).toBe('stripe');
+  expect(captured[1].properties.offer).toBe('improvement_system');
+  expect(captured[1].properties.cta_location).toBe('test');
 });
 
 test('popup manual/hash/timer/exit paths and overlapping dialogs retain independent locks', async ({ page, isMobile }) => {
