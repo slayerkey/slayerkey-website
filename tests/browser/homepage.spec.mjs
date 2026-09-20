@@ -199,6 +199,40 @@ test('direct Whop and Stripe checkouts emit checkout_started without changing na
   expect(captured[1].properties.route).toBe('website');
 });
 
+test('Dojo plan chooser preserves checkout analytics metadata', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => {
+    window.__posthogCaptures = [];
+    window.posthog = {
+      capture(event, properties) {
+        window.__posthogCaptures.push({ event, properties });
+      }
+    };
+  });
+
+  await page.locator(hero).first().click();
+  await expect(page.locator('#sk-plan-chooser')).toBeVisible();
+
+  const chooser = page.locator('.sk-plan-action').first();
+  await expect(chooser).toHaveAttribute('data-sk-offer', 'dojo');
+  await expect(chooser).toHaveAttribute('data-sk-plan-direct', 'true');
+  await expect(chooser).toHaveAttribute('data-sk-location', 'plan_chooser_monthly');
+
+  await chooser.evaluate(element => {
+    element.addEventListener('click', event => event.preventDefault(), { once: true });
+    element.click();
+  });
+
+  await expect.poll(async () => {
+    return page.evaluate(() => window.__posthogCaptures.filter(item => item.event === 'checkout_started').length);
+  }).toBe(1);
+
+  const captured = await page.evaluate(() => window.__posthogCaptures.find(item => item.event === 'checkout_started'));
+  expect(captured.properties.provider).toBe('whop');
+  expect(captured.properties.offer).toBe('dojo');
+  expect(captured.properties.cta_location).toBe('plan_chooser_monthly');
+});
+
 test('GA4 begin_checkout maps every current paid offer and value', async ({ page }) => {
   await page.goto('/');
   const cases = [
