@@ -547,7 +547,7 @@ Not changed.
 
 CI:
 
-The complete normal reliability suite has passed on the audited implementation. The final cleaned documentation-only head must retain a green reliability result before merge.
+The complete normal reliability suite has passed on the audited implementation. Before merge, the current PR head must also have a green normal reliability result.
 
 Remaining work:
 
