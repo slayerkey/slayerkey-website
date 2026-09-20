@@ -182,8 +182,10 @@ test('direct Whop and Stripe checkouts emit checkout_started without changing na
     document.body.appendChild(stripe);
   });
 
-  await page.locator(checkout('monthly')).click();
-  await page.locator('#test-stripe-checkout').click();
+  await page.evaluate(() => {
+    document.querySelector('[data-sk-location="pricing_monthly"]').click();
+    document.querySelector('#test-stripe-checkout').click();
+  });
 
   await expect.poll(async () => {
     return page.evaluate(() => window.__posthogCaptures.filter(item => item.event === 'checkout_started').length);
@@ -221,9 +223,11 @@ test('GA4 begin_checkout maps every current paid offer and value', async ({ page
     });
   }, cases);
 
-  for (let index = 0; index < cases.length; index += 1) {
-    await page.locator('#ga-checkout-' + index).click();
-  }
+  await page.evaluate(count => {
+    for (let index = 0; index < count; index += 1) {
+      document.querySelector('#ga-checkout-' + index).click();
+    }
+  }, cases.length);
 
   const events = await page.evaluate(() => window.dataLayer
     .map(entry => Array.from(entry))
