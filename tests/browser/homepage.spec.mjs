@@ -155,6 +155,27 @@ test('repeat initialization and failing analytics cannot break checkout navigati
   expect(errors).toEqual([]);
 });
 
+test('direct checkout emits checkout_started without blocking navigation', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => {
+    window.__posthogCaptures = [];
+    window.posthog = {
+      capture(event, properties) {
+        window.__posthogCaptures.push({ event, properties });
+      }
+    };
+  });
+  await page.route('https://whop.com/**', route => route.abort());
+  await page.locator(checkout('monthly')).click();
+  await expect.poll(async () => {
+    return page.evaluate(() => window.__posthogCaptures.filter(item => item.event === 'checkout_started').length);
+  }).toBe(1);
+  const captured = await page.evaluate(() => window.__posthogCaptures.find(item => item.event === 'checkout_started'));
+  expect(captured.properties.provider).toBe('whop');
+  expect(captured.properties.offer).toBe('dojo');
+  expect(captured.properties.cta_location).toBe('pricing_monthly');
+});
+
 test('popup manual/hash/timer/exit paths and overlapping dialogs retain independent locks', async ({ page, isMobile }) => {
   await page.goto('/');
   await page.locator('.sk-fp-float').click();
@@ -194,10 +215,24 @@ test('Kit submission uses the existing form and endpoint, without creating a sub
     return route.fulfill({status:200,headers:{'access-control-allow-origin':'*'},body:''});
   });
   await page.goto('/#free-plan');
+  await page.evaluate(() => {
+    window.__posthogCaptures = [];
+    window.posthog = {
+      capture(event, properties) {
+        window.__posthogCaptures.push({ event, properties });
+      }
+    };
+  });
   await page.locator('.sk-ep-input').fill('smoke@example.invalid');
   await page.locator('.sk-ep-btn').click();
   await expect(page.locator('#sk-ep-ok')).toBeVisible();
   expect(payload).toBe('email_address=smoke%40example.invalid');
+  await expect.poll(async () => {
+    return page.evaluate(() => window.__posthogCaptures.filter(item => item.event === 'lead_submitted').length);
+  }).toBe(1);
+  const captured = await page.evaluate(() => window.__posthogCaptures.find(item => item.event === 'lead_submitted'));
+  expect(captured.properties.lead_magnet).toBe('30_day_rank_up_routine');
+  expect(captured.properties.method).toBe('popup');
   await expect(page.locator('#sk-ep')).toBeHidden({timeout:6000});
   await unlockCheck(page);
 });
