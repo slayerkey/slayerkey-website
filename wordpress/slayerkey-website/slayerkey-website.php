@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.29
+ * Version: 0.1.30
  * Author: Slayerkey
  */
 
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'SLAYERKEY_TRACKING_ASSET', 'assets/js/tracking.js' );
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.29' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.30' );
 
 // Public /system now uses the approved GitHub managed live refresh page.
 // /system/welcome (the Stripe post-purchase page) and the native /terms route are always on;
