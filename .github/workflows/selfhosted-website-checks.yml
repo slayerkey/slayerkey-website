@@ -1,0 +1,84 @@
+name: Self Hosted Website Reliability Checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'wordpress/**'
+      - 'tests/**'
+      - 'tools/**'
+      - 'docs/wordpress/wpcode/**'
+      - '.github/workflows/selfhosted-website-checks.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  selfhosted-reliability:
+    runs-on: [self-hosted, Windows, X64, slayerkey-website]
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Preflight
+        shell: pwsh
+        run: |
+          node --version
+          npm --version
+          python --version
+          git --version
+
+          if (-not (Get-Command php -ErrorAction SilentlyContinue)) {
+            throw "PHP is required for the WordPress regression suite but was not found on this self-hosted runner."
+          }
+
+          php --version
+
+      - run: npm ci
+
+      - name: Install Playwright browsers
+        shell: pwsh
+        run: npx playwright install chromium webkit
+
+      - run: npm run test:unit
+
+      - run: python tests/publish_test.py
+
+      - run: npm run test:php
+
+      - name: Build fingerprinted plugin
+        shell: pwsh
+        run: python tools/build_deploy.py --output build/php-check/plugin
+
+      - name: Test built plugin
+        shell: pwsh
+        run: php tests/wordpress.php build/php-check/plugin
+
+      - name: Browser matrix
+        run: npm test
+
+      - name: Soak test
+        run: npm run test:soak
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        continue-on-error: true
+        with:
+          name: selfhosted-reliability-evidence-${{ github.run_id }}
+          path: |
+            artifacts/
+            playwright-report/
+            test-results/
+          retention-days: 1
