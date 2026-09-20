@@ -98,6 +98,112 @@
     window.setTimeout(alignDojoPricingCards, 750);
     window.setTimeout(updateWelcomeDiscordLink, 750);
 
+    function currentAttribution() {
+        try {
+            var q = new URLSearchParams(window.location.search);
+            return {
+                utm_source: q.get('utm_source') || null,
+                utm_medium: q.get('utm_medium') || null,
+                utm_campaign: q.get('utm_campaign') || null,
+                utm_content: q.get('utm_content') || null
+            };
+        } catch (error) {
+            return { utm_source: null, utm_medium: null, utm_campaign: null, utm_content: null };
+        }
+    }
+
+    function whopPlanId(href) {
+        try {
+            var url = new URL(href, window.location.href);
+            if (url.hostname !== 'whop.com') return '';
+            var match = url.pathname.match(/\/checkout\/(plan_[A-Za-z0-9]+)/);
+            return match ? match[1] : '';
+        } catch (error) {
+            return '';
+        }
+    }
+
+    function attributedWhopCheckout(element, event) {
+        var config = window.SK_TRACKING_CONFIG || {};
+        if (!config.whop_attribution_enabled || !config.whop_checkout_endpoint) return false;
+        if (element.getAttribute('data-sk-plan-direct') !== 'true') return false;
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return false;
+
+        var originalHref = element.href || '';
+        var planId = whopPlanId(originalHref);
+        if (!planId) return false;
+
+        event.preventDefault();
+
+        var attribution = currentAttribution();
+        var metadata = {
+            posthog_distinct_id: null,
+            posthog_session_id: null,
+            utm_source: attribution.utm_source,
+            utm_medium: attribution.utm_medium,
+            utm_campaign: attribution.utm_campaign,
+            utm_content: attribution.utm_content,
+            cta_id: element.getAttribute('data-sk-cta') || null,
+            cta_location: element.getAttribute('data-sk-location') || null,
+            page_path: window.location.pathname,
+            route: 'website'
+        };
+
+        if (window.posthog) {
+            try {
+                if (typeof window.posthog.get_distinct_id === 'function') {
+                    metadata.posthog_distinct_id = window.posthog.get_distinct_id();
+                }
+                if (typeof window.posthog.get_session_id === 'function') {
+                    metadata.posthog_session_id = window.posthog.get_session_id();
+                }
+                if (typeof window.posthog.capture === 'function') {
+                    window.posthog.capture('begin_checkout', {
+                        plan_id: planId,
+                        cta_id: metadata.cta_id,
+                        cta_location: metadata.cta_location,
+                        page_path: metadata.page_path,
+                        route: metadata.route,
+                        utm_source: metadata.utm_source,
+                        utm_medium: metadata.utm_medium,
+                        utm_campaign: metadata.utm_campaign,
+                        utm_content: metadata.utm_content
+                    });
+                }
+            } catch (error) { /* Analytics must never interrupt checkout. */ }
+        }
+
+        var checkoutWindow = null;
+        if (element.target === '_blank') {
+            try {
+                checkoutWindow = window.open('about:blank', '_blank');
+                if (checkoutWindow) checkoutWindow.opener = null;
+            } catch (error) {}
+        }
+
+        fetch(config.whop_checkout_endpoint, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ plan_id: planId, metadata: metadata })
+        })
+        .then(function (response) {
+            if (!response.ok) throw new Error('Checkout attribution unavailable');
+            return response.json();
+        })
+        .then(function (data) {
+            var destination = data && data.purchase_url ? data.purchase_url : originalHref;
+            if (checkoutWindow && !checkoutWindow.closed) checkoutWindow.location.href = destination;
+            else window.location.href = destination;
+        })
+        .catch(function () {
+            if (checkoutWindow && !checkoutWindow.closed) checkoutWindow.location.href = originalHref;
+            else window.location.href = originalHref;
+        });
+
+        return true;
+    }
+
     document.addEventListener('click', function (event) {
         if (!(event.target instanceof Element)) {
             return;
@@ -116,5 +222,7 @@
             plan_direct: element.getAttribute('data-sk-plan-direct') === 'true',
             page_path: window.location.pathname
         }); } catch (error) { /* Analytics must never interrupt navigation. */ }
+
+        attributedWhopCheckout(element, event);
     }, true);
 })();
