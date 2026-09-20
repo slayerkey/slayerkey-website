@@ -145,7 +145,17 @@
             [monthly, annual].forEach(function (source, index) {
                 var url = new URL(source.href);
                 if (url.protocol !== 'https:' || url.hostname !== 'whop.com') throw new Error('Checkout unavailable');
-                links[index].href = url.href;
+
+                var target = links[index];
+                target.href = url.href;
+
+                // The chooser buttons are the actual checkout click for many users.
+                // Copy the source CTA metadata so sitewide checkout analytics and the
+                // attributed Whop checkout path behave exactly like direct pricing links.
+                ['data-sk-cta', 'data-sk-offer', 'data-sk-plan-direct'].forEach(function (attribute) {
+                    if (source.hasAttribute(attribute)) target.setAttribute(attribute, source.getAttribute(attribute));
+                });
+                target.setAttribute('data-sk-location', index === 0 ? 'plan_chooser_monthly' : 'plan_chooser_annual');
             });
             document.body.appendChild(modal);
             var controller = modalController(modal, modal.querySelector('.sk-plan-close'));
