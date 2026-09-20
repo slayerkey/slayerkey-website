@@ -297,17 +297,32 @@
   var openTrigger = 'unknown';
 
   function attributionProps() {
+    var empty = {utm_source:null,utm_medium:null,utm_campaign:null,utm_content:null};
     try {
       var q = new URLSearchParams(location.search);
-      return {
+      var current = {
         utm_source: q.get('utm_source') || null,
         utm_medium: q.get('utm_medium') || null,
         utm_campaign: q.get('utm_campaign') || null,
         utm_content: q.get('utm_content') || null
       };
-    } catch(e) {
-      return {utm_source:null,utm_medium:null,utm_campaign:null,utm_content:null};
-    }
+      if (current.utm_source || current.utm_medium || current.utm_campaign || current.utm_content) {
+        try { sessionStorage.setItem('sk_attribution_v1', JSON.stringify(current)); } catch(e) {}
+        return current;
+      }
+      try {
+        var saved = JSON.parse(sessionStorage.getItem('sk_attribution_v1') || 'null');
+        if (saved && typeof saved === 'object') {
+          return {
+            utm_source: saved.utm_source || null,
+            utm_medium: saved.utm_medium || null,
+            utm_campaign: saved.utm_campaign || null,
+            utm_content: saved.utm_content || null
+          };
+        }
+      } catch(e) {}
+    } catch(e) {}
+    return empty;
   }
 
   function posthogCapture(name, props) {
