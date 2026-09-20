@@ -280,7 +280,8 @@ Browser coverage includes:
 4. GA4 begin_checkout mapping for all five current paid offers
 5. lead_submitted after the existing Kit submission path
 6. no lead email in PostHog event properties
-7. deterministic external checkout navigation in browser tests instead of aborting Whop top-level navigation
+7. deterministic chooser destination assertions without opening external Whop popups in the cross-browser edge test
+8. separate checkout-click tests that exercise the real browser analytics path
 
 PHP coverage includes:
 
@@ -321,9 +322,9 @@ built-plugin PHP tests
 full Chromium and WebKit browser matrix
 five minute browser soak
 
-The earlier WebKit checkout-destination failure was traced to aborting a real top-level Whop navigation inside the test harness.
+The earlier WebKit checkout-destination failures were isolated to external popup navigation in the test harness rather than analytics assertions.
 
-The test now returns a tiny deterministic Whop checkout document instead of aborting that navigation while preserving the same destination and attribution assertions.
+The cross-browser edge test now validates both real chooser destinations, UTM attribution, and target behavior without opening an external popup. Separate browser tests exercise the actual checkout click and checkout_started analytics path, so navigation assertions remain covered without depending on unstable WebKit popup behavior.
 
 ## Production status discovered during reconciliation
 
