@@ -35,6 +35,67 @@ function slayerkey_sales_get_secret( $provider ) {
     return is_string( $value ) ? trim( $value ) : '';
 }
 
+function slayerkey_sales_whop_signing_keys( $secret ) {
+    if ( ! is_string( $secret ) ) {
+        return array();
+    }
+
+    $secret = trim( $secret );
+    if ( '' === $secret ) {
+        return array();
+    }
+
+    // Preserve the existing raw-secret verifier for current ws_ secrets and
+    // historical configurations. For Standard Webhooks-style whsec_ values,
+    // also try the decoded key bytes so either valid serialization remains
+    // compatible during migration.
+    $keys = array( $secret );
+
+    if ( 0 === strpos( $secret, 'whsec_' ) ) {
+        $encoded = substr( $secret, 6 );
+        if ( '' !== $encoded ) {
+            $padding = strlen( $encoded ) % 4;
+            if ( 0 !== $padding ) {
+                $encoded .= str_repeat( '=', 4 - $padding );
+            }
+
+            $decoded = base64_decode( $encoded, true );
+            if ( false !== $decoded && '' !== $decoded && ! in_array( $decoded, $keys, true ) ) {
+                $keys[] = $decoded;
+            }
+        }
+    }
+
+    return $keys;
+}
+
+function slayerkey_sales_safe_posthog_distinct_id( $value ) {
+    if ( ! is_string( $value ) ) {
+        return '';
+    }
+
+    $value = trim( $value );
+
+    if ( '' === $value || strlen( $value ) > 200 || ! preg_match( '/^[A-Za-z0-9_-]+$/D', $value ) ) {
+        return '';
+    }
+
+    return $value;
+}
+
+function slayerkey_sales_pseudonymous_id( $namespace, $value ) {
+    if ( ! is_string( $namespace ) || ! preg_match( '/^[A-Za-z0-9_]+$/D', $namespace ) || ! is_scalar( $value ) ) {
+        return '';
+    }
+
+    $value = trim( (string) $value );
+    if ( '' === $value ) {
+        return '';
+    }
+
+    return $namespace . '_' . hash( 'sha256', $value );
+}
+
 function slayerkey_sales_get_whop_api_key() {
     $value = get_option( 'slayerkey_whop_api_key', '' );
     return is_string( $value ) ? trim( $value ) : '';
@@ -175,7 +236,7 @@ function slayerkey_sales_posthog_capture( $provider, $event_id, $properties = ar
         $properties
     );
 
-    $capture_distinct_id = is_string( $distinct_id ) ? trim( $distinct_id ) : '';
+    $capture_distinct_id = slayerkey_sales_safe_posthog_distinct_id( $distinct_id );
     if ( '' === $capture_distinct_id ) {
         $capture_distinct_id = 'sale:' . $provider . ':' . hash( 'sha256', $event_id );
     }
@@ -209,6 +270,145 @@ function slayerkey_sales_posthog_capture( $provider, $event_id, $properties = ar
     }
 
     return true;
+}
+
+function slayerkey_sales_handle_stripe_webhook( $raw_body, $signature_header ) {
+    $secret = slayerkey_sales_get_secret( 'stripe' );
+
+    if ( '' === $secret ) {
+        return array(
+            'status' => 503,
+            'body'   => array( 'ok' => false, 'error' => 'Stripe webhook secret is not configured.' ),
+        );
+    }
+
+    $raw_body         = is_string( $raw_body ) ? $raw_body : '';
+    $signature_header = is_string( $signature_header ) ? trim( $signature_header ) : '';
+
+    if ( '' === $raw_body || '' === $signature_header ) {
+        return array(
+            'status' => 400,
+            'body'   => array( 'ok' => false, 'error' => 'Missing Stripe payload or signature.' ),
+        );
+    }
+
+    $timestamp  = null;
+    $signatures = array();
+
+    foreach ( explode( ',', $signature_header ) as $part ) {
+        $pair = explode( '=', trim( $part ), 2 );
+        if ( 2 !== count( $pair ) ) {
+            continue;
+        }
+
+        if ( 't' === $pair[0] ) {
+            $timestamp = ctype_digit( $pair[1] ) ? (int) $pair[1] : null;
+        } elseif ( 'v1' === $pair[0] && '' !== $pair[1] ) {
+            $signatures[] = strtolower( $pair[1] );
+        }
+    }
+
+    if ( null === $timestamp || empty( $signatures ) ) {
+        return array(
+            'status' => 400,
+            'body'   => array( 'ok' => false, 'error' => 'Malformed Stripe signature header.' ),
+        );
+    }
+
+    if ( abs( time() - $timestamp ) > 300 ) {
+        return array(
+            'status' => 400,
+            'body'   => array( 'ok' => false, 'error' => 'Stripe signature timestamp is outside the allowed window.' ),
+        );
+    }
+
+    $expected_signature = hash_hmac( 'sha256', (string) $timestamp . '.' . $raw_body, $secret );
+    $verified           = false;
+
+    foreach ( $signatures as $signature ) {
+        if ( hash_equals( $expected_signature, $signature ) ) {
+            $verified = true;
+            break;
+        }
+    }
+
+    if ( ! $verified ) {
+        return array(
+            'status' => 400,
+            'body'   => array( 'ok' => false, 'error' => 'Invalid Stripe signature.' ),
+        );
+    }
+
+    $event = json_decode( $raw_body, true );
+    if ( ! is_array( $event ) || empty( $event['id'] ) || empty( $event['type'] ) ) {
+        return array(
+            'status' => 400,
+            'body'   => array( 'ok' => false, 'error' => 'Invalid Stripe event payload.' ),
+        );
+    }
+
+    $event_id   = (string) $event['id'];
+    $event_type = (string) $event['type'];
+
+    if ( 'checkout.session.completed' !== $event_type ) {
+        return array(
+            'status' => 200,
+            'body'   => array( 'ok' => true, 'ignored' => true ),
+        );
+    }
+
+    if ( slayerkey_sales_is_processed( 'stripe', $event_id ) ) {
+        return array(
+            'status' => 200,
+            'body'   => array( 'ok' => true, 'duplicate' => true ),
+        );
+    }
+
+    $session        = isset( $event['data']['object'] ) && is_array( $event['data']['object'] ) ? $event['data']['object'] : array();
+    $payment_status = isset( $session['payment_status'] ) ? (string) $session['payment_status'] : '';
+
+    if ( 'paid' !== $payment_status ) {
+        return array(
+            'status' => 200,
+            'body'   => array( 'ok' => true, 'ignored' => true, 'reason' => 'not_paid' ),
+        );
+    }
+
+    $properties = array(
+        'stripe_event_type' => $event_type,
+        'payment_status'    => 'paid',
+    );
+
+    if ( isset( $session['mode'] ) && is_string( $session['mode'] ) ) {
+        $properties['checkout_mode'] = $session['mode'];
+    }
+
+    $stripe_distinct_id = '';
+    if ( isset( $session['customer'] ) && is_string( $session['customer'] ) ) {
+        $stripe_distinct_id = slayerkey_sales_pseudonymous_id( 'stripe_customer', $session['customer'] );
+
+        if ( '' !== $stripe_distinct_id ) {
+            $properties['identity_source'] = 'stripe_customer_id_hash';
+        }
+    }
+
+    $result = slayerkey_sales_posthog_capture( 'stripe', $event_id, $properties, $stripe_distinct_id );
+
+    if ( is_wp_error( $result ) ) {
+        error_log( '[Slayerkey Stripe webhook] PostHog capture failed: ' . $result->get_error_message() );
+
+        return array(
+            'status' => 500,
+            'body'   => array( 'ok' => false, 'error' => 'Analytics delivery failed; Stripe should retry.' ),
+        );
+    }
+
+    slayerkey_sales_mark_processed( 'stripe', $event_id );
+
+    return array(
+        'status' => 200,
+        'body'   => array( 'ok' => true ),
+    );
 }
 
 function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_timestamp, $signature_header ) {
@@ -250,7 +450,6 @@ function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_t
     }
 
     $signed_payload      = $webhook_id . '.' . $webhook_timestamp . '.' . $raw_body;
-    $expected_signature  = base64_encode( hash_hmac( 'sha256', $signed_payload, $secret, true ) );
     $provided_signatures = array();
 
     if ( preg_match_all( '/v1,([A-Za-z0-9+\\/=]+)/', $signature_header, $matches ) ) {
@@ -258,10 +457,14 @@ function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_t
     }
 
     $verified = false;
-    foreach ( $provided_signatures as $signature ) {
-        if ( hash_equals( $expected_signature, $signature ) ) {
-            $verified = true;
-            break;
+    foreach ( slayerkey_sales_whop_signing_keys( $secret ) as $signing_key ) {
+        $expected_signature = base64_encode( hash_hmac( 'sha256', $signed_payload, $signing_key, true ) );
+
+        foreach ( $provided_signatures as $signature ) {
+            if ( hash_equals( $expected_signature, $signature ) ) {
+                $verified = true;
+                break 2;
+            }
         }
     }
 
@@ -331,14 +534,35 @@ function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_t
         ? slayerkey_sales_sanitize_attribution_metadata( $payment['metadata'] )
         : array();
 
-    $posthog_distinct_id = '';
-    if ( ! empty( $metadata['posthog_distinct_id'] ) ) {
-        $posthog_distinct_id = $metadata['posthog_distinct_id'];
+    $posthog_distinct_id = ! empty( $metadata['posthog_distinct_id'] )
+        ? slayerkey_sales_safe_posthog_distinct_id( $metadata['posthog_distinct_id'] )
+        : '';
+
+    if ( '' !== $posthog_distinct_id ) {
         $properties['journey_linked'] = true;
+        $properties['identity_source'] = 'website_posthog_distinct_id';
+    } else {
+        $whop_user_id = '';
+
+        if ( isset( $payment['user_id'] ) && is_scalar( $payment['user_id'] ) ) {
+            $whop_user_id = trim( (string) $payment['user_id'] );
+        } elseif ( isset( $payment['user'] ) && is_string( $payment['user'] ) ) {
+            $whop_user_id = trim( $payment['user'] );
+        } elseif ( isset( $payment['user'] ) && is_array( $payment['user'] ) && ! empty( $payment['user']['id'] ) ) {
+            $whop_user_id = trim( (string) $payment['user']['id'] );
+        }
+
+        $posthog_distinct_id = slayerkey_sales_pseudonymous_id( 'whop_user', $whop_user_id );
+        if ( '' !== $posthog_distinct_id ) {
+            $properties['identity_source'] = 'whop_user_id_hash';
+        }
     }
 
     if ( ! empty( $metadata['posthog_session_id'] ) ) {
-        $properties['$session_id'] = $metadata['posthog_session_id'];
+        $safe_session_id = slayerkey_sales_safe_posthog_distinct_id( $metadata['posthog_session_id'] );
+        if ( '' !== $safe_session_id ) {
+            $properties['$session_id'] = $safe_session_id;
+        }
     }
 
     foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'cta_id', 'cta_location', 'page_path', 'route' ) as $field ) {

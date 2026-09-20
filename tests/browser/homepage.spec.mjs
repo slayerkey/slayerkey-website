@@ -47,6 +47,13 @@ test('native content, section scrolling, chooser, proof, footer, and reload', as
   }
   await page.locator('.sk-plan-close').click();
   await unlockCheck(page);
+
+  // WebKit mobile can terminate a long-lived page after extensive scrolling plus
+  // modal activity. Keep the same coverage but isolate each interaction phase on
+  // a fresh navigation so a browser-engine lifecycle crash is not mistaken for a
+  // site regression.
+  await page.goto('/');
+  await readable(page);
   await page.locator('[data-proof-src]').first().click();
   await expect(page.locator('#djLightbox')).toBeVisible();
   await expect(page.locator('#djLightbox img')).toHaveAttribute('src', /^https:\/\/slayerkey.com\/wp-content\/uploads\/.+\.png$/);
@@ -55,6 +62,9 @@ test('native content, section scrolling, chooser, proof, footer, and reload', as
   await expect(page.locator('#djLightbox')).toBeHidden();
   await unlockCheck(page);
   await expect(page.locator('[data-proof-src]').first()).toBeFocused();
+
+  await page.goto('/');
+  await readable(page);
   const footerLink = page.locator('footer.sk-footer a[href="/"]');
   await footerLink.scrollIntoViewIfNeeded();
   await expect(footerLink).toBeVisible();
@@ -155,6 +165,210 @@ test('repeat initialization and failing analytics cannot break checkout navigati
   expect(errors).toEqual([]);
 });
 
+test('direct Whop and Stripe checkouts emit checkout_started without changing navigation behavior', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => {
+    window.__posthogCaptures = [];
+    window.posthog = {
+      capture(event, properties) {
+        window.__posthogCaptures.push({ event, properties });
+      }
+    };
+
+    document.querySelector('[data-sk-location="pricing_monthly"]').addEventListener('click', event => {
+      event.preventDefault();
+    }, { once: true });
+
+    const stripe = document.createElement('a');
+    stripe.id = 'test-stripe-checkout';
+    stripe.href = 'https://buy.stripe.com/test_checkout';
+    stripe.setAttribute('data-sk-cta', 'test-stripe-buy');
+    stripe.setAttribute('data-sk-offer', 'improvement_system');
+    stripe.setAttribute('data-sk-location', 'test');
+    stripe.addEventListener('click', event => event.preventDefault(), { once: true });
+    document.body.appendChild(stripe);
+  });
+
+  await page.evaluate(() => {
+    document.querySelector('[data-sk-location="pricing_monthly"]').click();
+    document.querySelector('#test-stripe-checkout').click();
+  });
+
+  await expect.poll(async () => {
+    return page.evaluate(() => window.__posthogCaptures.filter(item => item.event === 'checkout_started').length);
+  }).toBe(2);
+
+  const captured = await page.evaluate(() => window.__posthogCaptures.filter(item => item.event === 'checkout_started'));
+  expect(captured[0].properties.provider).toBe('whop');
+  expect(captured[0].properties.offer).toBe('dojo');
+  expect(captured[0].properties.cta_location).toBe('pricing_monthly');
+  expect(captured[0].properties.route).toBe('website');
+  expect(captured[1].properties.provider).toBe('stripe');
+  expect(captured[1].properties.offer).toBe('improvement_system');
+  expect(captured[1].properties.cta_location).toBe('test');
+  expect(captured[1].properties.route).toBe('website');
+});
+
+test('Dojo plan chooser preserves checkout analytics metadata', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => {
+    window.__posthogCaptures = [];
+    window.posthog = {
+      capture(event, properties) {
+        window.__posthogCaptures.push({ event, properties });
+      }
+    };
+  });
+
+  await page.locator(hero).first().click();
+  await expect(page.locator('#sk-plan-chooser')).toBeVisible();
+
+  const chooser = page.locator('.sk-plan-action').first();
+  await expect(chooser).toHaveAttribute('data-sk-cta', 'dojo-plan-monthly');
+  await expect(chooser).toHaveAttribute('data-sk-offer', 'dojo');
+  await expect(chooser).toHaveAttribute('data-sk-plan-direct', 'true');
+  await expect(chooser).toHaveAttribute('data-sk-location', 'plan_chooser_monthly');
+
+  await chooser.evaluate(element => {
+    element.addEventListener('click', event => event.preventDefault(), { once: true });
+    element.click();
+  });
+
+  await expect.poll(async () => {
+    return page.evaluate(() => window.__posthogCaptures.filter(item => item.event === 'checkout_started').length);
+  }).toBe(1);
+
+  const captured = await page.evaluate(() => window.__posthogCaptures.find(item => item.event === 'checkout_started'));
+  expect(captured.properties.provider).toBe('whop');
+  expect(captured.properties.offer).toBe('dojo');
+  expect(captured.properties.cta_location).toBe('plan_chooser_monthly');
+});
+
+test('enabled Whop attribution hands browser identity and campaign metadata to checkout configuration', async ({ page }) => {
+  await page.goto('/?utm_source=youtube&utm_medium=video&utm_campaign=guide&utm_content=description');
+  await page.locator(hero).first().click();
+  await expect(page.locator('#sk-plan-chooser')).toBeVisible();
+
+  await page.evaluate(() => {
+    window.__posthogCaptures = [];
+    window.__checkoutRequest = null;
+    window.__checkoutWindow = null;
+
+    window.SK_TRACKING_CONFIG = {
+      whop_attribution_enabled: true,
+      whop_checkout_endpoint: '/wp-json/slayerkey/v1/whop-checkout'
+    };
+
+    window.posthog = {
+      get_distinct_id() { return 'visitor_test'; },
+      get_session_id() { return 'session_test'; },
+      capture(event, properties) {
+        window.__posthogCaptures.push({ event, properties });
+      }
+    };
+
+    window.open = () => {
+      window.__checkoutWindow = {
+        closed: false,
+        opener: window,
+        location: { href: 'about:blank' }
+      };
+      return window.__checkoutWindow;
+    };
+
+    window.fetch = async (url, options) => {
+      window.__checkoutRequest = {
+        url,
+        method: options.method,
+        credentials: options.credentials,
+        body: JSON.parse(options.body)
+      };
+
+      return {
+        ok: true,
+        async json() {
+          return {
+            purchase_url: 'https://whop.com/checkout/plan_eVop6pXsIhHlf/?session=ch_browser_test'
+          };
+        }
+      };
+    };
+  });
+
+  await page.locator('.sk-plan-action').first().click();
+
+  await expect.poll(async () => page.evaluate(() => window.__checkoutRequest !== null)).toBe(true);
+
+  const result = await page.evaluate(() => ({
+    request: window.__checkoutRequest,
+    checkoutHref: window.__checkoutWindow && window.__checkoutWindow.location.href,
+    captures: window.__posthogCaptures
+  }));
+
+  expect(result.request.url).toBe('/wp-json/slayerkey/v1/whop-checkout');
+  expect(result.request.method).toBe('POST');
+  expect(result.request.credentials).toBe('same-origin');
+  expect(result.request.body.plan_id).toBe('plan_eVop6pXsIhHlf');
+  expect(result.request.body.metadata.posthog_distinct_id).toBe('visitor_test');
+  expect(result.request.body.metadata.posthog_session_id).toBe('session_test');
+  expect(result.request.body.metadata.utm_source).toBe('youtube');
+  expect(result.request.body.metadata.utm_medium).toBe('video');
+  expect(result.request.body.metadata.utm_campaign).toBe('guide');
+  expect(result.request.body.metadata.utm_content).toBe('description');
+  expect(result.request.body.metadata.cta_id).toBe('dojo-plan-monthly');
+  expect(result.request.body.metadata.cta_location).toBe('plan_chooser_monthly');
+  expect(result.request.body.metadata.route).toBe('website');
+  expect(result.checkoutHref).toBe('https://whop.com/checkout/plan_eVop6pXsIhHlf/?session=ch_browser_test');
+
+  const checkoutEvents = result.captures.filter(item => item.event === 'checkout_started');
+  expect(checkoutEvents).toHaveLength(1);
+  expect(checkoutEvents[0].properties.provider).toBe('whop');
+  expect(checkoutEvents[0].properties.cta_location).toBe('plan_chooser_monthly');
+});
+
+test('GA4 begin_checkout maps every current paid offer and value', async ({ page }) => {
+  await page.goto('/');
+  const cases = [
+    ['https://whop.com/checkout/plan_eVop6pXsIhHlf/', 19.99, 'plan_eVop6pXsIhHlf'],
+    ['https://whop.com/checkout/plan_kaaoYadRlBi4n/', 199.99, 'plan_kaaoYadRlBi4n'],
+    ['https://buy.stripe.com/28EbJ04MV4ege3j8VH04804', 249, 'stripe_system_249'],
+    ['https://buy.stripe.com/00w28q3IR4eg8IZ8VH04806', 1200, 'stripe_coaching_full'],
+    ['https://buy.stripe.com/4gM00i3IR4eg3oF0pb04805', 1300, 'stripe_coaching_plan']
+  ];
+
+  await page.evaluate(cases => {
+    window.dataLayer.length = 0;
+    cases.forEach(([href], index) => {
+      const link = document.createElement('a');
+      link.id = 'ga-checkout-' + index;
+      link.className = 'btn';
+      link.href = href;
+      link.textContent = 'Checkout ' + index;
+      link.addEventListener('click', event => event.preventDefault(), { once: true });
+      document.body.appendChild(link);
+    });
+  }, cases);
+
+  await page.evaluate(count => {
+    for (let index = 0; index < count; index += 1) {
+      document.querySelector('#ga-checkout-' + index).click();
+    }
+  }, cases.length);
+
+  const events = await page.evaluate(() => window.dataLayer
+    .map(entry => Array.from(entry))
+    .filter(entry => entry[0] === 'event' && entry[1] === 'begin_checkout')
+    .map(entry => entry[2]));
+
+  expect(events).toHaveLength(cases.length);
+  cases.forEach(([, value, itemId], index) => {
+    expect(events[index].currency).toBe('USD');
+    expect(events[index].value).toBe(value);
+    expect(events[index].items[0].item_id).toBe(itemId);
+    expect(events[index].items[0].price).toBe(value);
+  });
+});
+
 test('popup manual/hash/timer/exit paths and overlapping dialogs retain independent locks', async ({ page, isMobile }) => {
   await page.goto('/');
   await page.locator('.sk-fp-float').click();
@@ -194,10 +408,25 @@ test('Kit submission uses the existing form and endpoint, without creating a sub
     return route.fulfill({status:200,headers:{'access-control-allow-origin':'*'},body:''});
   });
   await page.goto('/#free-plan');
+  await page.evaluate(() => {
+    window.__posthogCaptures = [];
+    window.posthog = {
+      capture(event, properties) {
+        window.__posthogCaptures.push({ event, properties });
+      }
+    };
+  });
   await page.locator('.sk-ep-input').fill('smoke@example.invalid');
   await page.locator('.sk-ep-btn').click();
   await expect(page.locator('#sk-ep-ok')).toBeVisible();
   expect(payload).toBe('email_address=smoke%40example.invalid');
+  await expect.poll(async () => {
+    return page.evaluate(() => window.__posthogCaptures.filter(item => item.event === 'lead_submitted').length);
+  }).toBe(1);
+  const captured = await page.evaluate(() => window.__posthogCaptures.find(item => item.event === 'lead_submitted'));
+  expect(captured.properties.lead_magnet).toBe('30_day_rank_up_routine');
+  expect(captured.properties.method).toBe('popup');
+  expect(JSON.stringify(captured)).not.toContain('smoke@example.invalid');
   await expect(page.locator('#sk-ep')).toBeHidden({timeout:6000});
   await unlockCheck(page);
 });

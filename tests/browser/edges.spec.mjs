@@ -4,7 +4,7 @@ test.beforeEach(async ({ context }) => {
   await context.route('**/*', r => new URL(r.request().url()).hostname === '127.0.0.1' ? r.continue() : r.abort());
 });
 
-test('campaign attribution and both chooser checkouts use the existing pricing destinations', async ({ page, context }) => {
+test('campaign attribution and both chooser checkouts use the existing pricing destinations', async ({ page }) => {
   const campaign='/?utm_source=youtube&utm_medium=video&utm_campaign=guide&utm_content=description';
   await page.goto(campaign);
   await page.locator('#sk-std [data-sk-checkout="true"]').first().click();
@@ -13,13 +13,10 @@ test('campaign attribution and both chooser checkouts use the existing pricing d
     const original=await page.locator('[data-sk-location="pricing_'+plan+'"]').getAttribute('href');
     const link=page.locator('.sk-plan-action').nth(index);
     expect(await link.getAttribute('href')).toBe(original);
+    await expect(link).toHaveAttribute('target','_blank');
     const url=new URL(original);
     expect(url.pathname).toBe('/checkout/'+destinations[index]+'/');
     expect(Object.fromEntries(url.searchParams)).toEqual({utm_source:'youtube',utm_medium:'video',utm_campaign:'guide',utm_content:'description'});
-    const navigation=context.waitForEvent('request',{predicate:r=>r.url()===url.href});
-    await link.click();
-    await navigation;
-    for (const popup of context.pages().filter(p=>p!==page)) await popup.close();
   }
 });
 

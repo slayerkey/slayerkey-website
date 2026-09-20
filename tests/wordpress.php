@@ -23,6 +23,7 @@ function is_wp_error($value) { return $value instanceof WP_Error; }
 function get_option($name, $default = '') {
     if ($name === 'slayerkey_whop_webhook_secret') return $GLOBALS['whop_test_secret'] ?? $default;
     if ($name === 'slayerkey_whop_api_key') return $GLOBALS['whop_api_key'] ?? $default;
+    if ($name === 'slayerkey_stripe_webhook_secret') return $GLOBALS['stripe_test_secret'] ?? $default;
     return $default;
 }
 function get_transient($key) { return $GLOBALS['transients'][$key] ?? false; }
@@ -106,8 +107,16 @@ check(($checkoutResult->data['purchase_url'] ?? '') === 'https://whop.com/checko
 check(str_contains($GLOBALS['last_remote_post'][1]['body'], 'visitor_test'), 'Checkout forwards PostHog identity as Whop metadata');
 
 require_once $plugin . '/sales-webhook-common.php';
-$GLOBALS['whop_test_secret'] = 'whsec_test_secret';
-$webhookId = 'msg_test_sale_1';
+
+// Whop signing compatibility.
+$GLOBALS['whop_test_secret'] = 'ws_test_secret';
+check(in_array('ws_test_secret', slayerkey_sales_whop_signing_keys('ws_test_secret'), true), 'Current Whop ws_ secret uses literal HMAC key bytes');
+$legacyKeyBytes = 'legacy_test_key_bytes_1234567890';
+$legacySecret = 'whsec_' . rtrim(base64_encode($legacyKeyBytes), '=');
+check(in_array($legacyKeyBytes, slayerkey_sales_whop_signing_keys($legacySecret), true), 'Legacy whsec_ secret supports decoded Standard Webhooks key bytes');
+
+// Website-linked Whop journey: metadata should preserve the browser PostHog identity.
+$webhookId = 'msg_test_sale_linked';
 $webhookTimestamp = (string) time();
 $webhookBody = json_encode([
     'id' => $webhookId,
@@ -118,6 +127,7 @@ $webhookBody = json_encode([
         'billing_reason' => 'subscription_create',
         'product' => ['id' => 'prod_test'],
         'plan' => ['id' => 'plan_test'],
+        'user_id' => 'user_should_not_override_linked_identity',
         'metadata' => [
             'posthog_distinct_id' => 'visitor_test',
             'posthog_session_id' => 'session_test',
@@ -129,18 +139,171 @@ $webhookBody = json_encode([
         ],
     ],
 ]);
-$webhookSignature = 'v1,' . base64_encode(hash_hmac('sha256', $webhookId . '.' . $webhookTimestamp . '.' . $webhookBody, $GLOBALS['whop_test_secret'], true));
+$webhookSignature = 'v1,' . base64_encode(hash_hmac(
+    'sha256',
+    $webhookId . '.' . $webhookTimestamp . '.' . $webhookBody,
+    $GLOBALS['whop_test_secret'],
+    true
+));
 $webhookResult = slayerkey_sales_handle_whop_webhook($webhookBody, $webhookId, $webhookTimestamp, $webhookSignature);
 check($webhookResult['status'] === 200 && $webhookResult['body']['ok'] === true, 'Valid Whop payment webhook accepted');
-check(isset($GLOBALS['last_remote_post'][1]['body']) && str_contains($GLOBALS['last_remote_post'][1]['body'], 'sale_confirmed'), 'Whop payment captured to PostHog');
-check(str_contains($GLOBALS['last_remote_post'][1]['body'], '"distinct_id":"visitor_test"'), 'Whop payment reuses the website PostHog identity');
-check(str_contains($GLOBALS['last_remote_post'][1]['body'], '"utm_campaign":"yt_test"'), 'Whop payment carries campaign attribution into PostHog');
-$invalidWebhookResult = slayerkey_sales_handle_whop_webhook($webhookBody, 'msg_test_sale_2', $webhookTimestamp, 'v1,invalid');
+$linkedPostHog = json_decode($GLOBALS['last_remote_post'][1]['body'], true);
+check(($linkedPostHog['event'] ?? '') === 'sale_confirmed', 'Whop payment captured to PostHog');
+check(($linkedPostHog['distinct_id'] ?? '') === 'visitor_test', 'Whop payment reuses website PostHog identity');
+check(($linkedPostHog['properties']['$session_id'] ?? '') === 'session_test', 'Whop payment preserves website PostHog session');
+check(($linkedPostHog['properties']['utm_campaign'] ?? '') === 'yt_test', 'Whop payment preserves campaign attribution');
+check(($linkedPostHog['properties']['journey_linked'] ?? false) === true, 'Whop payment is marked journey linked');
+check(($linkedPostHog['properties']['identity_source'] ?? '') === 'website_posthog_distinct_id', 'Whop linked identity source is explicit');
+check(!str_contains($GLOBALS['last_remote_post'][1]['body'], 'user_should_not_override_linked_identity'), 'Raw Whop user ID is not sent when journey identity exists');
+
+$whopPostBeforeDuplicate = $GLOBALS['last_remote_post'][1]['body'];
+$duplicateWebhookResult = slayerkey_sales_handle_whop_webhook($webhookBody, $webhookId, $webhookTimestamp, $webhookSignature);
+check(!empty($duplicateWebhookResult['body']['duplicate']), 'Duplicate Whop webhook ignored');
+check($GLOBALS['last_remote_post'][1]['body'] === $whopPostBeforeDuplicate, 'Duplicate Whop webhook does not recapture PostHog event');
+
+$invalidWebhookResult = slayerkey_sales_handle_whop_webhook($webhookBody, 'msg_test_sale_invalid', $webhookTimestamp, 'v1,invalid');
 check($invalidWebhookResult['status'] === 400, 'Invalid Whop signature rejected');
+
+// Whop fallback identity when checkout metadata is unavailable.
+$fallbackPayload = json_decode($webhookBody, true);
+$fallbackPayload['id'] = 'msg_test_sale_fallback_user';
+$fallbackPayload['data']['user_id'] = 'user_test_repeat';
+unset($fallbackPayload['data']['metadata']);
+$fallbackBody = json_encode($fallbackPayload);
+$fallbackSignature = 'v1,' . base64_encode(hash_hmac(
+    'sha256',
+    'msg_test_sale_fallback_user' . '.' . $webhookTimestamp . '.' . $fallbackBody,
+    $GLOBALS['whop_test_secret'],
+    true
+));
+$fallbackResult = slayerkey_sales_handle_whop_webhook($fallbackBody, 'msg_test_sale_fallback_user', $webhookTimestamp, $fallbackSignature);
+check($fallbackResult['status'] === 200 && $fallbackResult['body']['ok'] === true, 'Whop sale without website metadata accepted');
+$fallbackPostHog = json_decode($GLOBALS['last_remote_post'][1]['body'], true);
+check(str_starts_with($fallbackPostHog['distinct_id'], 'whop_user_'), 'Whop fallback uses pseudonymous buyer identity');
+check(($fallbackPostHog['properties']['identity_source'] ?? '') === 'whop_user_id_hash', 'Whop fallback identity source is recorded');
+check(!str_contains($GLOBALS['last_remote_post'][1]['body'], 'user_test_repeat'), 'Raw Whop fallback user ID is not sent to PostHog');
+
+$whopStringPayload = $fallbackPayload;
+$whopStringPayload['id'] = 'msg_test_sale_string_user';
+$whopStringPayload['data']['user'] = 'user_string_shape';
+unset($whopStringPayload['data']['user_id']);
+$whopStringBody = json_encode($whopStringPayload);
+$whopStringSignature = 'v1,' . base64_encode(hash_hmac(
+    'sha256',
+    'msg_test_sale_string_user' . '.' . $webhookTimestamp . '.' . $whopStringBody,
+    $GLOBALS['whop_test_secret'],
+    true
+));
+$whopStringResult = slayerkey_sales_handle_whop_webhook($whopStringBody, 'msg_test_sale_string_user', $webhookTimestamp, $whopStringSignature);
+check($whopStringResult['status'] === 200 && $whopStringResult['body']['ok'] === true, 'Whop string user shape accepted');
+$whopStringPostHog = json_decode($GLOBALS['last_remote_post'][1]['body'], true);
+check(str_starts_with($whopStringPostHog['distinct_id'], 'whop_user_'), 'Whop string user shape pseudonymized');
+check(!str_contains($GLOBALS['last_remote_post'][1]['body'], 'user_string_shape'), 'Raw Whop string user ID is not sent to PostHog');
+
+$whopExpandedPayload = $fallbackPayload;
+$whopExpandedPayload['id'] = 'msg_test_sale_expanded_user';
+$whopExpandedPayload['data']['user'] = ['id' => 'user_expanded_shape'];
+unset($whopExpandedPayload['data']['user_id']);
+$whopExpandedBody = json_encode($whopExpandedPayload);
+$whopExpandedSignature = 'v1,' . base64_encode(hash_hmac(
+    'sha256',
+    'msg_test_sale_expanded_user' . '.' . $webhookTimestamp . '.' . $whopExpandedBody,
+    $GLOBALS['whop_test_secret'],
+    true
+));
+$whopExpandedResult = slayerkey_sales_handle_whop_webhook($whopExpandedBody, 'msg_test_sale_expanded_user', $webhookTimestamp, $whopExpandedSignature);
+check($whopExpandedResult['status'] === 200 && $whopExpandedResult['body']['ok'] === true, 'Whop expanded user shape accepted');
+$whopExpandedPostHog = json_decode($GLOBALS['last_remote_post'][1]['body'], true);
+check(str_starts_with($whopExpandedPostHog['distinct_id'], 'whop_user_'), 'Whop expanded user shape pseudonymized');
+check(!str_contains($GLOBALS['last_remote_post'][1]['body'], 'user_expanded_shape'), 'Raw Whop expanded user ID is not sent to PostHog');
+
+// Legacy whsec_ serialization can verify using decoded key bytes.
+$legacyWebhookId = 'msg_test_legacy_whsec';
+$legacyPayload = $fallbackPayload;
+$legacyPayload['id'] = $legacyWebhookId;
+$legacyPayload['data']['user_id'] = 'user_legacy_secret';
+$legacyBody = json_encode($legacyPayload);
+$GLOBALS['whop_test_secret'] = $legacySecret;
+$legacySignature = 'v1,' . base64_encode(hash_hmac(
+    'sha256',
+    $legacyWebhookId . '.' . $webhookTimestamp . '.' . $legacyBody,
+    $legacyKeyBytes,
+    true
+));
+$legacyResult = slayerkey_sales_handle_whop_webhook($legacyBody, $legacyWebhookId, $webhookTimestamp, $legacySignature);
+check($legacyResult['status'] === 200 && $legacyResult['body']['ok'] === true, 'Legacy whsec_ Whop signature accepted with decoded key bytes');
+$GLOBALS['whop_test_secret'] = 'ws_test_secret';
+
+// Shared Stripe handler regression coverage.
+$GLOBALS['stripe_test_secret'] = 'whsec_stripe_test_secret';
+$stripeWebhookTimestamp = (string) time();
+$stripeWebhookBody = json_encode([
+    'id' => 'evt_test_stripe_1',
+    'type' => 'checkout.session.completed',
+    'data' => [
+        'object' => [
+            'payment_status' => 'paid',
+            'mode' => 'payment',
+            'customer' => 'cus_repeat_buyer_123',
+        ],
+    ],
+]);
+$stripeWebhookSignature = 't=' . $stripeWebhookTimestamp . ',v1=' . hash_hmac(
+    'sha256',
+    $stripeWebhookTimestamp . '.' . $stripeWebhookBody,
+    $GLOBALS['stripe_test_secret']
+);
+$stripeWebhookResult = slayerkey_sales_handle_stripe_webhook($stripeWebhookBody, $stripeWebhookSignature);
+check($stripeWebhookResult['status'] === 200 && $stripeWebhookResult['body']['ok'] === true, 'Valid Stripe payment webhook accepted');
+$stripeWebhookPostHog = json_decode($GLOBALS['last_remote_post'][1]['body'], true);
+check(($stripeWebhookPostHog['event'] ?? '') === 'sale_confirmed', 'Stripe payment captured to PostHog');
+check(str_starts_with($stripeWebhookPostHog['distinct_id'], 'stripe_customer_'), 'Stripe sale uses pseudonymous customer identity when available');
+check(($stripeWebhookPostHog['properties']['identity_source'] ?? '') === 'stripe_customer_id_hash', 'Stripe identity source is recorded');
+check(!str_contains($GLOBALS['last_remote_post'][1]['body'], 'cus_repeat_buyer_123'), 'Raw Stripe Customer ID is not sent to PostHog');
+
+$stripePostBeforeDuplicate = $GLOBALS['last_remote_post'][1]['body'];
+$stripeDuplicateResult = slayerkey_sales_handle_stripe_webhook($stripeWebhookBody, $stripeWebhookSignature);
+check(!empty($stripeDuplicateResult['body']['duplicate']), 'Duplicate Stripe webhook ignored');
+check($GLOBALS['last_remote_post'][1]['body'] === $stripePostBeforeDuplicate, 'Duplicate Stripe webhook does not recapture PostHog event');
+
+$stripeInvalidResult = slayerkey_sales_handle_stripe_webhook(
+    $stripeWebhookBody,
+    't=' . $stripeWebhookTimestamp . ',v1=invalid'
+);
+check($stripeInvalidResult['status'] === 400, 'Invalid Stripe signature rejected');
+
+$stripeUnpaidBody = json_encode([
+    'id' => 'evt_test_stripe_unpaid',
+    'type' => 'checkout.session.completed',
+    'data' => ['object' => ['payment_status' => 'unpaid', 'mode' => 'payment']],
+]);
+$stripeUnpaidSignature = 't=' . $stripeWebhookTimestamp . ',v1=' . hash_hmac(
+    'sha256',
+    $stripeWebhookTimestamp . '.' . $stripeUnpaidBody,
+    $GLOBALS['stripe_test_secret']
+);
+$stripeUnpaidResult = slayerkey_sales_handle_stripe_webhook($stripeUnpaidBody, $stripeUnpaidSignature);
+check(!empty($stripeUnpaidResult['body']['ignored']) && ($stripeUnpaidResult['body']['reason'] ?? '') === 'not_paid', 'Unpaid Stripe Checkout Session ignored');
+
+$stripeNoCustomerBody = json_encode([
+    'id' => 'evt_test_stripe_no_customer',
+    'type' => 'checkout.session.completed',
+    'data' => ['object' => ['payment_status' => 'paid', 'mode' => 'payment']],
+]);
+$stripeNoCustomerSignature = 't=' . $stripeWebhookTimestamp . ',v1=' . hash_hmac(
+    'sha256',
+    $stripeWebhookTimestamp . '.' . $stripeNoCustomerBody,
+    $GLOBALS['stripe_test_secret']
+);
+$stripeNoCustomerResult = slayerkey_sales_handle_stripe_webhook($stripeNoCustomerBody, $stripeNoCustomerSignature);
+check($stripeNoCustomerResult['status'] === 200 && $stripeNoCustomerResult['body']['ok'] === true, 'Stripe sale without Customer still accepted');
+$stripeNoCustomerPostHog = json_decode($GLOBALS['last_remote_post'][1]['body'], true);
+check(str_starts_with($stripeNoCustomerPostHog['distinct_id'], 'sale:stripe:'), 'Stripe sale without Customer falls back to event identity');
+
 if (file_exists($plugin . '/DEPLOYED_ASSETS.json')) {
     $manifest = json_decode(file_get_contents($plugin . '/DEPLOYED_ASSETS.json'), true);
     check(SLAYERKEY_TRACKING_ASSET === $manifest['tracking_js'], 'Built tracking constant');
     check($health['tracking_sha256'] === $manifest['tracking_js_sha256'], 'Manifest/health agreement');
     check(slayerkey_website_preview_map()['dojo-v3']['script'] === $manifest['dojo_js'], 'Built Dojo enqueue');
 }
-echo "WordPress rendering, REST routes, Whop webhooks, attribution, enqueues and health passed.\n";
+echo "WordPress rendering, REST routes, Whop and Stripe webhooks, attribution, privacy, enqueues and health passed.\n";

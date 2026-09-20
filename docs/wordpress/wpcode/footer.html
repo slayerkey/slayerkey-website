@@ -155,16 +155,16 @@
   });
 
   /*
-    Checkout links and what they are worth, so begin_checkout carries a real value.
-    GA4 never sees the purchase itself (that happens on Whop/Ko-fi), so this is the last
-    measurable step on our side. The purchase event fires on /welcome.
+    Checkout links and their current authored values, so GA4 begin_checkout
+    measures the same paid offers the live sales pages actually send visitors to.
+    Verified purchases are recorded separately by provider webhooks.
   */
   const CHECKOUTS = [
-    { match:'whop.com/checkout/plan_eVop6pXsIhHlf', value:19.99,  name:'Training Dojo Monthly',  id:'plan_eVop6pXsIhHlf' },
-    { match:'whop.com/checkout/plan_kaaoYadRlBi4n', value:199.99, name:'Training Dojo Annual',   id:'plan_kaaoYadRlBi4n' },
-    { match:'whop.com/checkout/plan_TOSvOOLdpQXzi', value:15,     name:'Training Dojo Legacy',   id:'plan_TOSvOOLdpQXzi' },
-    { match:'ko-fi.com/s/e34dd9cdef',               value:197,    name:'Improvement System',      id:'kofi_e34dd9cdef'    },
-    { match:'ko-fi.com/s/cd324493ce',               value:870,    name:'Performance Mentorship',  id:'kofi_cd324493ce'    }
+    { match:'whop.com/checkout/plan_eVop6pXsIhHlf', value:19.99,  name:'Training Dojo Monthly',           id:'plan_eVop6pXsIhHlf' },
+    { match:'whop.com/checkout/plan_kaaoYadRlBi4n', value:199.99, name:'Training Dojo Annual',            id:'plan_kaaoYadRlBi4n' },
+    { match:'buy.stripe.com/28EbJ04MV4ege3j8VH04804', value:249,  name:'Improvement System',              id:'stripe_system_249' },
+    { match:'buy.stripe.com/00w28q3IR4eg8IZ8VH04806', value:1200, name:'Private Mentorship Paid In Full', id:'stripe_coaching_full' },
+    { match:'buy.stripe.com/4gM00i3IR4eg3oF0pb04805', value:1300, name:'Private Mentorship Payment Plan',  id:'stripe_coaching_plan' }
   ];
   function checkoutFor(href){
     return CHECKOUTS.find(c => href.indexOf(c.match) !== -1) || null;
@@ -429,7 +429,7 @@
         });
       }
 
-      posthogCapture('email_signup', {
+      posthogCapture('lead_submitted', {
         method: 'popup',
         trigger: openTrigger
       });

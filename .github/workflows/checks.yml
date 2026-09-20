@@ -28,8 +28,8 @@ jobs:
       - run: npm run test:php
       - run: python3 tools/build_deploy.py --output build/php-check/plugin
       - run: php tests/wordpress.php build/php-check/plugin
-      - name: Run Chromium browser matrix
-        run: npx playwright test --project=chromium-desktop --project=chromium-390 --project=chromium-430
+      - name: Run full browser matrix
+        run: npm test
       - run: npm run test:soak
       - uses: actions/upload-artifact@v4
         if: failure()
