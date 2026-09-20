@@ -112,7 +112,20 @@ if ( isset( $session['mode'] ) && is_string( $session['mode'] ) ) {
     $properties['checkout_mode'] = $session['mode'];
 }
 
-$result = slayerkey_sales_posthog_capture( 'stripe', $event_id, $properties );
+$client_reference_id = slayerkey_sales_safe_client_reference_id(
+    isset( $session['client_reference_id'] ) ? $session['client_reference_id'] : ''
+);
+
+if ( '' !== $client_reference_id ) {
+    $properties['identity_source'] = 'stripe_client_reference_id';
+}
+
+$result = slayerkey_sales_posthog_capture(
+    'stripe',
+    $event_id,
+    $properties,
+    $client_reference_id
+);
 
 if ( is_wp_error( $result ) ) {
     error_log( '[Slayerkey Stripe webhook] PostHog capture failed: ' . $result->get_error_message() );
