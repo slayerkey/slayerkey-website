@@ -211,17 +211,19 @@
 
         var element = event.target.closest('[data-sk-cta]');
 
-        if (!element || !window.posthog || typeof window.posthog.capture !== 'function') {
+        if (!element) {
             return;
         }
 
-        try { window.posthog.capture('cta_click', {
+        if (window.posthog && typeof window.posthog.capture === 'function') {
+            try { window.posthog.capture('cta_click', {
             cta_id: element.getAttribute('data-sk-cta'),
             cta_location: element.getAttribute('data-sk-location') || null,
             offer: element.getAttribute('data-sk-offer') || null,
             plan_direct: element.getAttribute('data-sk-plan-direct') === 'true',
-            page_path: window.location.pathname
-        }); } catch (error) { /* Analytics must never interrupt navigation. */ }
+                page_path: window.location.pathname
+            }); } catch (error) { /* Analytics must never interrupt navigation. */ }
+        }
 
         attributedWhopCheckout(element, event);
     }, true);
