@@ -73,6 +73,77 @@ function slayerkey_sales_whop_user_id_from_payment( $payment ) {
     return '';
 }
 
+function slayerkey_sales_dojo_identity_bridge_config() {
+    $url = defined( 'SLAYERKEY_DOJO_IDENTITY_BRIDGE_URL' )
+        ? trim( (string) SLAYERKEY_DOJO_IDENTITY_BRIDGE_URL )
+        : trim( (string) get_option( 'slayerkey_dojo_identity_bridge_url', '' ) );
+    $secret = defined( 'SLAYERKEY_DOJO_IDENTITY_BRIDGE_SECRET' )
+        ? trim( (string) SLAYERKEY_DOJO_IDENTITY_BRIDGE_SECRET )
+        : trim( (string) get_option( 'slayerkey_dojo_identity_bridge_secret', '' ) );
+
+    if ( '' === $url && '' === $secret ) {
+        return array( 'enabled' => false, 'url' => '', 'secret' => '' );
+    }
+
+    $host = wp_parse_url( $url, PHP_URL_HOST );
+    $scheme = wp_parse_url( $url, PHP_URL_SCHEME );
+    if ( '' === $url || '' === $secret || 'https' !== strtolower( (string) $scheme ) || ! is_string( $host ) || '' === $host ) {
+        return new WP_Error( 'dojo_identity_bridge_misconfigured', 'Dojo identity bridge configuration is incomplete or invalid.' );
+    }
+
+    return array( 'enabled' => true, 'url' => $url, 'secret' => $secret );
+}
+
+function slayerkey_sales_sync_dojo_identity( $whop_user_id, $posthog_distinct_id ) {
+    $whop_user_id = is_scalar( $whop_user_id ) ? trim( (string) $whop_user_id ) : '';
+    $posthog_distinct_id = is_scalar( $posthog_distinct_id ) ? trim( (string) $posthog_distinct_id ) : '';
+
+    if ( '' === $whop_user_id || '' === $posthog_distinct_id ) {
+        return true;
+    }
+
+    $config = slayerkey_sales_dojo_identity_bridge_config();
+    if ( is_wp_error( $config ) ) {
+        return $config;
+    }
+    if ( empty( $config['enabled'] ) ) {
+        return true;
+    }
+
+    $body = wp_json_encode(
+        array(
+            'whop_user_id'       => $whop_user_id,
+            'posthog_distinct_id' => $posthog_distinct_id,
+        )
+    );
+    $timestamp = (string) time();
+    $signature = hash_hmac( 'sha256', $timestamp . '.' . $body, $config['secret'] );
+
+    $response = wp_remote_post(
+        $config['url'],
+        array(
+            'timeout' => 3,
+            'headers' => array(
+                'Content-Type'          => 'application/json',
+                'X-Slayerkey-Timestamp' => $timestamp,
+                'X-Slayerkey-Signature' => 'sha256=' . $signature,
+            ),
+            'body' => $body,
+        )
+    );
+
+    if ( is_wp_error( $response ) ) {
+        return $response;
+    }
+
+    $status = wp_remote_retrieve_response_code( $response );
+    if ( $status < 200 || $status >= 300 ) {
+        return new WP_Error( 'dojo_identity_bridge_failed', 'Dojo identity bridge returned HTTP ' . $status . '.' );
+    }
+
+    return true;
+}
+
 function slayerkey_sales_whop_checkout_plans() {
     return array(
         'plan_eVop6pXsIhHlf' => 'https://whop.com/checkout/plan_eVop6pXsIhHlf/',
@@ -375,13 +446,13 @@ function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_t
         ? slayerkey_sales_sanitize_attribution_metadata( $payment['metadata'] )
         : array();
 
+    $whop_user_id = slayerkey_sales_whop_user_id_from_payment( $payment );
     $posthog_distinct_id = '';
     if ( ! empty( $metadata['posthog_distinct_id'] ) ) {
         $posthog_distinct_id = $metadata['posthog_distinct_id'];
         $properties['journey_linked'] = true;
         $properties['identity_source'] = 'checkout_posthog_distinct_id';
     } else {
-        $whop_user_id = slayerkey_sales_whop_user_id_from_payment( $payment );
         $posthog_distinct_id = slayerkey_sales_pseudonymous_id( 'whop_user', $whop_user_id );
         if ( '' !== $posthog_distinct_id ) {
             $properties['identity_source'] = 'whop_user_id_hash';
@@ -412,6 +483,16 @@ function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_t
         if ( ! empty( $metadata[ $field ] ) ) {
             $properties[ $field ] = $metadata[ $field ];
         }
+    }
+
+    $identity_sync = slayerkey_sales_sync_dojo_identity( $whop_user_id, $posthog_distinct_id );
+    if ( is_wp_error( $identity_sync ) ) {
+        error_log( '[Slayerkey Whop webhook] Dojo identity bridge failed before analytics capture: ' . $identity_sync->get_error_message() );
+
+        return array(
+            'status' => 500,
+            'body'   => array( 'ok' => false, 'error' => 'Customer identity handoff failed; Whop should retry.' ),
+        );
     }
 
     $result = slayerkey_sales_posthog_capture( 'whop', $event_id, $properties, $posthog_distinct_id );
