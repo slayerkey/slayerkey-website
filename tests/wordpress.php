@@ -23,12 +23,15 @@ function is_wp_error($value) { return $value instanceof WP_Error; }
 function get_option($name, $default = '') {
     if ($name === 'slayerkey_whop_webhook_secret') return $GLOBALS['whop_test_secret'] ?? $default;
     if ($name === 'slayerkey_whop_api_key') return $GLOBALS['whop_api_key'] ?? $default;
+    if ($name === 'slayerkey_dojo_identity_bridge_url') return $GLOBALS['dojo_bridge_url'] ?? $default;
+    if ($name === 'slayerkey_dojo_identity_bridge_secret') return $GLOBALS['dojo_bridge_secret'] ?? $default;
     return $default;
 }
 function get_transient($key) { return $GLOBALS['transients'][$key] ?? false; }
 function set_transient($key, $value, $ttl) { $GLOBALS['transients'][$key] = $value; return true; }
 function wp_remote_post($url, $args) {
     $GLOBALS['last_remote_post'] = [$url, $args];
+    $GLOBALS['remote_posts'][] = [$url, $args];
     if (str_contains($url, '/checkout_configurations')) {
         return [
             'response' => ['code' => 200],
@@ -134,6 +137,7 @@ $webhookBody = json_encode([
         'billing_reason' => 'subscription_create',
         'product' => ['id' => 'prod_test'],
         'plan' => ['id' => 'plan_test'],
+        'user_id' => 'user_website_linked_private',
         'metadata' => [
             'posthog_distinct_id' => 'visitor_test',
             'posthog_session_id' => 'session_test',
@@ -146,11 +150,28 @@ $webhookBody = json_encode([
     ],
 ]);
 $webhookSignature = 'v1,' . base64_encode(hash_hmac('sha256', $webhookId . '.' . $webhookTimestamp . '.' . $webhookBody, $GLOBALS['whop_test_secret'], true));
+$GLOBALS['dojo_bridge_url'] = 'https://dojo.example/internal/customer-identity';
+$GLOBALS['dojo_bridge_secret'] = 'test_dojo_bridge_secret';
 $webhookResult = slayerkey_sales_handle_whop_webhook($webhookBody, $webhookId, $webhookTimestamp, $webhookSignature);
 check($webhookResult['status'] === 200 && $webhookResult['body']['ok'] === true, 'Valid Whop payment webhook accepted');
 check(isset($GLOBALS['last_remote_post'][1]['body']) && str_contains($GLOBALS['last_remote_post'][1]['body'], 'sale_confirmed'), 'Whop payment captured to PostHog');
 check(str_contains($GLOBALS['last_remote_post'][1]['body'], '"distinct_id":"visitor_test"'), 'Whop payment reuses the website PostHog identity');
 check(str_contains($GLOBALS['last_remote_post'][1]['body'], '"utm_campaign":"yt_test"'), 'Whop payment carries campaign attribution into PostHog');
+
+$bridgePosts = array_values(array_filter(
+    $GLOBALS['remote_posts'] ?? array(),
+    function ($item) { return ($item[0] ?? '') === 'https://dojo.example/internal/customer-identity'; }
+));
+check(count($bridgePosts) >= 1, 'Website payment webhook sends server-side identity handoff to Dojo');
+$bridgeRequest = $bridgePosts[count($bridgePosts) - 1][1];
+$bridgePayload = json_decode($bridgeRequest['body'] ?? '', true);
+check(($bridgePayload['whop_user_id'] ?? '') === 'user_website_linked_private', 'Dojo handoff carries raw Whop ID only server-to-server');
+check(($bridgePayload['posthog_distinct_id'] ?? '') === 'visitor_test', 'Dojo handoff carries original website PostHog distinct ID');
+$bridgeTimestamp = $bridgeRequest['headers']['X-Slayerkey-Timestamp'] ?? '';
+$bridgeExpected = 'sha256=' . hash_hmac('sha256', $bridgeTimestamp . '.' . ($bridgeRequest['body'] ?? ''), $GLOBALS['dojo_bridge_secret']);
+check(($bridgeRequest['headers']['X-Slayerkey-Signature'] ?? '') === $bridgeExpected, 'Dojo identity handoff is HMAC authenticated');
+check(!str_contains($GLOBALS['last_remote_post'][1]['body'], 'user_website_linked_private'), 'Raw Whop user ID is not sent to PostHog');
+
 
 $GLOBALS['transients'] = [];
 $directUserId = 'user_direct_123';
