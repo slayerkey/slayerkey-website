@@ -19,3 +19,27 @@ export function verifyBytes(body, expected, label) {
   assert.equal(actual, expected, 'Browser bytes mismatch: ' + label);
   return actual;
 }
+
+
+export function verifyCoachingHTML(html) {
+  const cal = 'https://cal.com/slayerkey/perf-accelerator-application';
+  assert.ok(html.includes('Slayerkey Performance Accelerator'), 'Coaching offer name mismatch');
+  assert.ok(html.includes('Three months of personalized coaching'), 'Coaching duration copy mismatch');
+  assert.ok(html.includes('8 private 1:1 coaching sessions'), 'Coaching session count mismatch');
+  assert.ok(html.includes("Slayerkey's Improvement System included at no additional cost"), 'Coaching included-value mismatch');
+  assert.ok(html.includes('Diagnose') && html.includes('Prioritize') && html.includes('Implement') && html.includes('Adjust'),
+    'Coaching process copy mismatch');
+  assert.ok(html.includes('Ready to Stop Guessing What to Fix Next?'), 'Coaching final CTA heading mismatch');
+  assert.equal((html.match(/data-sk-cta="performance_accelerator_apply"/g) || []).length, 9,
+    'Performance Accelerator CTA count mismatch');
+  assert.equal(html.split('href="' + cal + '"').length - 1, 9,
+    'Performance Accelerator destination count mismatch');
+  assert.doesNotMatch(html, /buy\.stripe\.com/, 'Coaching page must not expose direct Stripe checkout');
+  assert.doesNotMatch(html, /Private Mentorship|Performance Mentorship|Start Your Mentorship|Apply for Mentorship|\$1,200|\$325|four-month|4 months/i,
+    'Stale coaching offer copy remains');
+  assert.match(html, /id="showcase"/, 'Student result proof must remain');
+  assert.match(html, /id="proof-wall"/, 'Discord proof wall must remain');
+  assert.match(html, /id="reviews"/, 'Reviews section must remain');
+  assert.match(html, /id="about"/, 'About section must remain');
+  assert.match(html, /id="faq"/, 'FAQ section must remain');
+}
