@@ -79,12 +79,6 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
       - run: npm run test:unit
       - run: python3 tests/publish_test.py
       - run: npm run test:php
@@ -141,6 +135,41 @@ jobs:
           EASYWP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
           EASYWP_PORT: ${{ secrets.EASYWP_PORT }}
         run: python3 tools/publish_deploy.py
+      - name: Record publication failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              ...context.repo, sha: context.sha,
+              state: 'failure',
+              context: 'easywp/deploy',
+              description: 'EasyWP publication or remote-byte verification failed'
+            });
+
+  verify-live:
+    name: verify live production
+    needs: deploy
+    if: needs.deploy.result == 'success'
+    runs-on: self-hosted
+    timeout-minutes: 15
+    env:
+      DEPLOY_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Install Chromium for live verification
+        run: npx playwright install chromium
+      - name: Download the exact published release manifest when available
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: release-${{ github.sha }}
+          path: build
       - name: Verify ordinary URLs and browser runtime after publication
         run: npm run test:live
       - name: Save live verification when Actions storage is available
@@ -162,5 +191,5 @@ jobs:
               ...context.repo, sha: context.sha,
               state: process.env.RESULT === 'success' ? 'success' : 'failure',
               context: 'easywp/deploy',
-              description: process.env.RESULT === 'success' ? 'Ordinary URLs and browser runtime verified' : 'Release incomplete; inspect runtime/cache verification'
+              description: process.env.RESULT === 'success' ? 'Published and verified from self-hosted browser' : 'Published; self-hosted live verification failed'
             });
