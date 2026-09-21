@@ -23,29 +23,37 @@ function cacheSnapshot(headers={}) {
   return Object.fromEntries(keys.filter(key=>headers[key]).map(key=>[key,headers[key]]));
 }
 async function waitForFreshHTML(url, verify, label, timeout=120000) {
-  const context=await browser.newContext();
   const deadline=Date.now()+timeout;
   let attempt=0, lastError=null, lastHeaders={};
-  try {
-    while (Date.now() < deadline) {
-      attempt++;
-      const response=await context.request.get(url,{failOnStatusCode:false,timeout:30000});
+  while (Date.now() < deadline) {
+    attempt++;
+    // Use a real Chromium navigation, not Playwright's raw APIRequest client.
+    // Cloudflare allows the production browser path but can block the raw client
+    // from hosted GitHub runners with a 403, producing a false deployment failure.
+    const context=await browser.newContext();
+    const page=await context.newPage();
+    try {
+      const response=await page.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
+      assert.ok(response,label+' returned no navigation response');
       const headers=response.headers();
       const html=await response.text();
       try {
         assert.equal(response.status(),200,label+' returned HTTP '+response.status());
         verify(html);
-        console.log(label+' converged after '+attempt+' request(s)',cacheSnapshot(headers));
+        console.log(label+' converged after '+attempt+' browser navigation(s)',cacheSnapshot(headers));
         return {html,headers,attempt};
       } catch (error) {
         lastError=error;
         lastHeaders=cacheSnapshot(headers);
         console.warn(label+' still stale on attempt '+attempt+': '+(error instanceof Error?error.message:String(error)),lastHeaders);
       }
-      await sleep(5000);
+    } catch (error) {
+      lastError=error;
+      console.warn(label+' navigation failed on attempt '+attempt+': '+(error instanceof Error?error.message:String(error)),lastHeaders);
+    } finally {
+      await context.close();
     }
-  } finally {
-    await context.close();
+    await sleep(5000);
   }
   throw new Error(label+' did not converge before timeout: '+(lastError instanceof Error?lastError.message:String(lastError))+
     ' cache='+JSON.stringify(lastHeaders));
