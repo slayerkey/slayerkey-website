@@ -40,6 +40,39 @@ function slayerkey_sales_get_whop_api_key() {
     return is_string( $value ) ? trim( $value ) : '';
 }
 
+function slayerkey_sales_pseudonymous_id( $namespace, $value ) {
+    if ( ! is_string( $namespace ) || ! preg_match( '/^[A-Za-z0-9_]+$/D', $namespace ) || ! is_scalar( $value ) ) {
+        return '';
+    }
+
+    $value = trim( (string) $value );
+    if ( '' === $value ) {
+        return '';
+    }
+
+    return $namespace . '_' . hash( 'sha256', $value );
+}
+
+function slayerkey_sales_whop_user_id_from_payment( $payment ) {
+    if ( ! is_array( $payment ) ) {
+        return '';
+    }
+
+    if ( isset( $payment['user_id'] ) && is_scalar( $payment['user_id'] ) ) {
+        return trim( (string) $payment['user_id'] );
+    }
+
+    if ( isset( $payment['user'] ) && is_scalar( $payment['user'] ) ) {
+        return trim( (string) $payment['user'] );
+    }
+
+    if ( isset( $payment['user'] ) && is_array( $payment['user'] ) && isset( $payment['user']['id'] ) && is_scalar( $payment['user']['id'] ) ) {
+        return trim( (string) $payment['user']['id'] );
+    }
+
+    return '';
+}
+
 function slayerkey_sales_whop_checkout_plans() {
     return array(
         'plan_eVop6pXsIhHlf' => 'https://whop.com/checkout/plan_eVop6pXsIhHlf/',
@@ -161,30 +194,25 @@ function slayerkey_sales_mark_processed( $provider, $event_id ) {
     );
 }
 
-function slayerkey_sales_posthog_capture( $provider, $event_id, $properties = array(), $distinct_id = '' ) {
+function slayerkey_sales_posthog_capture_event( $event_name, $distinct_id, $properties = array() ) {
     if ( ! defined( 'SLAYERKEY_POSTHOG_TOKEN' ) || '' === SLAYERKEY_POSTHOG_TOKEN ) {
         return new WP_Error( 'posthog_not_configured', 'PostHog project token is not configured.' );
     }
 
-    $safe_properties = array_merge(
-        array(
-            '$process_person_profile' => false,
-            'provider'                => $provider,
-            'source'                  => 'verified_payment_webhook',
-        ),
-        $properties
-    );
-
-    $capture_distinct_id = is_string( $distinct_id ) ? trim( $distinct_id ) : '';
-    if ( '' === $capture_distinct_id ) {
-        $capture_distinct_id = 'sale:' . $provider . ':' . hash( 'sha256', $event_id );
+    $event_name = is_string( $event_name ) ? trim( $event_name ) : '';
+    $distinct_id = is_string( $distinct_id ) ? trim( $distinct_id ) : '';
+    if ( '' === $event_name || '' === $distinct_id ) {
+        return new WP_Error( 'posthog_invalid_event', 'PostHog event name and distinct ID are required.' );
     }
 
     $payload = array(
         'api_key'     => SLAYERKEY_POSTHOG_TOKEN,
-        'event'       => 'sale_confirmed',
-        'distinct_id' => $capture_distinct_id,
-        'properties'  => $safe_properties,
+        'event'       => $event_name,
+        'distinct_id' => $distinct_id,
+        'properties'  => array_merge(
+            array( '$process_person_profile' => false ),
+            is_array( $properties ) ? $properties : array()
+        ),
     );
 
     $response = wp_remote_post(
@@ -203,12 +231,28 @@ function slayerkey_sales_posthog_capture( $provider, $event_id, $properties = ar
     }
 
     $status = wp_remote_retrieve_response_code( $response );
-
     if ( $status < 200 || $status >= 300 ) {
         return new WP_Error( 'posthog_capture_failed', 'PostHog returned HTTP ' . $status . '.' );
     }
 
     return true;
+}
+
+function slayerkey_sales_posthog_capture( $provider, $event_id, $properties = array(), $distinct_id = '' ) {
+    $safe_properties = array_merge(
+        array(
+            'provider' => $provider,
+            'source'   => 'verified_payment_webhook',
+        ),
+        $properties
+    );
+
+    $capture_distinct_id = is_string( $distinct_id ) ? trim( $distinct_id ) : '';
+    if ( '' === $capture_distinct_id ) {
+        $capture_distinct_id = 'sale:' . $provider . ':' . hash( 'sha256', $event_id );
+    }
+
+    return slayerkey_sales_posthog_capture_event( 'sale_confirmed', $capture_distinct_id, $safe_properties );
 }
 
 function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_timestamp, $signature_header ) {
@@ -335,6 +379,29 @@ function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_t
     if ( ! empty( $metadata['posthog_distinct_id'] ) ) {
         $posthog_distinct_id = $metadata['posthog_distinct_id'];
         $properties['journey_linked'] = true;
+        $properties['identity_source'] = 'checkout_posthog_distinct_id';
+    } else {
+        $whop_user_id = slayerkey_sales_whop_user_id_from_payment( $payment );
+        $posthog_distinct_id = slayerkey_sales_pseudonymous_id( 'whop_user', $whop_user_id );
+        if ( '' !== $posthog_distinct_id ) {
+            $properties['identity_source'] = 'whop_user_id_hash';
+        }
+    }
+
+    $payment_total = null;
+    if ( isset( $payment['final_amount'] ) && is_numeric( $payment['final_amount'] ) ) {
+        $payment_total = (float) $payment['final_amount'];
+    } elseif ( isset( $payment['total'] ) && is_numeric( $payment['total'] ) ) {
+        $payment_total = (float) $payment['total'];
+    }
+    if ( null !== $payment_total && $payment_total >= 0 ) {
+        $properties['revenue'] = $payment_total;
+    }
+    if ( isset( $payment['currency'] ) && is_scalar( $payment['currency'] ) ) {
+        $currency = strtoupper( trim( (string) $payment['currency'] ) );
+        if ( preg_match( '/^[A-Z]{3}$/D', $currency ) ) {
+            $properties['currency'] = $currency;
+        }
     }
 
     if ( ! empty( $metadata['posthog_session_id'] ) ) {
