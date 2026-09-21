@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { verifyHTML, verifyBytes } from '../tools/release-contract.mjs';
+import { verifyHTML, verifyBytes, verifyCoachingHTML } from '../tools/release-contract.mjs';
 const python=process.platform==='win32'?'python':'python3';
 const hash=data=>createHash('sha256').update(data).digest('hex');
 
@@ -53,4 +53,25 @@ test('external watchdog catches the exact historical mutation loop',()=>{
   const result=JSON.parse(output.trim());
   assert.ok(result.records>1000,'Historical script must trigger a mutation storm');
   assert.equal(result.timerFired,false,'Mutation loop must starve its proposed disconnect timer');
+});
+
+
+test('Performance Accelerator contract rejects stale coaching funnels',()=>{
+  const cal='https://cal.com/slayerkey/perf-accelerator-application';
+  const apply='<a href="'+cal+'" data-sk-cta="performance_accelerator_apply"></a>';
+  const html=[
+    '<h2>Slayerkey Performance Accelerator</h2>',
+    '<p>Three months of personalized coaching</p>',
+    '<p>8 private 1:1 coaching sessions</p>',
+    "<p>Slayerkey's Improvement System included at no additional cost</p>",
+    '<div>Diagnose Prioritize Implement Adjust</div>',
+    '<h3>Ready to Stop Guessing What to Fix Next?</h3>',
+    apply.repeat(9),
+    '<section id="showcase"></section><section id="proof-wall"></section>',
+    '<section id="reviews"></section><section id="about"></section><section id="faq"></section>'
+  ].join('');
+  verifyCoachingHTML(html);
+  assert.throws(()=>verifyCoachingHTML(html.replace('Slayerkey Performance Accelerator','Private Mentorship')));
+  assert.throws(()=>verifyCoachingHTML(html+'<a href="https://buy.stripe.com/test">checkout</a>'));
+  assert.throws(()=>verifyCoachingHTML(html.replace(apply.repeat(9),apply.repeat(8))));
 });
