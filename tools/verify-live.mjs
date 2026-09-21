@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
-import { assetKeys, verifyHTML, verifyBytes } from './release-contract.mjs';
+import { assetKeys, verifyHTML, verifyBytes, verifyCoachingHTML } from './release-contract.mjs';
 import { verifyPlayback } from './playback.mjs';
 
 const sha = process.env.DEPLOY_SHA;
@@ -17,8 +17,45 @@ assert.equal(manifest.commit, sha);
 await request.close();
 fs.mkdirSync('artifacts/live', { recursive:true });
 const results=[];
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+function cacheSnapshot(headers={}) {
+  const keys=['cache-control','cf-cache-status','age','server','x-cache','x-litespeed-cache','etag','last-modified','vary'];
+  return Object.fromEntries(keys.filter(key=>headers[key]).map(key=>[key,headers[key]]));
+}
+async function waitForFreshHTML(url, verify, label, timeout=120000) {
+  const context=await browser.newContext();
+  const deadline=Date.now()+timeout;
+  let attempt=0, lastError=null, lastHeaders={};
+  try {
+    while (Date.now() < deadline) {
+      attempt++;
+      const response=await context.request.get(url,{failOnStatusCode:false,timeout:30000});
+      const headers=response.headers();
+      const html=await response.text();
+      try {
+        assert.equal(response.status(),200,label+' returned HTTP '+response.status());
+        verify(html);
+        console.log(label+' converged after '+attempt+' request(s)',cacheSnapshot(headers));
+        return {html,headers,attempt};
+      } catch (error) {
+        lastError=error;
+        lastHeaders=cacheSnapshot(headers);
+        console.warn(label+' still stale on attempt '+attempt+': '+(error instanceof Error?error.message:String(error)),lastHeaders);
+      }
+      await sleep(5000);
+    }
+  } finally {
+    await context.close();
+  }
+  throw new Error(label+' did not converge before timeout: '+(lastError instanceof Error?lastError.message:String(lastError))+
+    ' cache='+JSON.stringify(lastHeaders));
+}
 const watchdog=setTimeout(()=>{console.error('External watchdog: production renderer unresponsive');process.exit(1)},360000);
 try {
+  // EasyWP/Cloudflare can briefly serve the previous HTML immediately after SFTP.
+  // Keep the ordinary URL strict, but allow a bounded convergence window and log
+  // cache headers so a true stale-cache failure is actionable.
+  await waitForFreshHTML(base+'/',html=>verifyHTML(html,manifest,sha,rollback),'Homepage cache convergence');
   for (const [name, width, height, url] of [
     ['desktop',1440,900,base+'/'],
     ['mobile390',390,844,base+'/?utm_source=youtube&utm_medium=video&utm_campaign=homepage_smoke'],
@@ -104,6 +141,31 @@ try {
     await page.locator('.sk-plan-close').click();
     assert.deepEqual(errors,[]);
     result.hashes=Object.fromEntries(loaded);result.completed=true;
+    await context.close();
+  }
+  // Coaching Performance Accelerator live verification.
+  await waitForFreshHTML(base+'/coaching',verifyCoachingHTML,'Coaching cache convergence');
+  for (const [name,width,height] of [['coaching-desktop',1440,900],['coaching-mobile390',390,844]]) {
+    const context=await browser.newContext({viewport:{width,height},isMobile:width<500,hasTouch:width<500});
+    const page=await context.newPage();
+    const errors=[];
+    page.on('pageerror',error=>errors.push(error.message));
+    const response=await page.goto(base+'/coaching',{waitUntil:'domcontentloaded',timeout:30000});
+    assert.equal(response.status(),200,name+' returned non-200');
+    verifyCoachingHTML(await response.text());
+    for (const selector of ['#hero','#showcase','#psmr','#coaching-pricing','#proof-wall','#how','#reviews','#about','#faq','#final-cta'])
+      assert.equal(await page.locator(selector).count(),1,name+' missing '+selector);
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true,name+' has horizontal overflow');
+    const applies=page.locator('a[data-sk-cta="performance_accelerator_apply"]');
+    assert.equal(await applies.count(),9,name+' application CTA count mismatch');
+    for (const link of await applies.all()) {
+      const href=await link.getAttribute('href');
+      const url=new URL(href,base);
+      assert.equal(url.hostname,'cal.com',name+' CTA host mismatch');
+      assert.equal(url.pathname,'/slayerkey/perf-accelerator-application',name+' CTA path mismatch');
+    }
+    await page.screenshot({path:'artifacts/live/'+name+'.png',fullPage:true});
+    results.push({name,url:base+'/coaching',sha,errors,completed:true});
     await context.close();
   }
 } finally {
