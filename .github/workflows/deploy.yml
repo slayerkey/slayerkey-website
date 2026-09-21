@@ -79,6 +79,12 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
       - run: npm run test:unit
       - run: python3 tests/publish_test.py
       - run: npm run test:php
@@ -100,16 +106,10 @@ jobs:
       DEPLOY_SHA: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-      - name: Reclaim runner disk for release verification
+      - name: Reclaim runner disk for release publication
         run: |
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc || true
           df -h /
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
       - run: sudo apt-get update && sudo apt-get install -y lftp
       - name: Mark deployment pending
         uses: actions/github-script@v7
