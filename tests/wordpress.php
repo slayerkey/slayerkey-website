@@ -53,6 +53,8 @@ function sanitize_text_field($value) { return (string) $value; }
 function is_admin() { return false; }
 function wp_parse_url($url, $component) { return parse_url($url, $component); }
 function wp_unslash($value) { return $value; }
+function wp_generate_uuid4() { return '11111111-2222-4333-8444-555555555555'; }
+function wp_redirect($location, $status = 302, $x_redirect_by = '') { $GLOBALS['redirect'] = [$location, $status, $x_redirect_by]; return true; }
 function sanitize_key($value) { return $value; }
 function untrailingslashit($value) { return rtrim($value, '/'); }
 function wp_enqueue_script(...$args) { $GLOBALS['enqueued'][] = $args; }
@@ -105,6 +107,20 @@ check($checkoutResult->status === 200, 'Attributed checkout configuration create
 check(($checkoutResult->data['purchase_url'] ?? '') === 'https://whop.com/checkout/plan_eVop6pXsIhHlf/?session=ch_test', 'Attributed checkout returns Whop URL');
 check(str_contains($GLOBALS['last_remote_post'][1]['body'], 'visitor_test'), 'Checkout forwards PostHog identity as Whop metadata');
 
+$directResult = slayerkey_website_build_direct_dojo_checkout([
+    'plan' => 'monthly',
+    'utm_source' => 'youtube',
+    'utm_medium' => 'description',
+    'utm_campaign' => 'yt_30day',
+    'utm_content' => 'cta_3min',
+]);
+check($directResult['ok'] === true, 'Direct Whop redirect creates checkout configuration');
+check(str_contains($directResult['destination'], 'whop.com/checkout/'), 'Direct Whop redirect returns hosted checkout URL');
+check(($directResult['metadata']['utm_campaign'] ?? '') === 'yt_30day', 'Direct checkout preserves campaign in Whop metadata');
+check(($directResult['metadata']['utm_content'] ?? '') === 'cta_3min', 'Direct checkout preserves content in Whop metadata');
+check(($directResult['metadata']['route'] ?? '') === 'direct_whop', 'Direct checkout marks direct route');
+check(str_contains($GLOBALS['last_remote_post'][1]['body'], '"event":"begin_checkout"'), 'Direct route emits live PostHog begin_checkout event');
+
 require_once $plugin . '/sales-webhook-common.php';
 $GLOBALS['whop_test_secret'] = 'whsec_test_secret';
 $webhookId = 'msg_test_sale_1';
@@ -135,6 +151,44 @@ check($webhookResult['status'] === 200 && $webhookResult['body']['ok'] === true,
 check(isset($GLOBALS['last_remote_post'][1]['body']) && str_contains($GLOBALS['last_remote_post'][1]['body'], 'sale_confirmed'), 'Whop payment captured to PostHog');
 check(str_contains($GLOBALS['last_remote_post'][1]['body'], '"distinct_id":"visitor_test"'), 'Whop payment reuses the website PostHog identity');
 check(str_contains($GLOBALS['last_remote_post'][1]['body'], '"utm_campaign":"yt_test"'), 'Whop payment carries campaign attribution into PostHog');
+
+$GLOBALS['transients'] = [];
+$directUserId = 'user_direct_123';
+$directWebhookId = 'msg_direct_sale_1';
+$directWebhookBody = json_encode([
+    'id' => $directWebhookId,
+    'api_version' => 'v1',
+    'type' => 'payment.succeeded',
+    'data' => [
+        'status' => 'paid',
+        'billing_reason' => 'subscription_create',
+        'product' => ['id' => 'prod_test'],
+        'plan' => ['id' => 'plan_eVop6pXsIhHlf'],
+        'user' => ['id' => $directUserId],
+        'final_amount' => 19.99,
+        'currency' => 'usd',
+        'metadata' => [],
+    ],
+]);
+$directWebhookSignature = 'v1,' . base64_encode(hash_hmac('sha256', $directWebhookId . '.' . $webhookTimestamp . '.' . $directWebhookBody, $GLOBALS['whop_test_secret'], true));
+$directWebhookResult = slayerkey_sales_handle_whop_webhook($directWebhookBody, $directWebhookId, $webhookTimestamp, $directWebhookSignature);
+check($directWebhookResult['status'] === 200, 'Direct Whop payment webhook accepted');
+$directPayload = $GLOBALS['last_remote_post'][1]['body'];
+$expectedDirectId = slayerkey_sales_pseudonymous_id('whop_user', $directUserId);
+check(str_contains($directPayload, '"distinct_id":"' . $expectedDirectId . '"'), 'Direct Whop buyer uses deterministic pseudonymous identity');
+check(!str_contains($directPayload, $directUserId), 'Raw Whop user ID is never sent to PostHog');
+check(str_contains($directPayload, '"revenue":19.99'), 'Verified Whop payment carries revenue');
+check(str_contains($directPayload, '"currency":"USD"'), 'Verified Whop payment carries currency');
+check(!str_contains($directPayload, '"utm_campaign"'), 'Direct Whop purchase does not invent missing UTM attribution');
+
+$GLOBALS['transients'] = [];
+$directWebhookId2 = 'msg_direct_sale_2';
+$directWebhookBody2 = str_replace($directWebhookId, $directWebhookId2, $directWebhookBody);
+$directWebhookSignature2 = 'v1,' . base64_encode(hash_hmac('sha256', $directWebhookId2 . '.' . $webhookTimestamp . '.' . $directWebhookBody2, $GLOBALS['whop_test_secret'], true));
+$directWebhookResult2 = slayerkey_sales_handle_whop_webhook($directWebhookBody2, $directWebhookId2, $webhookTimestamp, $directWebhookSignature2);
+check($directWebhookResult2['status'] === 200, 'Second direct Whop payment webhook accepted');
+check(str_contains($GLOBALS['last_remote_post'][1]['body'], '"distinct_id":"' . $expectedDirectId . '"'), 'Same Whop user keeps same pseudonymous identity across payments');
+
 $invalidWebhookResult = slayerkey_sales_handle_whop_webhook($webhookBody, 'msg_test_sale_2', $webhookTimestamp, 'v1,invalid');
 check($invalidWebhookResult['status'] === 400, 'Invalid Whop signature rejected');
 if (file_exists($plugin . '/DEPLOYED_ASSETS.json')) {

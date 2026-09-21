@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.30
+ * Version: 0.1.31
  * Author: Slayerkey
  */
 
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'SLAYERKEY_TRACKING_ASSET', 'assets/js/tracking.js' );
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.30' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.31' );
 
 // Public /system now uses the approved GitHub managed live refresh page.
 // /system/welcome (the Stripe post-purchase page) and the native /terms route are always on;
@@ -270,6 +270,132 @@ function slayerkey_website_render_private_preview() {
     exit;
 }
 add_action( 'template_redirect', 'slayerkey_website_render_private_preview', 0 );
+
+function slayerkey_website_direct_dojo_plan_id( $value ) {
+    $value = is_scalar( $value ) ? strtolower( trim( (string) $value ) ) : '';
+
+    if ( 'annual' === $value || 'yearly' === $value ) {
+        return 'plan_kaaoYadRlBi4n';
+    }
+
+    return 'plan_eVop6pXsIhHlf';
+}
+
+function slayerkey_website_direct_dojo_checkout_metadata( $query, $distinct_id ) {
+    $query = is_array( $query ) ? $query : array();
+    $metadata = array(
+        'posthog_distinct_id' => $distinct_id,
+        'cta_id'              => 'direct-whop',
+        'cta_location'        => 'direct_redirect',
+        'page_path'           => '/go/dojo',
+        'route'               => 'direct_whop',
+    );
+
+    foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content' ) as $field ) {
+        if ( isset( $query[ $field ] ) && is_scalar( $query[ $field ] ) ) {
+            $value = trim( sanitize_text_field( wp_unslash( (string) $query[ $field ] ) ) );
+            if ( '' !== $value ) {
+                $metadata[ $field ] = substr( $value, 0, 200 );
+            }
+        }
+    }
+
+    return $metadata;
+}
+
+function slayerkey_website_direct_dojo_distinct_id() {
+    if ( function_exists( 'wp_generate_uuid4' ) ) {
+        return 'direct_whop_' . str_replace( '-', '', wp_generate_uuid4() );
+    }
+
+    try {
+        return 'direct_whop_' . bin2hex( random_bytes( 16 ) );
+    } catch ( Exception $error ) {
+        return 'direct_whop_' . hash( 'sha256', uniqid( '', true ) );
+    }
+}
+
+function slayerkey_website_build_direct_dojo_checkout( $query = array() ) {
+    require_once __DIR__ . '/sales-webhook-common.php';
+
+    $query       = is_array( $query ) ? $query : array();
+    $plan_id     = slayerkey_website_direct_dojo_plan_id( isset( $query['plan'] ) ? $query['plan'] : 'monthly' );
+    $distinct_id = slayerkey_website_direct_dojo_distinct_id();
+    $metadata    = slayerkey_website_direct_dojo_checkout_metadata( $query, $distinct_id );
+    $result      = slayerkey_sales_create_whop_checkout_configuration( $plan_id, $metadata );
+
+    $plans = slayerkey_sales_whop_checkout_plans();
+    $fallback = isset( $plans[ $plan_id ] ) ? $plans[ $plan_id ] : 'https://whop.com/slayerkey/get-std/';
+
+    if ( is_wp_error( $result ) ) {
+        $utm_query = array();
+        foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content' ) as $field ) {
+            if ( ! empty( $metadata[ $field ] ) ) {
+                $utm_query[ $field ] = $metadata[ $field ];
+            }
+        }
+        if ( ! empty( $utm_query ) ) {
+            $fallback .= '?' . http_build_query( $utm_query, '', '&', PHP_QUERY_RFC3986 );
+        }
+
+        return array(
+            'ok'          => false,
+            'destination' => $fallback,
+            'plan_id'     => $plan_id,
+            'metadata'    => $metadata,
+        );
+    }
+
+    $value = 'plan_kaaoYadRlBi4n' === $plan_id ? 199.99 : 19.99;
+    $event_properties = array_merge(
+        array(
+            'provider'         => 'whop',
+            'source'           => 'server_direct_checkout',
+            'plan_id'          => $plan_id,
+            'value'            => $value,
+            'currency'         => 'USD',
+            'cta_id'           => 'direct-whop',
+            'cta_location'     => 'direct_redirect',
+            'page_path'        => '/go/dojo',
+            'route'            => 'direct_whop',
+            'direct_checkout'  => true,
+            'attribution_mode' => 'checkout_configuration_metadata',
+        ),
+        array_intersect_key(
+            $metadata,
+            array_flip( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content' ) )
+        )
+    );
+    slayerkey_sales_posthog_capture_event( 'begin_checkout', $distinct_id, $event_properties );
+
+    return array(
+        'ok'          => true,
+        'destination' => $result['purchase_url'],
+        'plan_id'     => $plan_id,
+        'metadata'    => $metadata,
+    );
+}
+
+function slayerkey_website_render_direct_dojo_checkout() {
+    if ( '/go/dojo' !== slayerkey_website_public_request_path() ) {
+        return;
+    }
+
+    nocache_headers();
+    header( 'X-Robots-Tag: noindex, nofollow, noarchive', true );
+
+    $result = slayerkey_website_build_direct_dojo_checkout( $_GET );
+    $destination = isset( $result['destination'] ) ? (string) $result['destination'] : '';
+
+    if ( '' === $destination ) {
+        status_header( 503 );
+        exit( 'Checkout temporarily unavailable.' );
+    }
+
+    wp_redirect( $destination, 302, 'Slayerkey direct Whop checkout' );
+    exit;
+}
+add_action( 'template_redirect', 'slayerkey_website_render_direct_dojo_checkout', 0 );
 
 function slayerkey_website_is_public_dojo_request() {
     if ( is_admin() || slayerkey_website_is_private_preview_request() || slayerkey_website_is_public_work_request() ) {
@@ -643,6 +769,7 @@ function slayerkey_website_health_response() {
             'posthog_ui_host' => SLAYERKEY_POSTHOG_UI_HOST,
             'tracking_asset' => plugin_dir_url( __FILE__ ) . SLAYERKEY_TRACKING_ASSET,
             'whop_checkout_endpoint' => rest_url( 'slayerkey/v1/whop-checkout' ),
+            'direct_whop_checkout_url' => home_url( '/go/dojo' ),
             'tracking_sha256' => slayerkey_website_file_sha256( SLAYERKEY_TRACKING_ASSET ),
             'private_previews_enabled' => true,
             'public_dojo_enabled' => true,
