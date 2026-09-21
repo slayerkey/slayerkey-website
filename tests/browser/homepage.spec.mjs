@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import fs from 'node:fs';
 
 const checkout = plan => '[data-sk-location="pricing_' + plan + '"]';
 const hero = '#sk-std [data-sk-checkout="true"]:not([data-sk-plan-direct])';
@@ -234,4 +235,65 @@ test('35-second heartbeat, native image dimensions, animation lifecycle, and aut
   await unlockCheck(page);
   await readable(page);
   await info.attach('runtime', {body:JSON.stringify(await page.evaluate(()=>({heartbeats:window.__heartbeat,longTasks:window.__longTasks}))),contentType:'application/json'});
+});
+
+
+test('Performance Accelerator coaching page preserves the funnel and responsive offer card', async ({ page }) => {
+  const cal = 'https://cal.com/slayerkey/perf-accelerator-application';
+  const source = fs.readFileSync(
+    new URL('../../wordpress/slayerkey-website/previews/live-refresh/coaching-live-refresh-v3/index.html', import.meta.url),
+    'utf8'
+  );
+  // Static markup/CSS verification is deterministic and avoids executing the captured
+  // production scripts while still exercising every configured desktop/mobile viewport.
+  const html = source.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
+  await page.setContent(html, { waitUntil: 'domcontentloaded' });
+
+  for (const selector of ['#hero', '#showcase', '#psmr', '#coaching-pricing', '#proof-wall', '#how', '#reviews', '#about', '#faq', '#final-cta']) {
+    await expect(page.locator(selector)).toHaveCount(1);
+  }
+
+  const bodyText = await page.locator('body').innerText();
+  for (const stale of [
+    'Private Mentorship',
+    'Performance Mentorship',
+    'four-month',
+    '4 months',
+    '$1,200',
+    '$325',
+    'Start Your Mentorship',
+    'Apply for Mentorship'
+  ]) {
+    expect(bodyText).not.toContain(stale);
+  }
+
+  await expect(page.locator('#coaching-pricing h2')).toHaveText('Slayerkey Performance Accelerator');
+  await expect(page.locator('#coaching-pricing')).toContainText('Three months of personalized coaching');
+  await expect(page.locator('#coaching-pricing')).toContainText('8 private 1:1 coaching sessions');
+  await expect(page.locator('#coaching-pricing')).toContainText("Slayerkey's Improvement System included at no additional cost");
+  await expect(page.locator('#how')).toContainText('Diagnose');
+  await expect(page.locator('#how')).toContainText('Prioritize');
+  await expect(page.locator('#how')).toContainText('Implement');
+  await expect(page.locator('#how')).toContainText('Adjust');
+
+  expect(await page.locator('a[href*="buy.stripe.com"]').count()).toBe(0);
+  expect(await page.locator('#final-cta [data-ep-open]').count()).toBe(0);
+
+  const applies = page.locator('a[data-sk-cta="performance_accelerator_apply"]');
+  await expect(applies).toHaveCount(9);
+  for (const link of await applies.all()) {
+    expect(await link.getAttribute('href')).toBe(cal);
+    expect(await link.getAttribute('data-sk-offer')).toBe('performance_accelerator');
+    expect(await link.getAttribute('data-sk-location')).toBeTruthy();
+  }
+
+  const offer = page.locator('#coaching-pricing');
+  expect(await offer.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+  const card = await page.locator('#coaching-pricing .price-card').boundingBox();
+  const apply = await page.locator('#coaching-pricing [data-sk-cta="performance_accelerator_apply"]').boundingBox();
+  const viewport = page.viewportSize();
+  expect(card).not.toBeNull();
+  expect(apply).not.toBeNull();
+  expect(card.width).toBeLessThanOrEqual(viewport.width + 1);
+  expect(apply.width).toBeLessThanOrEqual(viewport.width + 1);
 });
