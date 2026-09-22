@@ -150,7 +150,7 @@ jobs:
   verify-live:
     name: verify live production
     needs: deploy
-    if: needs.deploy.result == 'success'
+    if: always() && needs.deploy.result == 'success'
     runs-on: self-hosted
     timeout-minutes: 15
     env:
