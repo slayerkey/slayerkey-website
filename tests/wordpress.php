@@ -248,6 +248,7 @@ $directWebhookBody = json_encode([
     'api_version' => 'v1',
     'type' => 'payment.succeeded',
     'data' => [
+        'id' => 'pay_direct_123',
         'status' => 'paid',
         'billing_reason' => 'subscription_create',
         'product' => ['id' => 'prod_test'],
