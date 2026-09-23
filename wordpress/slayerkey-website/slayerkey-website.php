@@ -867,7 +867,7 @@ function slayerkey_website_whop_checkout_response( $request ) {
 function slayerkey_website_whop_attribution_health_response() {
     require_once __DIR__ . '/sales-webhook-common.php';
 
-    $cache_key = 'slayerkey_whop_events_diag_v1';
+    $cache_key = 'slayerkey_whop_events_diag_v2';
     $cached = get_transient( $cache_key );
     if ( is_array( $cached ) ) {
         return new WP_REST_Response( $cached, 200 );
