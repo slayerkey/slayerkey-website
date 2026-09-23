@@ -82,9 +82,9 @@ function slayerkey_sales_dojo_identity_bridge_config() {
         : trim( (string) get_option( 'slayerkey_dojo_identity_bridge_secret', '' ) );
 
     if ( '' === $secret ) {
-        $whop_secret = slayerkey_sales_get_secret( 'whop' );
-        if ( '' !== $whop_secret ) {
-            $secret = hash_hmac( 'sha256', 'slayerkey-dojo-identity-bridge-v1', $whop_secret );
+        $whop_api_key = slayerkey_sales_get_whop_api_key();
+        if ( '' !== $whop_api_key ) {
+            $secret = hash_hmac( 'sha256', 'slayerkey-dojo-identity-bridge-v1', $whop_api_key );
         }
     }
 
