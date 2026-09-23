@@ -14,7 +14,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          body="$(curl -fsS --max-time 20 'https://slayerkey.com/wp-json/slayerkey/v1/whop-attribution-health')"
+          body=""
+          for attempt in $(seq 1 30); do
+            body="$(curl -fsS --max-time 20 'https://slayerkey.com/whop-attribution-health' 2>/dev/null || true)"
+            if [[ -n "$body" ]]; then
+              break
+            fi
+            echo "Waiting for live attribution health route ($attempt/30)"
+            sleep 15
+          done
+          test -n "$body"
           echo "$body"
           HEALTH_JSON="$body" node - <<'NODE'
           const body = JSON.parse(process.env.HEALTH_JSON || '{}');
