@@ -1,14 +1,12 @@
-name: Scheduled Live Dojo Smoke
+name: Manual Live Dojo Smoke
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '17 * * * *'
 permissions:
   contents: read
   actions: read
 concurrency:
-  group: slayerkey-easywp-production
-  cancel-in-progress: false
+  group: slayerkey-live-smoke
+  cancel-in-progress: true
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -23,7 +21,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - name: Determine expected release, excluding documentation-only changes
+      - name: Determine expected release
         env:
           GH_TOKEN: ${{ github.token }}
           APPROVED_ROLLBACK: ${{ vars.SLAYERKEY_EXPECTED_DEPLOY_SHA }}
@@ -37,11 +35,12 @@ jobs:
           fi
           [[ "$release" =~ ^[a-f0-9]{40}$ ]]
           echo "DEPLOY_SHA=$release" >> "$GITHUB_ENV"
-      - run: npm run test:live
+      - name: Run public browser diagnostics
+        run: npm run test:live
       - uses: actions/upload-artifact@v4
         if: failure()
         continue-on-error: true
         with:
-          name: scheduled-live-evidence-${{ github.run_id }}
+          name: manual-live-evidence-${{ github.run_id }}
           path: artifacts/live/
           retention-days: 1
