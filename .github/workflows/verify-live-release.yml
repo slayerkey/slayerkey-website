@@ -1,0 +1,21 @@
+name: Verify Live EasyWP Release
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  live-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Read live health release marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(curl -fsS --max-time 15 'https://slayerkey.com/wp-json/slayerkey/v1/health')"
+          echo "$body"
+          HEALTH_JSON="$body" node -e '
+            const body=JSON.parse(process.env.HEALTH_JSON||"{}");
+            console.log(JSON.stringify({deployed_commit:body?.deployed_commit||null,tracking_version:body?.tracking_version||null}));
+          '
