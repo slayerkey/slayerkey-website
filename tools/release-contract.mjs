@@ -26,10 +26,11 @@ export function verifyCoachingHTML(html) {
   assert.ok(html.includes('Slayerkey Performance Accelerator'), 'Coaching offer name mismatch');
   assert.ok(html.includes('Three months of personalized coaching'), 'Coaching duration copy mismatch');
   assert.ok(html.includes('8 private 1:1 coaching sessions'), 'Coaching session count mismatch');
-  assert.ok(html.includes("Slayerkey's Improvement System included at no additional cost"), 'Coaching included-value mismatch');
+  assert.ok(html.includes("Slayerkey's Improvement System — $249 value, included at no additional cost"), 'Coaching included-value mismatch');
   assert.ok(html.includes('Diagnose') && html.includes('Prioritize') && html.includes('Implement') && html.includes('Adjust'),
     'Coaching process copy mismatch');
   assert.ok(html.includes('Ready to Stop Guessing What to Fix Next?'), 'Coaching final CTA heading mismatch');
+  assert.ok((html.match(/>Apply for Accelerator<\/a>/g) || []).length >= 7, 'Coaching application CTA label mismatch');
   assert.equal((html.match(/data-sk-cta="performance_accelerator_apply"/g) || []).length, 9,
     'Performance Accelerator CTA count mismatch');
   assert.equal(html.split('href="' + cal + '"').length - 1, 9,

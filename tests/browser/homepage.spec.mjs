@@ -270,7 +270,8 @@ test('Performance Accelerator coaching page preserves the funnel and responsive 
   await expect(page.locator('#coaching-pricing h2')).toHaveText('Slayerkey Performance Accelerator');
   await expect(page.locator('#coaching-pricing')).toContainText('Three months of personalized coaching');
   await expect(page.locator('#coaching-pricing')).toContainText('8 private 1:1 coaching sessions');
-  await expect(page.locator('#coaching-pricing')).toContainText("Slayerkey's Improvement System included at no additional cost");
+  await expect(page.locator('a[data-sk-cta="performance_accelerator_apply"]').filter({ hasText: 'Apply for Accelerator' })).toHaveCount(7);
+  await expect(page.locator('#coaching-pricing')).toContainText("Slayerkey's Improvement System — $249 value, included at no additional cost");
   await expect(page.locator('#how')).toContainText('Diagnose');
   await expect(page.locator('#how')).toContainText('Prioritize');
   await expect(page.locator('#how')).toContainText('Implement');

@@ -28,3 +28,6 @@ test-results/
 playwright-report/
 build/
 __pycache__/
+
+# Local working inputs
+inputs/

@@ -63,9 +63,10 @@ test('Performance Accelerator contract rejects stale coaching funnels',()=>{
     '<h2>Slayerkey Performance Accelerator</h2>',
     '<p>Three months of personalized coaching</p>',
     '<p>8 private 1:1 coaching sessions</p>',
-    "<p>Slayerkey's Improvement System included at no additional cost</p>",
+    "<p>Slayerkey's Improvement System — $249 value, included at no additional cost</p>",
     '<div>Diagnose Prioritize Implement Adjust</div>',
     '<h3>Ready to Stop Guessing What to Fix Next?</h3>',
+    '<a>Apply for Accelerator</a>'.repeat(7),
     apply.repeat(9),
     '<section id="showcase"></section><section id="proof-wall"></section>',
     '<section id="reviews"></section><section id="about"></section><section id="faq"></section>'
