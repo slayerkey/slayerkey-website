@@ -43,6 +43,70 @@ function wp_remote_post($url, $args) {
     }
     return ['response' => ['code' => 200], 'body' => '{}'];
 }
+function wp_remote_get($url, $args) {
+    $GLOBALS['last_remote_get'] = [$url, $args];
+    $GLOBALS['remote_gets'][] = [$url, $args];
+
+    if (str_contains($url, '/api/v1/events')) {
+        if (!empty($GLOBALS['whop_events_http_status']) && (int) $GLOBALS['whop_events_http_status'] !== 200) {
+            return [
+                'response' => ['code' => (int) $GLOBALS['whop_events_http_status']],
+                'body' => json_encode(['error' => ['message' => 'forbidden']]),
+            ];
+        }
+
+        $query = [];
+        parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
+        $data = [];
+
+        if (($query['identifier'] ?? '') === 'user_direct_123') {
+            $data[] = [
+                'event_id' => 'evt_direct_payment',
+                'event_name' => 'payment.completed',
+                'context' => [
+                    'utm_source' => 'youtube',
+                    'utm_medium' => 'description',
+                    'utm_campaign' => 'yt_30day',
+                    'utm_content' => 'cta_3min',
+                ],
+                'related' => [
+                    'payment' => ['id' => 'pay_direct_123'],
+                    'user' => ['id' => 'user_direct_123'],
+                ],
+            ];
+        } elseif (empty($query['identifier'])) {
+            $data[] = [
+                'event_id' => 'evt_recent_payment',
+                'event_name' => 'payment.completed',
+                'context' => [
+                    'utm_source' => 'youtube',
+                    'utm_medium' => 'description',
+                    'utm_campaign' => 'yt_30day',
+                    'utm_content' => 'cta_3min',
+                ],
+                'related' => [
+                    'payment' => ['id' => 'pay_recent'],
+                    'user' => ['id' => 'user_recent'],
+                ],
+            ];
+        }
+
+        return [
+            'response' => ['code' => 200],
+            'body' => json_encode([
+                'data' => $data,
+                'page_info' => [
+                    'has_next_page' => false,
+                    'has_previous_page' => false,
+                    'end_cursor' => null,
+                    'start_cursor' => null,
+                ],
+            ]),
+        ];
+    }
+
+    return ['response' => ['code' => 404], 'body' => '{}'];
+}
 function wp_remote_retrieve_response_code($response) { return $response['response']['code'] ?? 0; }
 function wp_remote_retrieve_body($response) { return $response['body'] ?? ''; }
 function wp_json_encode($value) { return json_encode($value); }
@@ -86,6 +150,8 @@ $health = slayerkey_website_health_response();
 check($health['tracking_sha256'] === hash_file('sha256', $plugin . '/' . SLAYERKEY_TRACKING_ASSET), 'Health tracking bytes');
 slayerkey_website_register_health_route();
 check(isset($GLOBALS['rest_routes']['slayerkey/v1/health']), 'Health REST route registered');
+check(isset($GLOBALS['rest_routes']['slayerkey/v1/whop-attribution-health']), 'Whop attribution health route registered');
+check($GLOBALS['rest_routes']['slayerkey/v1/whop-attribution-health']['methods'] === 'GET', 'Whop attribution health route is GET-only');
 check(isset($GLOBALS['rest_routes']['slayerkey/v1/whop-webhook']), 'Whop REST route registered');
 check($GLOBALS['rest_routes']['slayerkey/v1/whop-webhook']['methods'] === 'POST', 'Whop REST route is POST-only');
 check(isset($GLOBALS['rest_routes']['slayerkey/v1/whop-checkout']), 'Attributed Whop checkout REST route registered');
@@ -133,6 +199,7 @@ $webhookBody = json_encode([
     'api_version' => 'v1',
     'type' => 'payment.succeeded',
     'data' => [
+        'id' => 'pay_direct_123',
         'status' => 'paid',
         'billing_reason' => 'subscription_create',
         'product' => ['id' => 'prod_test'],
@@ -200,7 +267,13 @@ check(str_contains($directPayload, '"distinct_id":"' . $expectedDirectId . '"'),
 check(!str_contains($directPayload, $directUserId), 'Raw Whop user ID is never sent to PostHog');
 check(str_contains($directPayload, '"revenue":19.99'), 'Verified Whop payment carries revenue');
 check(str_contains($directPayload, '"currency":"USD"'), 'Verified Whop payment carries currency');
-check(!str_contains($directPayload, '"utm_campaign"'), 'Direct Whop purchase does not invent missing UTM attribution');
+check(str_contains($directPayload, '"utm_source":"youtube"'), 'Direct Whop purchase recovers source from matching Whop payment event');
+check(str_contains($directPayload, '"utm_medium":"description"'), 'Direct Whop purchase recovers medium from matching Whop payment event');
+check(str_contains($directPayload, '"utm_campaign":"yt_30day"'), 'Direct Whop purchase recovers campaign from matching Whop payment event');
+check(str_contains($directPayload, '"utm_content":"cta_3min"'), 'Direct Whop purchase recovers content from matching Whop payment event');
+check(str_contains($directPayload, '"attribution_source":"whop_events_api"'), 'Direct Whop purchase records Whop Events API as attribution source');
+check(($GLOBALS['last_remote_get'][1]['headers']['Authorization'] ?? '') === 'Bearer test_whop_company_api_key_1234567890', 'Whop Events API uses stored company API key');
+check(($GLOBALS['last_remote_get'][1]['headers']['Api-Version-Date'] ?? '') === '2026-09-22-2', 'Whop Events API request pins API version');
 
 $GLOBALS['transients'] = [];
 $directWebhookId2 = 'msg_direct_sale_2';
@@ -209,6 +282,22 @@ $directWebhookSignature2 = 'v1,' . base64_encode(hash_hmac('sha256', $directWebh
 $directWebhookResult2 = slayerkey_sales_handle_whop_webhook($directWebhookBody2, $directWebhookId2, $webhookTimestamp, $directWebhookSignature2);
 check($directWebhookResult2['status'] === 200, 'Second direct Whop payment webhook accepted');
 check(str_contains($GLOBALS['last_remote_post'][1]['body'], '"distinct_id":"' . $expectedDirectId . '"'), 'Same Whop user keeps same pseudonymous identity across payments');
+
+$GLOBALS['transients'] = [];
+$diag = slayerkey_website_whop_attribution_health_response();
+check($diag->status === 200, 'Whop attribution health responds successfully');
+check(($diag->data['configured'] ?? false) === true, 'Whop attribution health sees stored API key');
+check(($diag->data['events_readable'] ?? false) === true, 'Whop Events API is readable');
+check(($diag->data['recent_payment_events_found'] ?? false) === true, 'Recent Whop payment events are visible');
+check(($diag->data['recent_attributed_payment_found'] ?? false) === true, 'Recent attributed Whop payment event is visible');
+check(($diag->data['recent_youtube_payment_found'] ?? false) === true, 'Recent YouTube-attributed Whop payment event is visible');
+
+$GLOBALS['whop_events_http_status'] = 403;
+$GLOBALS['transients'] = [];
+$diagForbidden = slayerkey_website_whop_attribution_health_response();
+check($diagForbidden->status === 200, 'Whop attribution health fails closed to a safe response');
+check(($diagForbidden->data['events_readable'] ?? true) === false, 'Whop attribution health reports unreadable events when permission is denied');
+unset($GLOBALS['whop_events_http_status']);
 
 $invalidWebhookResult = slayerkey_sales_handle_whop_webhook($webhookBody, 'msg_test_sale_2', $webhookTimestamp, 'v1,invalid');
 check($invalidWebhookResult['status'] === 400, 'Invalid Whop signature rejected');
