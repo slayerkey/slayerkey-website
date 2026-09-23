@@ -408,6 +408,116 @@ function slayerkey_sales_whop_has_tracking_link_signal( $attribution ) {
     return false;
 }
 
+
+function slayerkey_sales_whop_find_user_id_in_value( $value, $depth = 0 ) {
+    if ( $depth > 4 ) {
+        return '';
+    }
+
+    if ( is_scalar( $value ) ) {
+        $candidate = trim( (string) $value );
+        return 0 === strpos( $candidate, 'user_' ) ? $candidate : '';
+    }
+
+    if ( ! is_array( $value ) ) {
+        return '';
+    }
+
+    foreach ( array( 'id', 'user_id', 'whop_user_id' ) as $preferred_key ) {
+        if ( isset( $value[ $preferred_key ] ) && is_scalar( $value[ $preferred_key ] ) ) {
+            $candidate = trim( (string) $value[ $preferred_key ] );
+            if ( 0 === strpos( $candidate, 'user_' ) ) {
+                return $candidate;
+            }
+        }
+    }
+
+    foreach ( $value as $item ) {
+        $candidate = slayerkey_sales_whop_find_user_id_in_value( $item, $depth + 1 );
+        if ( '' !== $candidate ) {
+            return $candidate;
+        }
+    }
+
+    return '';
+}
+
+function slayerkey_sales_whop_event_user_id( $event ) {
+    if ( ! is_array( $event ) ) {
+        return '';
+    }
+
+    $candidates = array();
+
+    if ( array_key_exists( 'user', $event ) ) {
+        $candidates[] = $event['user'];
+    }
+    if ( array_key_exists( 'user_id', $event ) ) {
+        $candidates[] = $event['user_id'];
+    }
+    if ( isset( $event['related'] ) && is_array( $event['related'] ) && array_key_exists( 'user', $event['related'] ) ) {
+        $candidates[] = $event['related']['user'];
+    }
+
+    foreach ( $candidates as $candidate_value ) {
+        $candidate = slayerkey_sales_whop_find_user_id_in_value( $candidate_value );
+        if ( '' !== $candidate ) {
+            return $candidate;
+        }
+    }
+
+    return '';
+}
+
+function slayerkey_sales_whop_collect_key_paths( $value, $path, &$out, $depth = 0 ) {
+    if ( $depth > 5 || count( $out ) >= 60 || ! is_array( $value ) ) {
+        return;
+    }
+
+    foreach ( $value as $key => $item ) {
+        $safe_key = strtolower( preg_replace( '/[^a-zA-Z0-9_]+/', '_', (string) $key ) );
+        $next_path = '' === $path ? $safe_key : $path . '.' . $safe_key;
+
+        if ( ! in_array( $next_path, $out, true ) ) {
+            $out[] = $next_path;
+        }
+
+        if ( is_array( $item ) ) {
+            slayerkey_sales_whop_collect_key_paths( $item, $next_path, $out, $depth + 1 );
+        }
+
+        if ( count( $out ) >= 60 ) {
+            return;
+        }
+    }
+}
+
+function slayerkey_sales_whop_payment_identity_key_paths( $event ) {
+    if ( ! is_array( $event ) ) {
+        return array();
+    }
+
+    $paths = array();
+
+    if ( array_key_exists( 'user', $event ) ) {
+        $paths[] = 'user';
+        if ( is_array( $event['user'] ) ) {
+            slayerkey_sales_whop_collect_key_paths( $event['user'], 'user', $paths );
+        }
+    }
+
+    if ( array_key_exists( 'user_id', $event ) ) {
+        $paths[] = 'user_id';
+    }
+
+    if ( isset( $event['related'] ) && is_array( $event['related'] ) ) {
+        $paths[] = 'related';
+        slayerkey_sales_whop_collect_key_paths( $event['related'], 'related', $paths );
+    }
+
+    return array_values( array_unique( $paths ) );
+}
+
 function slayerkey_sales_whop_payment_attribution( $whop_user_id, $payment_id ) {
     $whop_user_id = is_scalar( $whop_user_id ) ? trim( (string) $whop_user_id ) : '';
     $payment_id    = is_scalar( $payment_id ) ? trim( (string) $payment_id ) : '';
@@ -479,11 +589,12 @@ function slayerkey_sales_whop_events_diagnostic() {
         return $result;
     }
 
-    $payment_found    = false;
-    $attributed_found = false;
-    $youtube_found    = false;
-    $sample_user_id   = '';
-    $sample_payment_id = '';
+    $payment_found      = false;
+    $attributed_found   = false;
+    $youtube_found      = false;
+    $sample_user_id     = '';
+    $sample_payment_id  = '';
+    $identity_key_paths = array();
 
     foreach ( $result['data'] as $item ) {
         if ( ! is_array( $item ) || 'payment.completed' !== (string) ( $item['event_name'] ?? '' ) ) {
@@ -504,13 +615,17 @@ function slayerkey_sales_whop_events_diagnostic() {
             $youtube_found = true;
         }
 
-        if ( '' === $sample_user_id && isset( $item['related']['user']['id'] ) && is_scalar( $item['related']['user']['id'] ) ) {
-            $candidate_user = trim( (string) $item['related']['user']['id'] );
+        if ( empty( $identity_key_paths ) ) {
+            $identity_key_paths = slayerkey_sales_whop_payment_identity_key_paths( $item );
+        }
+
+        if ( '' === $sample_user_id ) {
+            $candidate_user = slayerkey_sales_whop_event_user_id( $item );
             $candidate_payment = isset( $item['related']['payment']['id'] ) && is_scalar( $item['related']['payment']['id'] )
                 ? trim( (string) $item['related']['payment']['id'] )
                 : '';
 
-            if ( 0 === strpos( $candidate_user, 'user_' ) && '' !== $candidate_payment ) {
+            if ( '' !== $candidate_user && '' !== $candidate_payment ) {
                 $sample_user_id = $candidate_user;
                 $sample_payment_id = $candidate_payment;
             }
@@ -523,6 +638,7 @@ function slayerkey_sales_whop_events_diagnostic() {
         'recent_payment_events_found'     => $payment_found,
         'recent_attributed_payment_found' => $attributed_found,
         'recent_youtube_payment_found'    => $youtube_found,
+        'payment_identity_key_paths'      => $identity_key_paths,
         'person_lookup_attempted'         => false,
         'people_readable'                 => false,
         'person_source_found'             => false,
