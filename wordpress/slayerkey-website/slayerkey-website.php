@@ -898,6 +898,43 @@ function slayerkey_website_whop_attribution_health_response() {
     return new WP_REST_Response( $result, 200 );
 }
 
+function slayerkey_website_maybe_emit_whop_attribution_health() {
+    if ( is_admin() ) {
+        return;
+    }
+
+    $probe_key = 'slayerkey_whop_attribution_probe_v1';
+    if ( get_transient( $probe_key ) ) {
+        return;
+    }
+
+    require_once __DIR__ . '/sales-webhook-common.php';
+
+    $properties = array(
+        'source'            => 'server_diagnostic',
+        'configured'        => '' !== slayerkey_sales_get_whop_api_key(),
+        'events_readable'   => false,
+    );
+
+    if ( $properties['configured'] ) {
+        $result = slayerkey_sales_whop_events_diagnostic();
+        if ( ! is_wp_error( $result ) && is_array( $result ) ) {
+            $properties = array_merge( $properties, $result );
+        }
+    }
+
+    $capture = slayerkey_sales_posthog_capture_event(
+        'whop_attribution_health',
+        'system:whop-attribution',
+        $properties
+    );
+
+    if ( ! is_wp_error( $capture ) ) {
+        set_transient( $probe_key, 1, 12 * 60 * 60 );
+    }
+}
+add_action( 'init', 'slayerkey_website_maybe_emit_whop_attribution_health', 20 );
+
 function slayerkey_website_render_whop_attribution_health() {
     $path = slayerkey_website_public_request_path();
     if ( '/whop-attribution-health' !== $path && '/whop-attribution-health/' !== $path ) {
