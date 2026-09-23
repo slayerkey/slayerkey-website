@@ -81,28 +81,25 @@ function slayerkey_sales_dojo_identity_bridge_config() {
         ? trim( (string) SLAYERKEY_DOJO_IDENTITY_BRIDGE_SECRET )
         : trim( (string) get_option( 'slayerkey_dojo_identity_bridge_secret', '' ) );
 
-    if ( '' === $secret ) {
-        $whop_api_key = slayerkey_sales_get_whop_api_key();
-        if ( '' !== $whop_api_key ) {
-            $secret = hash_hmac( 'sha256', 'slayerkey-dojo-identity-bridge-v1', $whop_api_key );
-        }
-    }
-
     $host = wp_parse_url( $url, PHP_URL_HOST );
     $scheme = wp_parse_url( $url, PHP_URL_SCHEME );
-    if ( '' === $url || '' === $secret || 'https' !== strtolower( (string) $scheme ) || ! is_string( $host ) || '' === $host ) {
-        return new WP_Error( 'dojo_identity_bridge_misconfigured', 'Dojo identity bridge configuration is incomplete or invalid.' );
+    if ( '' === $url || 'https' !== strtolower( (string) $scheme ) || ! is_string( $host ) || '' === $host ) {
+        return new WP_Error( 'dojo_identity_bridge_misconfigured', 'Dojo identity bridge URL is invalid.' );
     }
 
     return array( 'enabled' => true, 'url' => $url, 'secret' => $secret );
 }
 
-function slayerkey_sales_sync_dojo_identity( $whop_user_id, $posthog_distinct_id ) {
+function slayerkey_sales_sync_dojo_identity( $whop_user_id, $posthog_distinct_id, $payment_id ) {
     $whop_user_id = is_scalar( $whop_user_id ) ? trim( (string) $whop_user_id ) : '';
     $posthog_distinct_id = is_scalar( $posthog_distinct_id ) ? trim( (string) $posthog_distinct_id ) : '';
+    $payment_id = is_scalar( $payment_id ) ? trim( (string) $payment_id ) : '';
 
     if ( '' === $whop_user_id || '' === $posthog_distinct_id ) {
         return true;
+    }
+    if ( '' === $payment_id ) {
+        return new WP_Error( 'dojo_identity_bridge_missing_payment', 'Dojo identity bridge requires a Whop payment ID.' );
     }
 
     $config = slayerkey_sales_dojo_identity_bridge_config();
@@ -115,23 +112,26 @@ function slayerkey_sales_sync_dojo_identity( $whop_user_id, $posthog_distinct_id
 
     $body = wp_json_encode(
         array(
-            'whop_user_id'       => $whop_user_id,
+            'whop_user_id'        => $whop_user_id,
             'posthog_distinct_id' => $posthog_distinct_id,
+            'payment_id'          => $payment_id,
         )
     );
     $timestamp = (string) time();
-    $signature = hash_hmac( 'sha256', $timestamp . '.' . $body, $config['secret'] );
+    $headers = array(
+        'Content-Type'          => 'application/json',
+        'X-Slayerkey-Timestamp' => $timestamp,
+    );
+    if ( '' !== $config['secret'] ) {
+        $headers['X-Slayerkey-Signature'] = 'sha256=' . hash_hmac( 'sha256', $timestamp . '.' . $body, $config['secret'] );
+    }
 
     $response = wp_remote_post(
         $config['url'],
         array(
-            'timeout' => 3,
-            'headers' => array(
-                'Content-Type'          => 'application/json',
-                'X-Slayerkey-Timestamp' => $timestamp,
-                'X-Slayerkey-Signature' => 'sha256=' . $signature,
-            ),
-            'body' => $body,
+            'timeout' => 5,
+            'headers' => $headers,
+            'body'    => $body,
         )
     );
 
@@ -671,14 +671,16 @@ function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_t
         }
     }
 
-    $identity_sync = slayerkey_sales_sync_dojo_identity( $whop_user_id, $posthog_distinct_id );
-    if ( is_wp_error( $identity_sync ) ) {
-        error_log( '[Slayerkey Whop webhook] Dojo identity bridge failed before analytics capture: ' . $identity_sync->get_error_message() );
+    if ( ! empty( $metadata['posthog_distinct_id'] ) ) {
+        $identity_sync = slayerkey_sales_sync_dojo_identity( $whop_user_id, $posthog_distinct_id, $payment_id );
+        if ( is_wp_error( $identity_sync ) ) {
+            error_log( '[Slayerkey Whop webhook] Dojo identity bridge failed before analytics capture: ' . $identity_sync->get_error_message() );
 
-        return array(
-            'status' => 500,
-            'body'   => array( 'ok' => false, 'error' => 'Customer identity handoff failed; Whop should retry.' ),
-        );
+            return array(
+                'status' => 500,
+                'body'   => array( 'ok' => false, 'error' => 'Customer identity handoff failed; Whop should retry.' ),
+            );
+        }
     }
 
     $result = slayerkey_sales_posthog_capture( 'whop', $event_id, $properties, $posthog_distinct_id );

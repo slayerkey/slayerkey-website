@@ -234,15 +234,16 @@ $bridgeRequest = $bridgePosts[count($bridgePosts) - 1][1];
 $bridgePayload = json_decode($bridgeRequest['body'] ?? '', true);
 check(($bridgePayload['whop_user_id'] ?? '') === 'user_website_linked_private', 'Dojo handoff carries raw Whop ID only server-to-server');
 check(($bridgePayload['posthog_distinct_id'] ?? '') === 'visitor_test', 'Dojo handoff carries original website PostHog distinct ID');
+check(($bridgePayload['payment_id'] ?? '') === 'pay_direct_123', 'Dojo handoff carries the Whop payment ID for server-side verification');
 $bridgeTimestamp = $bridgeRequest['headers']['X-Slayerkey-Timestamp'] ?? '';
 $bridgeExpected = 'sha256=' . hash_hmac('sha256', $bridgeTimestamp . '.' . ($bridgeRequest['body'] ?? ''), $GLOBALS['dojo_bridge_secret']);
 check(($bridgeRequest['headers']['X-Slayerkey-Signature'] ?? '') === $bridgeExpected, 'Dojo identity handoff is HMAC authenticated');
 check(!str_contains($GLOBALS['last_remote_post'][1]['body'], 'user_website_linked_private'), 'Raw Whop user ID is not sent to PostHog');
 
 $GLOBALS['dojo_bridge_secret'] = '';
-$derivedBridgeConfig = slayerkey_sales_dojo_identity_bridge_config();
-$derivedBridgeExpected = hash_hmac('sha256', 'slayerkey-dojo-identity-bridge-v1', $GLOBALS['whop_api_key']);
-check(!is_wp_error($derivedBridgeConfig) && ($derivedBridgeConfig['secret'] ?? '') === $derivedBridgeExpected, 'Dojo bridge falls back to a key derived from the shared Whop API key');
+$paymentProofBridgeConfig = slayerkey_sales_dojo_identity_bridge_config();
+check(!is_wp_error($paymentProofBridgeConfig) && ($paymentProofBridgeConfig['secret'] ?? '') === '', 'Dojo bridge can use Whop payment proof without a shared secret');
+$bridgeCountBeforeDirect = count($bridgePosts);
 
 
 $GLOBALS['transients'] = [];
@@ -278,6 +279,11 @@ check(str_contains($directPayload, '"utm_medium":"description"'), 'Direct Whop p
 check(str_contains($directPayload, '"utm_campaign":"yt_30day"'), 'Direct Whop purchase recovers campaign from matching Whop payment event');
 check(str_contains($directPayload, '"utm_content":"cta_3min"'), 'Direct Whop purchase recovers content from matching Whop payment event');
 check(str_contains($directPayload, '"attribution_source":"whop_events_api"'), 'Direct Whop purchase records Whop Events API as attribution source');
+$bridgePostsAfterDirect = array_values(array_filter(
+    $GLOBALS['remote_posts'] ?? array(),
+    function ($item) { return str_contains((string) ($item[0] ?? ''), '/internal/customer-identity'); }
+));
+check(count($bridgePostsAfterDirect) === $bridgeCountBeforeDirect, 'Direct Whop purchase does not require website-to-Dojo identity handoff');
 check(($GLOBALS['last_remote_get'][1]['headers']['Authorization'] ?? '') === 'Bearer test_whop_company_api_key_1234567890', 'Whop Events API uses stored company API key');
 check(($GLOBALS['last_remote_get'][1]['headers']['Api-Version-Date'] ?? '') === '2026-09-22-2', 'Whop Events API request pins API version');
 
