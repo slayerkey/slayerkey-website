@@ -166,6 +166,7 @@ function slayerkey_sales_sanitize_attribution_metadata( $metadata ) {
         'utm_medium',
         'utm_campaign',
         'utm_content',
+        'utm_term',
         'cta_id',
         'cta_location',
         'page_path',
@@ -241,6 +242,158 @@ function slayerkey_sales_create_whop_checkout_configuration( $plan_id, $metadata
     return array(
         'purchase_url' => $purchase_url,
         'id'           => isset( $data['id'] ) && is_scalar( $data['id'] ) ? (string) $data['id'] : '',
+    );
+}
+
+function slayerkey_sales_whop_events_request( $query = array() ) {
+    $api_key = slayerkey_sales_get_whop_api_key();
+    if ( '' === $api_key ) {
+        return new WP_Error( 'whop_api_not_configured', 'Whop API key is not configured.' );
+    }
+
+    $query = is_array( $query ) ? array_filter(
+        $query,
+        function ( $value ) {
+            return null !== $value && '' !== $value;
+        }
+    ) : array();
+
+    $url = 'https://api.whop.com/api/v1/events';
+    if ( ! empty( $query ) ) {
+        $url .= '?' . http_build_query( $query, '', '&', PHP_QUERY_RFC3986 );
+    }
+
+    $response = wp_remote_get(
+        $url,
+        array(
+            'timeout' => 4,
+            'headers' => array(
+                'Authorization'    => 'Bearer ' . $api_key,
+                'Api-Version-Date' => '2026-09-22-2',
+                'Accept'           => 'application/json',
+            ),
+        )
+    );
+
+    if ( is_wp_error( $response ) ) {
+        return $response;
+    }
+
+    $status = wp_remote_retrieve_response_code( $response );
+    $data   = json_decode( wp_remote_retrieve_body( $response ), true );
+
+    if ( $status < 200 || $status >= 300 ) {
+        return new WP_Error( 'whop_events_api_failed', 'Whop Events API returned HTTP ' . $status . '.' );
+    }
+
+    if ( ! is_array( $data ) || ! isset( $data['data'] ) || ! is_array( $data['data'] ) ) {
+        return new WP_Error( 'whop_events_api_invalid_response', 'Whop Events API returned an invalid response.' );
+    }
+
+    return $data;
+}
+
+function slayerkey_sales_whop_payment_attribution( $whop_user_id, $payment_id ) {
+    $whop_user_id = is_scalar( $whop_user_id ) ? trim( (string) $whop_user_id ) : '';
+    $payment_id    = is_scalar( $payment_id ) ? trim( (string) $payment_id ) : '';
+
+    if ( '' === $whop_user_id || '' === $payment_id ) {
+        return array( 'matched' => false, 'attribution' => array() );
+    }
+
+    $result = slayerkey_sales_whop_events_request(
+        array(
+            'identifier' => $whop_user_id,
+            'event'      => 'payment.completed',
+            'first'      => 100,
+        )
+    );
+
+    if ( is_wp_error( $result ) ) {
+        return $result;
+    }
+
+    foreach ( $result['data'] as $item ) {
+        if ( ! is_array( $item ) || 'payment.completed' !== (string) ( $item['event_name'] ?? '' ) ) {
+            continue;
+        }
+
+        $related_payment_id = '';
+        if ( isset( $item['related']['payment']['id'] ) && is_scalar( $item['related']['payment']['id'] ) ) {
+            $related_payment_id = trim( (string) $item['related']['payment']['id'] );
+        }
+
+        if ( '' === $related_payment_id || ! hash_equals( $payment_id, $related_payment_id ) ) {
+            continue;
+        }
+
+        $context = isset( $item['context'] ) && is_array( $item['context'] ) ? $item['context'] : array();
+        $attribution = array();
+        foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term' ) as $field ) {
+            if ( ! isset( $context[ $field ] ) || ! is_scalar( $context[ $field ] ) ) {
+                continue;
+            }
+
+            $value = trim( (string) $context[ $field ] );
+            if ( '' !== $value ) {
+                $attribution[ $field ] = substr( $value, 0, 200 );
+            }
+        }
+
+        return array(
+            'matched'     => true,
+            'attribution' => $attribution,
+        );
+    }
+
+    return array( 'matched' => false, 'attribution' => array() );
+}
+
+function slayerkey_sales_whop_events_diagnostic() {
+    $now = time();
+    $result = slayerkey_sales_whop_events_request(
+        array(
+            'from'  => gmdate( 'c', $now - ( 7 * DAY_IN_SECONDS ) ),
+            'to'    => gmdate( 'c', $now ),
+            'event' => 'payment.completed',
+            'first' => 100,
+        )
+    );
+
+    if ( is_wp_error( $result ) ) {
+        return $result;
+    }
+
+    $payment_found    = false;
+    $attributed_found = false;
+    $youtube_found    = false;
+
+    foreach ( $result['data'] as $item ) {
+        if ( ! is_array( $item ) || 'payment.completed' !== (string) ( $item['event_name'] ?? '' ) ) {
+            continue;
+        }
+
+        $payment_found = true;
+        $context = isset( $item['context'] ) && is_array( $item['context'] ) ? $item['context'] : array();
+
+        foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term' ) as $field ) {
+            if ( isset( $context[ $field ] ) && is_scalar( $context[ $field ] ) && '' !== trim( (string) $context[ $field ] ) ) {
+                $attributed_found = true;
+                break;
+            }
+        }
+
+        if ( isset( $context['utm_source'] ) && 'youtube' === strtolower( trim( (string) $context['utm_source'] ) ) ) {
+            $youtube_found = true;
+        }
+    }
+
+    return array(
+        'configured'                     => true,
+        'events_readable'                 => true,
+        'recent_payment_events_found'     => $payment_found,
+        'recent_attributed_payment_found' => $attributed_found,
+        'recent_youtube_payment_found'    => $youtube_found,
     );
 }
 
@@ -450,6 +603,36 @@ function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_t
         : array();
 
     $whop_user_id = slayerkey_sales_whop_user_id_from_payment( $payment );
+    $payment_id = isset( $payment['id'] ) && is_scalar( $payment['id'] ) ? trim( (string) $payment['id'] ) : '';
+
+    $has_checkout_attribution = false;
+    foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term' ) as $field ) {
+        if ( ! empty( $metadata[ $field ] ) ) {
+            $has_checkout_attribution = true;
+            break;
+        }
+    }
+
+    if ( ! $has_checkout_attribution && '' !== $whop_user_id && '' !== $payment_id ) {
+        $whop_attribution = slayerkey_sales_whop_payment_attribution( $whop_user_id, $payment_id );
+        if ( is_wp_error( $whop_attribution ) ) {
+            $properties['whop_attribution_status'] = 'events_api_error';
+            error_log( '[Slayerkey Whop webhook] Whop Events attribution lookup failed; sale will still be recorded.' );
+        } elseif ( ! empty( $whop_attribution['matched'] ) ) {
+            $properties['whop_attribution_status'] = 'payment_event_matched';
+            if ( ! empty( $whop_attribution['attribution'] ) && is_array( $whop_attribution['attribution'] ) ) {
+                $properties['attribution_source'] = 'whop_events_api';
+                foreach ( $whop_attribution['attribution'] as $field => $value ) {
+                    if ( empty( $metadata[ $field ] ) ) {
+                        $metadata[ $field ] = $value;
+                    }
+                }
+            }
+        } else {
+            $properties['whop_attribution_status'] = 'payment_event_not_found';
+        }
+    }
+
     $posthog_distinct_id = '';
     if ( ! empty( $metadata['posthog_distinct_id'] ) ) {
         $posthog_distinct_id = $metadata['posthog_distinct_id'];
@@ -482,7 +665,7 @@ function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_t
         $properties['$session_id'] = $metadata['posthog_session_id'];
     }
 
-    foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'cta_id', 'cta_location', 'page_path', 'route' ) as $field ) {
+    foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'cta_id', 'cta_location', 'page_path', 'route' ) as $field ) {
         if ( ! empty( $metadata[ $field ] ) ) {
             $properties[ $field ] = $metadata[ $field ];
         }

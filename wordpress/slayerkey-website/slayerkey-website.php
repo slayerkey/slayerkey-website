@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Slayerkey Website
  * Description: GitHub managed page rendering and analytics foundation for slayerkey.com.
- * Version: 0.1.31
+ * Version: 0.1.32
  * Author: Slayerkey
  */
 
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'SLAYERKEY_TRACKING_ASSET', 'assets/js/tracking.js' );
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.31' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.32' );
 
 // Public /system now uses the approved GitHub managed live refresh page.
 // /system/welcome (the Stripe post-purchase page) and the native /terms route are always on;
@@ -864,6 +864,40 @@ function slayerkey_website_whop_checkout_response( $request ) {
     );
 }
 
+function slayerkey_website_whop_attribution_health_response() {
+    require_once __DIR__ . '/sales-webhook-common.php';
+
+    $cache_key = 'slayerkey_whop_events_diag_v1';
+    $cached = get_transient( $cache_key );
+    if ( is_array( $cached ) ) {
+        return new WP_REST_Response( $cached, 200 );
+    }
+
+    if ( '' === slayerkey_sales_get_whop_api_key() ) {
+        return new WP_REST_Response(
+            array(
+                'configured'      => false,
+                'events_readable' => false,
+            ),
+            200
+        );
+    }
+
+    $result = slayerkey_sales_whop_events_diagnostic();
+    if ( is_wp_error( $result ) ) {
+        return new WP_REST_Response(
+            array(
+                'configured'      => true,
+                'events_readable' => false,
+            ),
+            200
+        );
+    }
+
+    set_transient( $cache_key, $result, 5 * MINUTE_IN_SECONDS );
+    return new WP_REST_Response( $result, 200 );
+}
+
 function slayerkey_website_register_health_route() {
     register_rest_route(
         'slayerkey/v1',
@@ -871,6 +905,16 @@ function slayerkey_website_register_health_route() {
         array(
             'methods' => 'GET',
             'callback' => 'slayerkey_website_health_response',
+            'permission_callback' => '__return_true',
+        )
+    );
+
+    register_rest_route(
+        'slayerkey/v1',
+        '/whop-attribution-health',
+        array(
+            'methods' => 'GET',
+            'callback' => 'slayerkey_website_whop_attribution_health_response',
             'permission_callback' => '__return_true',
         )
     );
