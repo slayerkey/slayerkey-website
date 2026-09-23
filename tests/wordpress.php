@@ -146,9 +146,12 @@ function wp_remote_get($url, $args) {
                     'utm_campaign' => 'yt_30day',
                     'utm_content' => 'cta_3min',
                 ],
+                'user' => [
+                    'id' => 'user_recent',
+                    'email' => 'private-event@example.com',
+                ],
                 'related' => [
                     'payment' => ['id' => 'pay_recent'],
-                    'user' => ['id' => 'user_recent'],
                 ],
             ];
         }
@@ -366,6 +369,7 @@ check(($diag->data['recent_payment_events_found'] ?? false) === true, 'Recent Wh
 check(($diag->data['recent_attributed_payment_found'] ?? false) === true, 'Recent attributed Whop payment event is visible');
 check(($diag->data['recent_youtube_payment_found'] ?? false) === true, 'Recent YouTube-attributed Whop payment event is visible');
 check(($diag->data['person_lookup_attempted'] ?? false) === true, 'Whop attribution health attempts a People lookup for a recent buyer');
+check(in_array('user.id', $diag->data['payment_identity_key_paths'] ?? [], true), 'Whop diagnostic reports only the top-level user key path, not its value');
 check(($diag->data['people_readable'] ?? false) === true, 'Whop People API is readable');
 check(($diag->data['person_source_found'] ?? false) === true, 'Whop Person exposes sanitized source attribution');
 check(($diag->data['journey_readable'] ?? false) === true, 'Whop buyer journey is readable');
@@ -374,6 +378,7 @@ check(($diag->data['journey_events_before_purchase'] ?? -1) === 1, 'Whop buyer j
 check(($diag->data['tracking_link_signal_found'] ?? false) === true, 'Whop attribution health detects tracking-link signals');
 $diagJson = json_encode($diag->data);
 check(!str_contains($diagJson, 'private@example.com'), 'Whop diagnostic does not expose buyer email');
+check(!str_contains($diagJson, 'private-event@example.com'), 'Whop diagnostic does not expose event user email');
 check(!str_contains($diagJson, 'Private Buyer'), 'Whop diagnostic does not expose buyer name');
 check(!str_contains($diagJson, 'user_recent'), 'Whop diagnostic does not expose raw Whop user ID');
 check(!str_contains($diagJson, 'pay_recent'), 'Whop diagnostic does not expose raw Whop payment ID');
