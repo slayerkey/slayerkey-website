@@ -1,0 +1,49 @@
+name: Temporary Whop Attribution Live Probe
+
+on:
+  workflow_run:
+    workflows: ["Deploy Slayerkey Website to EasyWP"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe privacy-safe Whop diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          urls=(
+            "https://slayerkey.com/wp-json/slayerkey/v1/whop-attribution-health"
+            "https://slayerkey.com/whop-attribution-health"
+          )
+
+          for attempt in {1..12}; do
+            for url in "${urls[@]}"; do
+              body="$(curl -sS --max-time 20 -A 'Slayerkey-Whop-Diagnostic/1.0' "$url" || true)"
+
+              if printf '%s' "$body" | jq -e '
+                type == "object"
+                and has("configured")
+                and has("events_readable")
+                and has("person_lookup_attempted")
+                and has("people_readable")
+                and has("journey_readable")
+              ' >/dev/null 2>&1; then
+                echo "Live Whop diagnostic:"
+                printf '%s' "$body" | jq .
+                exit 0
+              fi
+            done
+
+            sleep 15
+          done
+
+          echo "Temporary Whop diagnostic did not become readable after deployment."
+          exit 1
