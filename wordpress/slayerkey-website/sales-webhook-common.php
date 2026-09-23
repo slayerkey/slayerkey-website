@@ -76,13 +76,16 @@ function slayerkey_sales_whop_user_id_from_payment( $payment ) {
 function slayerkey_sales_dojo_identity_bridge_config() {
     $url = defined( 'SLAYERKEY_DOJO_IDENTITY_BRIDGE_URL' )
         ? trim( (string) SLAYERKEY_DOJO_IDENTITY_BRIDGE_URL )
-        : trim( (string) get_option( 'slayerkey_dojo_identity_bridge_url', '' ) );
+        : trim( (string) get_option( 'slayerkey_dojo_identity_bridge_url', 'https://slayerkey-dojo.mystd.workers.dev/internal/customer-identity' ) );
     $secret = defined( 'SLAYERKEY_DOJO_IDENTITY_BRIDGE_SECRET' )
         ? trim( (string) SLAYERKEY_DOJO_IDENTITY_BRIDGE_SECRET )
         : trim( (string) get_option( 'slayerkey_dojo_identity_bridge_secret', '' ) );
 
-    if ( '' === $url && '' === $secret ) {
-        return array( 'enabled' => false, 'url' => '', 'secret' => '' );
+    if ( '' === $secret ) {
+        $whop_secret = slayerkey_sales_get_secret( 'whop' );
+        if ( '' !== $whop_secret ) {
+            $secret = hash_hmac( 'sha256', 'slayerkey-dojo-identity-bridge-v1', $whop_secret );
+        }
     }
 
     $host = wp_parse_url( $url, PHP_URL_HOST );
