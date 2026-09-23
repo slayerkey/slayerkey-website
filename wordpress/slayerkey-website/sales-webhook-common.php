@@ -293,6 +293,121 @@ function slayerkey_sales_whop_events_request( $query = array() ) {
     return $data;
 }
 
+
+function slayerkey_sales_whop_people_request( $identifier ) {
+    $api_key = slayerkey_sales_get_whop_api_key();
+    if ( '' === $api_key ) {
+        return new WP_Error( 'whop_api_not_configured', 'Whop API key is not configured.' );
+    }
+
+    $identifier = is_scalar( $identifier ) ? trim( (string) $identifier ) : '';
+    if ( '' === $identifier ) {
+        return new WP_Error( 'whop_people_invalid_identifier', 'Whop People API requires an identifier.' );
+    }
+
+    $response = wp_remote_get(
+        'https://api.whop.com/api/v1/people/' . rawurlencode( $identifier ),
+        array(
+            'timeout' => 4,
+            'headers' => array(
+                'Authorization'    => 'Bearer ' . $api_key,
+                'Api-Version-Date' => '2026-09-22-2',
+                'Accept'           => 'application/json',
+            ),
+        )
+    );
+
+    if ( is_wp_error( $response ) ) {
+        return $response;
+    }
+
+    $status = wp_remote_retrieve_response_code( $response );
+    $data   = json_decode( wp_remote_retrieve_body( $response ), true );
+
+    if ( $status < 200 || $status >= 300 ) {
+        return new WP_Error( 'whop_people_api_failed', 'Whop People API returned HTTP ' . $status . '.' );
+    }
+
+    if ( ! is_array( $data ) ) {
+        return new WP_Error( 'whop_people_api_invalid_response', 'Whop People API returned an invalid response.' );
+    }
+
+    return $data;
+}
+
+function slayerkey_sales_whop_collect_safe_attribution( $value, $path, &$out, $depth = 0 ) {
+    if ( $depth > 6 || count( $out ) >= 40 || ! is_array( $value ) ) {
+        return;
+    }
+
+    $safe_scalar_keys = array(
+        'utm_source',
+        'utm_medium',
+        'utm_campaign',
+        'utm_content',
+        'utm_term',
+        'source',
+        'source_type',
+        'medium',
+        'campaign',
+        'content',
+        'term',
+        'channel',
+        'tracking_link_id',
+        'tracking_link_name',
+    );
+
+    foreach ( $value as $key => $item ) {
+        $safe_key = strtolower( preg_replace( '/[^a-zA-Z0-9_]+/', '_', (string) $key ) );
+        $next_path = '' === $path ? $safe_key : $path . '.' . $safe_key;
+
+        if ( is_array( $item ) ) {
+            slayerkey_sales_whop_collect_safe_attribution( $item, $next_path, $out, $depth + 1 );
+            continue;
+        }
+
+        if ( ! is_scalar( $item ) ) {
+            continue;
+        }
+
+        $allow_type = 'type' === $safe_key && preg_match( '/(?:source|touch|attribution|tracking|utm)/', $path );
+        if ( ! in_array( $safe_key, $safe_scalar_keys, true ) && ! $allow_type ) {
+            continue;
+        }
+
+        $scalar = trim( (string) $item );
+        if ( '' === $scalar ) {
+            continue;
+        }
+
+        $out[ $next_path ] = substr( $scalar, 0, 200 );
+        if ( count( $out ) >= 40 ) {
+            return;
+        }
+    }
+}
+
+function slayerkey_sales_whop_safe_attribution_summary( $value ) {
+    $out = array();
+    slayerkey_sales_whop_collect_safe_attribution( $value, '', $out, 0 );
+    return $out;
+}
+
+function slayerkey_sales_whop_has_tracking_link_signal( $attribution ) {
+    if ( ! is_array( $attribution ) ) {
+        return false;
+    }
+
+    foreach ( $attribution as $key => $value ) {
+        $haystack = strtolower( (string) $key . ' ' . (string) $value );
+        if ( false !== strpos( $haystack, 'tracking_link' ) || false !== strpos( $haystack, 'tracking link' ) ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 function slayerkey_sales_whop_payment_attribution( $whop_user_id, $payment_id ) {
     $whop_user_id = is_scalar( $whop_user_id ) ? trim( (string) $whop_user_id ) : '';
     $payment_id    = is_scalar( $payment_id ) ? trim( (string) $payment_id ) : '';
@@ -367,6 +482,8 @@ function slayerkey_sales_whop_events_diagnostic() {
     $payment_found    = false;
     $attributed_found = false;
     $youtube_found    = false;
+    $sample_user_id   = '';
+    $sample_payment_id = '';
 
     foreach ( $result['data'] as $item ) {
         if ( ! is_array( $item ) || 'payment.completed' !== (string) ( $item['event_name'] ?? '' ) ) {
@@ -386,15 +503,102 @@ function slayerkey_sales_whop_events_diagnostic() {
         if ( isset( $context['utm_source'] ) && 'youtube' === strtolower( trim( (string) $context['utm_source'] ) ) ) {
             $youtube_found = true;
         }
+
+        if ( '' === $sample_user_id && isset( $item['related']['user']['id'] ) && is_scalar( $item['related']['user']['id'] ) ) {
+            $candidate_user = trim( (string) $item['related']['user']['id'] );
+            $candidate_payment = isset( $item['related']['payment']['id'] ) && is_scalar( $item['related']['payment']['id'] )
+                ? trim( (string) $item['related']['payment']['id'] )
+                : '';
+
+            if ( 0 === strpos( $candidate_user, 'user_' ) && '' !== $candidate_payment ) {
+                $sample_user_id = $candidate_user;
+                $sample_payment_id = $candidate_payment;
+            }
+        }
     }
 
-    return array(
+    $diagnostic = array(
         'configured'                     => true,
         'events_readable'                 => true,
         'recent_payment_events_found'     => $payment_found,
         'recent_attributed_payment_found' => $attributed_found,
         'recent_youtube_payment_found'    => $youtube_found,
+        'person_lookup_attempted'         => false,
+        'people_readable'                 => false,
+        'person_source_found'             => false,
+        'person_attribution'              => array(),
+        'journey_readable'                => false,
+        'journey_exact_payment_matched'   => false,
+        'journey_events_before_purchase'  => 0,
+        'journey_source_found'            => false,
+        'journey_attribution'             => array(),
+        'tracking_link_signal_found'      => false,
     );
+
+    if ( '' === $sample_user_id || '' === $sample_payment_id ) {
+        return $diagnostic;
+    }
+
+    $diagnostic['person_lookup_attempted'] = true;
+    $person = slayerkey_sales_whop_people_request( $sample_user_id );
+    if ( is_wp_error( $person ) ) {
+        $diagnostic['people_error'] = $person->get_error_message();
+    } else {
+        $person_attribution = slayerkey_sales_whop_safe_attribution_summary( $person );
+        $diagnostic['people_readable'] = true;
+        $diagnostic['person_attribution'] = $person_attribution;
+        $diagnostic['person_source_found'] = ! empty( $person_attribution );
+        $diagnostic['tracking_link_signal_found'] = slayerkey_sales_whop_has_tracking_link_signal( $person_attribution );
+    }
+
+    $journey = slayerkey_sales_whop_events_request(
+        array(
+            'identifier' => $sample_user_id,
+            'direction'  => 'asc',
+            'first'      => 100,
+        )
+    );
+
+    if ( is_wp_error( $journey ) ) {
+        $diagnostic['journey_error'] = $journey->get_error_message();
+        return $diagnostic;
+    }
+
+    $diagnostic['journey_readable'] = true;
+    $before_purchase = 0;
+    $journey_attribution = array();
+
+    foreach ( $journey['data'] as $item ) {
+        if ( ! is_array( $item ) ) {
+            continue;
+        }
+
+        $item_attribution = slayerkey_sales_whop_safe_attribution_summary(
+            isset( $item['context'] ) && is_array( $item['context'] ) ? $item['context'] : array()
+        );
+        foreach ( $item_attribution as $key => $value ) {
+            $journey_attribution[ $key ] = $value;
+        }
+
+        $related_payment_id = isset( $item['related']['payment']['id'] ) && is_scalar( $item['related']['payment']['id'] )
+            ? trim( (string) $item['related']['payment']['id'] )
+            : '';
+
+        if ( '' !== $related_payment_id && hash_equals( $sample_payment_id, $related_payment_id ) ) {
+            $diagnostic['journey_exact_payment_matched'] = true;
+            break;
+        }
+
+        $before_purchase++;
+    }
+
+    $diagnostic['journey_events_before_purchase'] = $before_purchase;
+    $diagnostic['journey_attribution'] = $journey_attribution;
+    $diagnostic['journey_source_found'] = ! empty( $journey_attribution );
+    $diagnostic['tracking_link_signal_found'] = $diagnostic['tracking_link_signal_found']
+        || slayerkey_sales_whop_has_tracking_link_signal( $journey_attribution );
+
+    return $diagnostic;
 }
 
 function slayerkey_sales_processed_key( $provider, $event_id ) {

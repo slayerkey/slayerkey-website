@@ -47,6 +47,44 @@ function wp_remote_get($url, $args) {
     $GLOBALS['last_remote_get'] = [$url, $args];
     $GLOBALS['remote_gets'][] = [$url, $args];
 
+    if (str_contains($url, '/api/v1/people/')) {
+        if (!empty($GLOBALS['whop_people_http_status']) && (int) $GLOBALS['whop_people_http_status'] !== 200) {
+            return [
+                'response' => ['code' => (int) $GLOBALS['whop_people_http_status']],
+                'body' => json_encode(['error' => ['message' => 'forbidden']]),
+            ];
+        }
+
+        return [
+            'response' => ['code' => 200],
+            'body' => json_encode([
+                'id' => 'prsn_private_should_not_leak',
+                'email' => 'private@example.com',
+                'name' => 'Private Buyer',
+                'sources' => [
+                    [
+                        'type' => 'utm',
+                        'source' => 'youtube',
+                        'utm_source' => 'youtube',
+                        'utm_medium' => 'description',
+                        'utm_campaign' => 'yt_30day',
+                        'utm_content' => 'cta_3min',
+                    ],
+                ],
+                'first_touch' => [
+                    'type' => 'utm',
+                    'source' => 'youtube',
+                    'utm_campaign' => 'yt_30day',
+                ],
+                'last_touch' => [
+                    'type' => 'tracking_link',
+                    'source' => 'youtube',
+                    'tracking_link_id' => 'link_test',
+                ],
+            ]),
+        ];
+    }
+
     if (str_contains($url, '/api/v1/events')) {
         if (!empty($GLOBALS['whop_events_http_status']) && (int) $GLOBALS['whop_events_http_status'] !== 200) {
             return [
@@ -59,7 +97,31 @@ function wp_remote_get($url, $args) {
         parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
         $data = [];
 
-        if (($query['identifier'] ?? '') === 'user_direct_123') {
+        if (($query['identifier'] ?? '') === 'user_recent') {
+            $data[] = [
+                'event_id' => 'evt_recent_landing',
+                'event_name' => 'page.viewed',
+                'context' => [
+                    'utm_source' => 'youtube',
+                    'utm_medium' => 'description',
+                    'utm_campaign' => 'yt_30day',
+                    'utm_content' => 'cta_3min',
+                    'tracking_link_id' => 'link_test',
+                ],
+                'related' => [
+                    'user' => ['id' => 'user_recent'],
+                ],
+            ];
+            $data[] = [
+                'event_id' => 'evt_recent_payment',
+                'event_name' => 'payment.completed',
+                'context' => [],
+                'related' => [
+                    'payment' => ['id' => 'pay_recent'],
+                    'user' => ['id' => 'user_recent'],
+                ],
+            ];
+        } elseif (($query['identifier'] ?? '') === 'user_direct_123') {
             $data[] = [
                 'event_id' => 'evt_direct_payment',
                 'event_name' => 'payment.completed',
@@ -303,6 +365,27 @@ check(($diag->data['events_readable'] ?? false) === true, 'Whop Events API is re
 check(($diag->data['recent_payment_events_found'] ?? false) === true, 'Recent Whop payment events are visible');
 check(($diag->data['recent_attributed_payment_found'] ?? false) === true, 'Recent attributed Whop payment event is visible');
 check(($diag->data['recent_youtube_payment_found'] ?? false) === true, 'Recent YouTube-attributed Whop payment event is visible');
+check(($diag->data['person_lookup_attempted'] ?? false) === true, 'Whop attribution health attempts a People lookup for a recent buyer');
+check(($diag->data['people_readable'] ?? false) === true, 'Whop People API is readable');
+check(($diag->data['person_source_found'] ?? false) === true, 'Whop Person exposes sanitized source attribution');
+check(($diag->data['journey_readable'] ?? false) === true, 'Whop buyer journey is readable');
+check(($diag->data['journey_exact_payment_matched'] ?? false) === true, 'Whop buyer journey matches the exact payment');
+check(($diag->data['journey_events_before_purchase'] ?? -1) === 1, 'Whop buyer journey counts events before the exact purchase');
+check(($diag->data['tracking_link_signal_found'] ?? false) === true, 'Whop attribution health detects tracking-link signals');
+$diagJson = json_encode($diag->data);
+check(!str_contains($diagJson, 'private@example.com'), 'Whop diagnostic does not expose buyer email');
+check(!str_contains($diagJson, 'Private Buyer'), 'Whop diagnostic does not expose buyer name');
+check(!str_contains($diagJson, 'user_recent'), 'Whop diagnostic does not expose raw Whop user ID');
+check(!str_contains($diagJson, 'pay_recent'), 'Whop diagnostic does not expose raw Whop payment ID');
+
+$GLOBALS['whop_people_http_status'] = 403;
+$GLOBALS['transients'] = [];
+$diagPeopleForbidden = slayerkey_website_whop_attribution_health_response();
+check($diagPeopleForbidden->status === 200, 'Whop People permission failure stays a safe health response');
+check(($diagPeopleForbidden->data['events_readable'] ?? false) === true, 'Events remain readable when People permission is denied');
+check(($diagPeopleForbidden->data['people_readable'] ?? true) === false, 'People permission denial is reported without failing Events');
+check(str_contains(($diagPeopleForbidden->data['people_error'] ?? ''), 'HTTP 403'), 'People permission denial reports only the HTTP failure');
+unset($GLOBALS['whop_people_http_status']);
 
 $GLOBALS['whop_events_http_status'] = 403;
 $GLOBALS['transients'] = [];
