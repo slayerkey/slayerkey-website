@@ -898,6 +898,23 @@ function slayerkey_website_whop_attribution_health_response() {
     return new WP_REST_Response( $result, 200 );
 }
 
+function slayerkey_website_render_whop_attribution_health() {
+    $path = slayerkey_website_public_request_path();
+    if ( '/whop-attribution-health' !== $path && '/whop-attribution-health/' !== $path ) {
+        return;
+    }
+
+    $response = slayerkey_website_whop_attribution_health_response();
+    $body = $response instanceof WP_REST_Response ? $response->data : $response;
+
+    nocache_headers();
+    header( 'Content-Type: application/json; charset=utf-8' );
+    header( 'X-Robots-Tag: noindex, nofollow, noarchive', true );
+    echo wp_json_encode( is_array( $body ) ? $body : array( 'configured' => false, 'events_readable' => false ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    exit;
+}
+add_action( 'template_redirect', 'slayerkey_website_render_whop_attribution_health', 0 );
+
 function slayerkey_website_register_health_route() {
     register_rest_route(
         'slayerkey/v1',
