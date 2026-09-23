@@ -1,0 +1,30 @@
+name: Verify live Whop attribution API
+on:
+  push:
+    branches:
+      - verify/live-whop-events
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Query safe production attribution health
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(curl -fsS --max-time 20 'https://slayerkey.com/wp-json/slayerkey/v1/whop-attribution-health')"
+          echo "$body"
+          HEALTH_JSON="$body" node - <<'NODE'
+          const body = JSON.parse(process.env.HEALTH_JSON || '{}');
+          if (body.configured !== true) throw new Error('Whop API key is not configured on WordPress');
+          if (body.events_readable !== true) throw new Error('Stored Whop API key cannot read the Events API');
+          console.log(JSON.stringify({
+            configured: body.configured,
+            events_readable: body.events_readable,
+            recent_payment_events_found: Boolean(body.recent_payment_events_found),
+            recent_attributed_payment_found: Boolean(body.recent_attributed_payment_found),
+            recent_youtube_payment_found: Boolean(body.recent_youtube_payment_found)
+          }));
+          NODE
