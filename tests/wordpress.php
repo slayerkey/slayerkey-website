@@ -239,6 +239,11 @@ $bridgeExpected = 'sha256=' . hash_hmac('sha256', $bridgeTimestamp . '.' . ($bri
 check(($bridgeRequest['headers']['X-Slayerkey-Signature'] ?? '') === $bridgeExpected, 'Dojo identity handoff is HMAC authenticated');
 check(!str_contains($GLOBALS['last_remote_post'][1]['body'], 'user_website_linked_private'), 'Raw Whop user ID is not sent to PostHog');
 
+$GLOBALS['dojo_bridge_secret'] = '';
+$derivedBridgeConfig = slayerkey_sales_dojo_identity_bridge_config();
+$derivedBridgeExpected = hash_hmac('sha256', 'slayerkey-dojo-identity-bridge-v1', $GLOBALS['whop_api_key']);
+check(!is_wp_error($derivedBridgeConfig) && ($derivedBridgeConfig['secret'] ?? '') === $derivedBridgeExpected, 'Dojo bridge falls back to a key derived from the shared Whop API key');
+
 
 $GLOBALS['transients'] = [];
 $directUserId = 'user_direct_123';
