@@ -21,3 +21,5 @@ jobs:
           sed -n '1,40p' "$headers"
           head -c 1200 "$body" || true
           echo
+
+# retry after Cloudflare change
