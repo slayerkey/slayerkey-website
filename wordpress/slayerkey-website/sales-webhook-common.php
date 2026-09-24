@@ -717,6 +717,50 @@ function slayerkey_sales_whop_events_diagnostic() {
     return $diagnostic;
 }
 
+function slayerkey_sales_bridge_pending_key( $event_id ) {
+    return 'sk_dojo_bridge_' . md5( (string) $event_id );
+}
+
+function slayerkey_sales_store_bridge_pending( $event_id, $whop_user_id, $posthog_distinct_id, $payment_id ) {
+    if ( '' === (string) $event_id ) {
+        return;
+    }
+
+    set_transient(
+        slayerkey_sales_bridge_pending_key( $event_id ),
+        array(
+            'whop_user_id'        => (string) $whop_user_id,
+            'posthog_distinct_id' => (string) $posthog_distinct_id,
+            'payment_id'          => (string) $payment_id,
+        ),
+        7 * DAY_IN_SECONDS
+    );
+}
+
+function slayerkey_sales_retry_bridge_pending( $event_id ) {
+    if ( '' === (string) $event_id ) {
+        return array( 'pending' => false, 'recovered' => false );
+    }
+
+    $pending = get_transient( slayerkey_sales_bridge_pending_key( $event_id ) );
+    if ( ! is_array( $pending ) ) {
+        return array( 'pending' => false, 'recovered' => false );
+    }
+
+    $result = slayerkey_sales_sync_dojo_identity(
+        $pending['whop_user_id'] ?? '',
+        $pending['posthog_distinct_id'] ?? '',
+        $pending['payment_id'] ?? ''
+    );
+
+    if ( is_wp_error( $result ) ) {
+        return array( 'pending' => true, 'recovered' => false );
+    }
+
+    delete_transient( slayerkey_sales_bridge_pending_key( $event_id ) );
+    return array( 'pending' => false, 'recovered' => true );
+}
+
 function slayerkey_sales_processed_key( $provider, $event_id ) {
     return 'sk_sale_' . $provider . '_' . md5( $event_id );
 }
@@ -883,9 +927,15 @@ function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_t
     }
 
     if ( slayerkey_sales_is_processed( 'whop', $event_id ) ) {
+        $bridge_retry = slayerkey_sales_retry_bridge_pending( $event_id );
         return array(
             'status' => 200,
-            'body'   => array( 'ok' => true, 'duplicate' => true ),
+            'body'   => array(
+                'ok'                        => true,
+                'duplicate'                 => true,
+                'identity_bridge_pending'   => ! empty( $bridge_retry['pending'] ),
+                'identity_bridge_recovered' => ! empty( $bridge_retry['recovered'] ),
+            ),
         );
     }
 
@@ -991,17 +1041,7 @@ function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_t
         }
     }
 
-    if ( ! empty( $metadata['posthog_distinct_id'] ) ) {
-        $identity_sync = slayerkey_sales_sync_dojo_identity( $whop_user_id, $posthog_distinct_id, $payment_id );
-        if ( is_wp_error( $identity_sync ) ) {
-            error_log( '[Slayerkey Whop webhook] Dojo identity bridge failed before analytics capture: ' . $identity_sync->get_error_message() );
-
-            return array(
-                'status' => 500,
-                'body'   => array( 'ok' => false, 'error' => 'Customer identity handoff failed; Whop should retry.' ),
-            );
-        }
-    }
+    $identity_bridge_pending = false;
 
     $result = slayerkey_sales_posthog_capture( 'whop', $event_id, $properties, $posthog_distinct_id );
 
@@ -1014,11 +1054,25 @@ function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_t
         );
     }
 
+    if ( ! empty( $metadata['posthog_distinct_id'] ) ) {
+        $identity_sync = slayerkey_sales_sync_dojo_identity( $whop_user_id, $posthog_distinct_id, $payment_id );
+        if ( is_wp_error( $identity_sync ) ) {
+            $identity_bridge_pending = true;
+            slayerkey_sales_store_bridge_pending( $event_id, $whop_user_id, $posthog_distinct_id, $payment_id );
+            error_log( '[Slayerkey Whop webhook] Dojo identity bridge is pending after analytics capture: ' . $identity_sync->get_error_message() );
+        } else {
+            delete_transient( slayerkey_sales_bridge_pending_key( $event_id ) );
+        }
+    }
+
     slayerkey_sales_mark_processed( 'whop', $event_id );
 
     return array(
         'status' => 200,
-        'body'   => array( 'ok' => true ),
+        'body'   => array(
+            'ok'                      => true,
+            'identity_bridge_pending' => $identity_bridge_pending,
+        ),
     );
 }
 
