@@ -97,7 +97,7 @@ function wp_remote_get($url, $args) {
         parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
         $data = [];
 
-        if (($query['identifier'] ?? '') === 'user_recent') {
+        if (($query['identifier'] ?? '') === 'private-event@example.com') {
             $data[] = [
                 'event_id' => 'evt_recent_landing',
                 'event_name' => 'page.viewed',
@@ -109,7 +109,7 @@ function wp_remote_get($url, $args) {
                     'tracking_link_id' => 'link_test',
                 ],
                 'related' => [
-                    'user' => ['id' => 'user_recent'],
+                    'user' => ['email' => 'private-event@example.com'],
                 ],
             ];
             $data[] = [
@@ -118,7 +118,7 @@ function wp_remote_get($url, $args) {
                 'context' => [],
                 'related' => [
                     'payment' => ['id' => 'pay_recent'],
-                    'user' => ['id' => 'user_recent'],
+                    'user' => ['email' => 'private-event@example.com'],
                 ],
             ];
         } elseif (($query['identifier'] ?? '') === 'user_direct_123') {
@@ -147,8 +147,9 @@ function wp_remote_get($url, $args) {
                     'utm_content' => 'cta_3min',
                 ],
                 'user' => [
-                    'id' => 'user_recent',
                     'email' => 'private-event@example.com',
+                    'first_name' => 'Private',
+                    'last_name' => 'Event',
                 ],
                 'related' => [
                     'payment' => ['id' => 'pay_recent'],
@@ -369,7 +370,9 @@ check(($diag->data['recent_payment_events_found'] ?? false) === true, 'Recent Wh
 check(($diag->data['recent_attributed_payment_found'] ?? false) === true, 'Recent attributed Whop payment event is visible');
 check(($diag->data['recent_youtube_payment_found'] ?? false) === true, 'Recent YouTube-attributed Whop payment event is visible');
 check(($diag->data['person_lookup_attempted'] ?? false) === true, 'Whop attribution health attempts a People lookup for a recent buyer');
-check(in_array('user.id', $diag->data['payment_identity_key_paths'] ?? [], true), 'Whop diagnostic reports only the top-level user key path, not its value');
+check(in_array('user.email', $diag->data['payment_identity_key_paths'] ?? [], true), 'Whop diagnostic sees an email identity key without exposing its value');
+check(!in_array('user.id', $diag->data['payment_identity_key_paths'] ?? [], true), 'Whop diagnostic handles payment events that do not contain a user ID');
+check(($diag->data['person_identifier_type'] ?? '') === 'email', 'Whop diagnostic falls back to an email identifier server-side');
 check(($diag->data['people_readable'] ?? false) === true, 'Whop People API is readable');
 check(($diag->data['person_source_found'] ?? false) === true, 'Whop Person exposes sanitized source attribution');
 check(($diag->data['journey_readable'] ?? false) === true, 'Whop buyer journey is readable');
