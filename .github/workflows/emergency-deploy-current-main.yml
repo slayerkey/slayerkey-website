@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      DEPLOY_SHA: f25ae67bdcf699d60ea94a286bb14b757c6d9574
+      DEPLOY_SHA: 0f9aa6cabf21badf0a711043216363dff30b0563
     steps:
       - uses: actions/checkout@v4
         with:
