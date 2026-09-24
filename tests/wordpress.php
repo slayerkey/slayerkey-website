@@ -336,8 +336,12 @@ unset($GLOBALS['dojo_bridge_http_status']);
 $GLOBALS['dojo_bridge_secret'] = '';
 $paymentProofBridgeConfig = slayerkey_sales_dojo_identity_bridge_config();
 check(!is_wp_error($paymentProofBridgeConfig) && ($paymentProofBridgeConfig['secret'] ?? '') === '', 'Dojo bridge can use Whop payment proof without a shared secret');
-$bridgeCountBeforeDirect = count($bridgePosts);
 
+$bridgePostsBeforeDirect = array_values(array_filter(
+    $GLOBALS['remote_posts'] ?? array(),
+    function ($item) { return str_contains((string) ($item[0] ?? ''), '/internal/customer-identity'); }
+));
+$bridgeCountBeforeDirect = count($bridgePostsBeforeDirect);
 
 $GLOBALS['transients'] = [];
 $directUserId = 'user_direct_123';
