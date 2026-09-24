@@ -1,0 +1,32 @@
+name: Emergency Deploy Current Main to EasyWP
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  deploy-current-main:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DEPLOY_SHA: bb4bcc35935a1b3fe2d50b099cfee204b74b573c
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Validate exact deploy artifact
+        run: |
+          set -euo pipefail
+          python3 tools/build_deploy.py --output build/php-check/plugin
+          php tests/wordpress.php build/php-check/plugin
+      - name: Install publisher dependency
+        run: sudo apt-get update && sudo apt-get install -y lftp
+      - name: Build immutable current-main release
+        run: python3 tools/build_deploy.py --commit "$DEPLOY_SHA"
+      - name: Publish to EasyWP and verify remote bytes
+        env:
+          EASYWP_HOST: ${{ secrets.EASYWP_HOST }}
+          EASYWP_USER: ${{ secrets.EASYWP_USER }}
+          EASYWP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
+          EASYWP_PORT: ${{ secrets.EASYWP_PORT }}
+        run: python3 tools/publish_deploy.py
