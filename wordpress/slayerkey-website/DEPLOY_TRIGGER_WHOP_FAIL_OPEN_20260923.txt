@@ -1,0 +1,1 @@
+Force EasyWP publication of the current main release containing the Whop webhook fail-open fix.
