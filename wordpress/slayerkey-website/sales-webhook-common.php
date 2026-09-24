@@ -469,6 +469,26 @@ function slayerkey_sales_whop_event_user_id( $event ) {
     return '';
 }
 
+function slayerkey_sales_whop_event_person_identifier( $event ) {
+    if ( ! is_array( $event ) ) {
+        return array( 'value' => '', 'type' => '' );
+    }
+
+    $user_id = slayerkey_sales_whop_event_user_id( $event );
+    if ( '' !== $user_id ) {
+        return array( 'value' => $user_id, 'type' => 'user_id' );
+    }
+
+    if ( isset( $event['user'] ) && is_array( $event['user'] ) && isset( $event['user']['email'] ) && is_scalar( $event['user']['email'] ) ) {
+        $email = trim( (string) $event['user']['email'] );
+        if ( '' !== $email && false !== strpos( $email, '@' ) ) {
+            return array( 'value' => $email, 'type' => 'email' );
+        }
+    }
+
+    return array( 'value' => '', 'type' => '' );
+}
+
 function slayerkey_sales_whop_collect_key_paths( $value, $path, &$out, $depth = 0 ) {
     if ( $depth > 5 || count( $out ) >= 60 || ! is_array( $value ) ) {
         return;
@@ -592,7 +612,8 @@ function slayerkey_sales_whop_events_diagnostic() {
     $payment_found      = false;
     $attributed_found   = false;
     $youtube_found      = false;
-    $sample_user_id     = '';
+    $sample_identifier  = '';
+    $sample_identifier_type = '';
     $sample_payment_id  = '';
     $identity_key_paths = array();
 
@@ -619,14 +640,15 @@ function slayerkey_sales_whop_events_diagnostic() {
             $identity_key_paths = slayerkey_sales_whop_payment_identity_key_paths( $item );
         }
 
-        if ( '' === $sample_user_id ) {
-            $candidate_user = slayerkey_sales_whop_event_user_id( $item );
+        if ( '' === $sample_identifier ) {
+            $candidate_identifier = slayerkey_sales_whop_event_person_identifier( $item );
             $candidate_payment = isset( $item['related']['payment']['id'] ) && is_scalar( $item['related']['payment']['id'] )
                 ? trim( (string) $item['related']['payment']['id'] )
                 : '';
 
-            if ( '' !== $candidate_user && '' !== $candidate_payment ) {
-                $sample_user_id = $candidate_user;
+            if ( '' !== $candidate_identifier['value'] && '' !== $candidate_payment ) {
+                $sample_identifier = $candidate_identifier['value'];
+                $sample_identifier_type = $candidate_identifier['type'];
                 $sample_payment_id = $candidate_payment;
             }
         }
@@ -639,6 +661,7 @@ function slayerkey_sales_whop_events_diagnostic() {
         'recent_attributed_payment_found' => $attributed_found,
         'recent_youtube_payment_found'    => $youtube_found,
         'payment_identity_key_paths'      => $identity_key_paths,
+        'person_identifier_type'          => $sample_identifier_type,
         'person_lookup_attempted'         => false,
         'people_readable'                 => false,
         'person_source_found'             => false,
@@ -651,12 +674,12 @@ function slayerkey_sales_whop_events_diagnostic() {
         'tracking_link_signal_found'      => false,
     );
 
-    if ( '' === $sample_user_id || '' === $sample_payment_id ) {
+    if ( '' === $sample_identifier || '' === $sample_payment_id ) {
         return $diagnostic;
     }
 
     $diagnostic['person_lookup_attempted'] = true;
-    $person = slayerkey_sales_whop_people_request( $sample_user_id );
+    $person = slayerkey_sales_whop_people_request( $sample_identifier );
     if ( is_wp_error( $person ) ) {
         $diagnostic['people_error'] = $person->get_error_message();
     } else {
@@ -669,7 +692,7 @@ function slayerkey_sales_whop_events_diagnostic() {
 
     $journey = slayerkey_sales_whop_events_request(
         array(
-            'identifier' => $sample_user_id,
+            'identifier' => $sample_identifier,
             'direction'  => 'asc',
             'first'      => 100,
         )
