@@ -29,9 +29,13 @@ function get_option($name, $default = '') {
 }
 function get_transient($key) { return $GLOBALS['transients'][$key] ?? false; }
 function set_transient($key, $value, $ttl) { $GLOBALS['transients'][$key] = $value; return true; }
+function delete_transient($key) { unset($GLOBALS['transients'][$key]); return true; }
 function wp_remote_post($url, $args) {
     $GLOBALS['last_remote_post'] = [$url, $args];
     $GLOBALS['remote_posts'][] = [$url, $args];
+    if (str_contains($url, '/internal/customer-identity') && !empty($GLOBALS['dojo_bridge_http_status'])) {
+        return ['response' => ['code' => (int) $GLOBALS['dojo_bridge_http_status']], 'body' => json_encode(['ok' => false])];
+    }
     if (str_contains($url, '/checkout_configurations')) {
         return [
             'response' => ['code' => 200],
@@ -304,6 +308,25 @@ $bridgeTimestamp = $bridgeRequest['headers']['X-Slayerkey-Timestamp'] ?? '';
 $bridgeExpected = 'sha256=' . hash_hmac('sha256', $bridgeTimestamp . '.' . ($bridgeRequest['body'] ?? ''), $GLOBALS['dojo_bridge_secret']);
 check(($bridgeRequest['headers']['X-Slayerkey-Signature'] ?? '') === $bridgeExpected, 'Dojo identity handoff is HMAC authenticated');
 check(!str_contains($GLOBALS['last_remote_post'][1]['body'], 'user_website_linked_private'), 'Raw Whop user ID is not sent to PostHog');
+
+$GLOBALS['dojo_bridge_http_status'] = 403;
+$GLOBALS['transients'] = [];
+$bridgeFailureEventId = 'msg_bridge_failure';
+$bridgeFailureBody = str_replace($webhookId, $bridgeFailureEventId, $webhookBody);
+$bridgeFailureSignature = 'v1,' . base64_encode(hash_hmac('sha256', $bridgeFailureEventId . '.' . $webhookTimestamp . '.' . $bridgeFailureBody, $GLOBALS['whop_test_secret'], true));
+$bridgeFailureResult = slayerkey_sales_handle_whop_webhook($bridgeFailureBody, $bridgeFailureEventId, $webhookTimestamp, $bridgeFailureSignature);
+check($bridgeFailureResult['status'] === 200, 'Identity bridge failure does not fail a valid Whop payment webhook');
+check(($bridgeFailureResult['body']['identity_bridge_pending'] ?? false) === true, 'Identity bridge failure is recorded as pending');
+check(slayerkey_sales_is_processed('whop', $bridgeFailureEventId) === true, 'Sale is marked processed even when bridge is pending');
+check(is_array(get_transient(slayerkey_sales_bridge_pending_key($bridgeFailureEventId))), 'Pending identity bridge is stored for retry');
+
+$GLOBALS['dojo_bridge_http_status'] = 200;
+$bridgeReplayResult = slayerkey_sales_handle_whop_webhook($bridgeFailureBody, $bridgeFailureEventId, $webhookTimestamp, $bridgeFailureSignature);
+check($bridgeReplayResult['status'] === 200, 'Replay of processed Whop payment remains 200');
+check(($bridgeReplayResult['body']['duplicate'] ?? false) === true, 'Replay remains idempotent');
+check(($bridgeReplayResult['body']['identity_bridge_recovered'] ?? false) === true, 'Replay retries and recovers pending identity bridge');
+check(get_transient(slayerkey_sales_bridge_pending_key($bridgeFailureEventId)) === false, 'Recovered identity bridge clears pending retry');
+unset($GLOBALS['dojo_bridge_http_status']);
 
 $GLOBALS['dojo_bridge_secret'] = '';
 $paymentProofBridgeConfig = slayerkey_sales_dojo_identity_bridge_config();
