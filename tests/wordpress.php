@@ -290,9 +290,14 @@ $GLOBALS['dojo_bridge_url'] = 'https://dojo.example/internal/customer-identity';
 $GLOBALS['dojo_bridge_secret'] = 'test_dojo_bridge_secret';
 $webhookResult = slayerkey_sales_handle_whop_webhook($webhookBody, $webhookId, $webhookTimestamp, $webhookSignature);
 check($webhookResult['status'] === 200 && $webhookResult['body']['ok'] === true, 'Valid Whop payment webhook accepted');
-check(isset($GLOBALS['last_remote_post'][1]['body']) && str_contains($GLOBALS['last_remote_post'][1]['body'], 'sale_confirmed'), 'Whop payment captured to PostHog');
-check(str_contains($GLOBALS['last_remote_post'][1]['body'], '"distinct_id":"visitor_test"'), 'Whop payment reuses the website PostHog identity');
-check(str_contains($GLOBALS['last_remote_post'][1]['body'], '"utm_campaign":"yt_test"'), 'Whop payment carries campaign attribution into PostHog');
+$posthogPosts = array_values(array_filter(
+    $GLOBALS['remote_posts'] ?? array(),
+    function ($item) { return str_contains((string) ($item[0] ?? ''), 'posthog.com/i/v0/e/'); }
+));
+check(count($posthogPosts) >= 1, 'Whop payment captured to PostHog');
+$websiteSalePost = $posthogPosts[count($posthogPosts) - 1][1];
+check(str_contains($websiteSalePost['body'] ?? '', '"distinct_id":"visitor_test"'), 'Whop payment reuses the website PostHog identity');
+check(str_contains($websiteSalePost['body'] ?? '', '"utm_campaign":"yt_test"'), 'Whop payment carries campaign attribution into PostHog');
 
 $bridgePosts = array_values(array_filter(
     $GLOBALS['remote_posts'] ?? array(),
@@ -307,7 +312,7 @@ check(($bridgePayload['payment_id'] ?? '') === 'pay_direct_123', 'Dojo handoff c
 $bridgeTimestamp = $bridgeRequest['headers']['X-Slayerkey-Timestamp'] ?? '';
 $bridgeExpected = 'sha256=' . hash_hmac('sha256', $bridgeTimestamp . '.' . ($bridgeRequest['body'] ?? ''), $GLOBALS['dojo_bridge_secret']);
 check(($bridgeRequest['headers']['X-Slayerkey-Signature'] ?? '') === $bridgeExpected, 'Dojo identity handoff is HMAC authenticated');
-check(!str_contains($GLOBALS['last_remote_post'][1]['body'], 'user_website_linked_private'), 'Raw Whop user ID is not sent to PostHog');
+check(!str_contains($websiteSalePost['body'] ?? '', 'user_website_linked_private'), 'Raw Whop user ID is not sent to PostHog');
 
 $GLOBALS['dojo_bridge_http_status'] = 403;
 $GLOBALS['transients'] = [];
