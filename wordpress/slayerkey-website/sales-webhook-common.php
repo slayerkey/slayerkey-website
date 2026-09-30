@@ -167,6 +167,7 @@ function slayerkey_sales_sanitize_attribution_metadata( $metadata ) {
         'utm_campaign',
         'utm_content',
         'utm_term',
+        'ck_subscriber_id',
         'cta_id',
         'cta_location',
         'page_path',
@@ -1035,7 +1036,7 @@ function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_t
         $properties['$session_id'] = $metadata['posthog_session_id'];
     }
 
-    foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'cta_id', 'cta_location', 'page_path', 'route' ) as $field ) {
+    foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'ck_subscriber_id', 'cta_id', 'cta_location', 'page_path', 'route' ) as $field ) {
         if ( ! empty( $metadata[ $field ] ) ) {
             $properties[ $field ] = $metadata[ $field ];
         }
