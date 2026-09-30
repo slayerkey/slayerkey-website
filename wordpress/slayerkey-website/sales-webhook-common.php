@@ -356,6 +356,7 @@ function slayerkey_sales_whop_collect_safe_attribution( $value, $path, &$out, $d
         'channel',
         'tracking_link_id',
         'tracking_link_name',
+        'ck_subscriber_id',
     );
 
     foreach ( $value as $key => $item ) {
@@ -519,6 +520,26 @@ function slayerkey_sales_whop_payment_identity_key_paths( $event ) {
     return array_values( array_unique( $paths ) );
 }
 
+function slayerkey_sales_whop_context_attribution( $context ) {
+    if ( ! is_array( $context ) ) {
+        return array();
+    }
+
+    $attribution = array();
+    foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'ck_subscriber_id', 'tracking_link_id', 'tracking_link_name' ) as $field ) {
+        if ( ! isset( $context[ $field ] ) || ! is_scalar( $context[ $field ] ) ) {
+            continue;
+        }
+
+        $value = trim( (string) $context[ $field ] );
+        if ( '' !== $value ) {
+            $attribution[ $field ] = substr( $value, 0, 200 );
+        }
+    }
+
+    return $attribution;
+}
+
 function slayerkey_sales_whop_payment_attribution( $whop_user_id, $payment_id ) {
     $whop_user_id = is_scalar( $whop_user_id ) ? trim( (string) $whop_user_id ) : '';
     $payment_id    = is_scalar( $payment_id ) ? trim( (string) $payment_id ) : '';
@@ -527,6 +548,7 @@ function slayerkey_sales_whop_payment_attribution( $whop_user_id, $payment_id ) 
         return array( 'matched' => false, 'attribution' => array() );
     }
 
+    // Fast path: Whop often attaches attribution directly to payment.completed.
     $result = slayerkey_sales_whop_events_request(
         array(
             'identifier' => $whop_user_id,
@@ -539,6 +561,7 @@ function slayerkey_sales_whop_payment_attribution( $whop_user_id, $payment_id ) 
         return $result;
     }
 
+    $payment_matched = false;
     foreach ( $result['data'] as $item ) {
         if ( ! is_array( $item ) || 'payment.completed' !== (string) ( $item['event_name'] ?? '' ) ) {
             continue;
@@ -553,26 +576,72 @@ function slayerkey_sales_whop_payment_attribution( $whop_user_id, $payment_id ) 
             continue;
         }
 
+        $payment_matched = true;
         $context = isset( $item['context'] ) && is_array( $item['context'] ) ? $item['context'] : array();
-        $attribution = array();
-        foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term' ) as $field ) {
-            if ( ! isset( $context[ $field ] ) || ! is_scalar( $context[ $field ] ) ) {
-                continue;
-            }
-
-            $value = trim( (string) $context[ $field ] );
-            if ( '' !== $value ) {
-                $attribution[ $field ] = substr( $value, 0, 200 );
-            }
+        $attribution = slayerkey_sales_whop_context_attribution( $context );
+        if ( ! empty( $attribution ) ) {
+            return array(
+                'matched'          => true,
+                'attribution'      => $attribution,
+                'attribution_mode' => 'payment_event',
+            );
         }
-
-        return array(
-            'matched'     => true,
-            'attribution' => $attribution,
-        );
+        break;
     }
 
-    return array( 'matched' => false, 'attribution' => array() );
+    // Some direct Whop links record UTM/tracking data on the buyer journey event
+    // immediately before payment.completed rather than on the payment event.
+    // Walk only this buyer's bounded journey and stop at the exact payment.
+    $journey = slayerkey_sales_whop_events_request(
+        array(
+            'identifier' => $whop_user_id,
+            'direction'  => 'asc',
+            'first'      => 100,
+        )
+    );
+
+    if ( is_wp_error( $journey ) ) {
+        if ( $payment_matched ) {
+            return array(
+                'matched'          => true,
+                'attribution'      => array(),
+                'attribution_mode' => 'payment_event',
+            );
+        }
+        return $journey;
+    }
+
+    $journey_attribution = array();
+    foreach ( $journey['data'] as $item ) {
+        if ( ! is_array( $item ) ) {
+            continue;
+        }
+
+        $context = isset( $item['context'] ) && is_array( $item['context'] ) ? $item['context'] : array();
+        $item_attribution = slayerkey_sales_whop_context_attribution( $context );
+        foreach ( $item_attribution as $field => $value ) {
+            $journey_attribution[ $field ] = $value;
+        }
+
+        $related_payment_id = '';
+        if ( isset( $item['related']['payment']['id'] ) && is_scalar( $item['related']['payment']['id'] ) ) {
+            $related_payment_id = trim( (string) $item['related']['payment']['id'] );
+        }
+
+        if ( '' !== $related_payment_id && hash_equals( $payment_id, $related_payment_id ) ) {
+            return array(
+                'matched'          => true,
+                'attribution'      => $journey_attribution,
+                'attribution_mode' => empty( $journey_attribution ) ? 'payment_event' : 'journey_before_payment',
+            );
+        }
+    }
+
+    return array(
+        'matched'          => $payment_matched,
+        'attribution'      => array(),
+        'attribution_mode' => $payment_matched ? 'payment_event' : 'not_found',
+    );
 }
 
 function slayerkey_sales_whop_events_diagnostic() {
@@ -991,12 +1060,22 @@ function slayerkey_sales_handle_whop_webhook( $raw_body, $webhook_id, $webhook_t
             error_log( '[Slayerkey Whop webhook] Whop Events attribution lookup failed; sale will still be recorded.' );
         } elseif ( ! empty( $whop_attribution['matched'] ) ) {
             $properties['whop_attribution_status'] = 'payment_event_matched';
+            if ( ! empty( $whop_attribution['attribution_mode'] ) ) {
+                $properties['whop_attribution_mode'] = $whop_attribution['attribution_mode'];
+            }
             if ( ! empty( $whop_attribution['attribution'] ) && is_array( $whop_attribution['attribution'] ) ) {
                 $properties['attribution_source'] = 'whop_events_api';
                 foreach ( $whop_attribution['attribution'] as $field => $value ) {
+                    if ( in_array( $field, array( 'tracking_link_id', 'tracking_link_name' ), true ) ) {
+                        $properties[ 'whop_' . $field ] = $value;
+                        continue;
+                    }
                     if ( empty( $metadata[ $field ] ) ) {
                         $metadata[ $field ] = $value;
                     }
+                }
+                if ( empty( $metadata['route'] ) && empty( $metadata['posthog_distinct_id'] ) ) {
+                    $metadata['route'] = 'direct_whop';
                 }
             }
         } else {
