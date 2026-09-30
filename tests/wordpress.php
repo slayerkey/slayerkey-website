@@ -251,13 +251,16 @@ $directResult = slayerkey_website_build_direct_dojo_checkout([
     'utm_medium' => 'description',
     'utm_campaign' => 'yt_30day',
     'utm_content' => 'cta_3min',
+    'ck_subscriber_id' => 'kit_subscriber_123',
 ]);
 check($directResult['ok'] === true, 'Direct Whop redirect creates checkout configuration');
 check(str_contains($directResult['destination'], 'whop.com/checkout/'), 'Direct Whop redirect returns hosted checkout URL');
 check(($directResult['metadata']['utm_campaign'] ?? '') === 'yt_30day', 'Direct checkout preserves campaign in Whop metadata');
 check(($directResult['metadata']['utm_content'] ?? '') === 'cta_3min', 'Direct checkout preserves content in Whop metadata');
+check(($directResult['metadata']['ck_subscriber_id'] ?? '') === 'kit_subscriber_123', 'Direct checkout preserves Kit subscriber ID in Whop metadata');
 check(($directResult['metadata']['route'] ?? '') === 'direct_whop', 'Direct checkout marks direct route');
 check(str_contains($GLOBALS['last_remote_post'][1]['body'], '"event":"begin_checkout"'), 'Direct route emits live PostHog begin_checkout event');
+check(str_contains($GLOBALS['last_remote_post'][1]['body'], '"ck_subscriber_id":"kit_subscriber_123"'), 'Direct begin_checkout carries Kit subscriber ID');
 
 require_once $plugin . '/sales-webhook-common.php';
 $GLOBALS['whop_test_secret'] = 'whsec_test_secret';
@@ -279,6 +282,7 @@ $webhookBody = json_encode([
             'posthog_session_id' => 'session_test',
             'utm_source' => 'youtube',
             'utm_campaign' => 'yt_test',
+            'ck_subscriber_id' => 'kit_subscriber_website_456',
             'cta_id' => 'dojo-plan-monthly',
             'cta_location' => 'plan_chooser_monthly',
             'route' => 'website',
@@ -298,6 +302,7 @@ check(count($posthogPosts) >= 1, 'Whop payment captured to PostHog');
 $websiteSalePost = $posthogPosts[count($posthogPosts) - 1][1];
 check(str_contains($websiteSalePost['body'] ?? '', '"distinct_id":"visitor_test"'), 'Whop payment reuses the website PostHog identity');
 check(str_contains($websiteSalePost['body'] ?? '', '"utm_campaign":"yt_test"'), 'Whop payment carries campaign attribution into PostHog');
+check(str_contains($websiteSalePost['body'] ?? '', '"ck_subscriber_id":"kit_subscriber_website_456"'), 'Whop payment carries Kit subscriber ID into PostHog');
 
 $bridgePosts = array_values(array_filter(
     $GLOBALS['remote_posts'] ?? array(),
