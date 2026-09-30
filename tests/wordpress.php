@@ -106,10 +106,11 @@ function wp_remote_get($url, $args) {
                 'event_id' => 'evt_recent_landing',
                 'event_name' => 'page.viewed',
                 'context' => [
-                    'utm_source' => 'youtube',
-                    'utm_medium' => 'description',
-                    'utm_campaign' => 'yt_30day',
-                    'utm_content' => 'cta_3min',
+                    'utm_source' => 'kit',
+                    'utm_medium' => 'newsletter-footer',
+                    'utm_campaign' => 'standing',
+                    'utm_content' => 'dojo_footer',
+                    'ck_subscriber_id' => 'kit_subscriber_journey_789',
                     'tracking_link_id' => 'link_test',
                 ],
                 'related' => [
@@ -251,13 +252,16 @@ $directResult = slayerkey_website_build_direct_dojo_checkout([
     'utm_medium' => 'description',
     'utm_campaign' => 'yt_30day',
     'utm_content' => 'cta_3min',
+    'ck_subscriber_id' => 'kit_subscriber_123',
 ]);
 check($directResult['ok'] === true, 'Direct Whop redirect creates checkout configuration');
 check(str_contains($directResult['destination'], 'whop.com/checkout/'), 'Direct Whop redirect returns hosted checkout URL');
 check(($directResult['metadata']['utm_campaign'] ?? '') === 'yt_30day', 'Direct checkout preserves campaign in Whop metadata');
 check(($directResult['metadata']['utm_content'] ?? '') === 'cta_3min', 'Direct checkout preserves content in Whop metadata');
+check(($directResult['metadata']['ck_subscriber_id'] ?? '') === 'kit_subscriber_123', 'Direct checkout preserves Kit subscriber ID in Whop metadata');
 check(($directResult['metadata']['route'] ?? '') === 'direct_whop', 'Direct checkout marks direct route');
 check(str_contains($GLOBALS['last_remote_post'][1]['body'], '"event":"begin_checkout"'), 'Direct route emits live PostHog begin_checkout event');
+check(str_contains($GLOBALS['last_remote_post'][1]['body'], '"ck_subscriber_id":"kit_subscriber_123"'), 'Direct begin_checkout carries Kit subscriber ID');
 
 require_once $plugin . '/sales-webhook-common.php';
 $GLOBALS['whop_test_secret'] = 'whsec_test_secret';
@@ -279,6 +283,7 @@ $webhookBody = json_encode([
             'posthog_session_id' => 'session_test',
             'utm_source' => 'youtube',
             'utm_campaign' => 'yt_test',
+            'ck_subscriber_id' => 'kit_subscriber_website_456',
             'cta_id' => 'dojo-plan-monthly',
             'cta_location' => 'plan_chooser_monthly',
             'route' => 'website',
@@ -298,6 +303,7 @@ check(count($posthogPosts) >= 1, 'Whop payment captured to PostHog');
 $websiteSalePost = $posthogPosts[count($posthogPosts) - 1][1];
 check(str_contains($websiteSalePost['body'] ?? '', '"distinct_id":"visitor_test"'), 'Whop payment reuses the website PostHog identity');
 check(str_contains($websiteSalePost['body'] ?? '', '"utm_campaign":"yt_test"'), 'Whop payment carries campaign attribution into PostHog');
+check(str_contains($websiteSalePost['body'] ?? '', '"ck_subscriber_id":"kit_subscriber_website_456"'), 'Whop payment carries Kit subscriber ID into PostHog');
 
 $bridgePosts = array_values(array_filter(
     $GLOBALS['remote_posts'] ?? array(),
@@ -376,6 +382,38 @@ check(str_contains($directPayload, '"utm_medium":"description"'), 'Direct Whop p
 check(str_contains($directPayload, '"utm_campaign":"yt_30day"'), 'Direct Whop purchase recovers campaign from matching Whop payment event');
 check(str_contains($directPayload, '"utm_content":"cta_3min"'), 'Direct Whop purchase recovers content from matching Whop payment event');
 check(str_contains($directPayload, '"attribution_source":"whop_events_api"'), 'Direct Whop purchase records Whop Events API as attribution source');
+
+$GLOBALS['transients'] = [];
+$kitJourneyWebhookId = 'msg_kit_journey_sale';
+$kitJourneyWebhookBody = json_encode([
+    'id' => $kitJourneyWebhookId,
+    'api_version' => 'v1',
+    'type' => 'payment.succeeded',
+    'data' => [
+        'id' => 'pay_recent',
+        'status' => 'paid',
+        'billing_reason' => 'subscription_create',
+        'product' => ['id' => 'prod_test'],
+        'plan' => ['id' => 'plan_eVop6pXsIhHlf'],
+        'user' => ['id' => 'user_recent'],
+        'final_amount' => 19.99,
+        'currency' => 'usd',
+        'metadata' => [],
+    ],
+]);
+$kitJourneyWebhookSignature = 'v1,' . base64_encode(hash_hmac('sha256', $kitJourneyWebhookId . '.' . $webhookTimestamp . '.' . $kitJourneyWebhookBody, $GLOBALS['whop_test_secret'], true));
+$kitJourneyWebhookResult = slayerkey_sales_handle_whop_webhook($kitJourneyWebhookBody, $kitJourneyWebhookId, $webhookTimestamp, $kitJourneyWebhookSignature);
+check($kitJourneyWebhookResult['status'] === 200, 'Kit direct Whop journey payment webhook accepted');
+$kitJourneyPayload = $GLOBALS['last_remote_post'][1]['body'];
+check(str_contains($kitJourneyPayload, '"utm_source":"kit"'), 'Kit journey recovers source before the Whop payment');
+check(str_contains($kitJourneyPayload, '"utm_medium":"newsletter-footer"'), 'Kit journey recovers medium before the Whop payment');
+check(str_contains($kitJourneyPayload, '"utm_campaign":"standing"'), 'Kit journey recovers campaign before the Whop payment');
+check(str_contains($kitJourneyPayload, '"utm_content":"dojo_footer"'), 'Kit journey recovers CTA content before the Whop payment');
+check(str_contains($kitJourneyPayload, '"ck_subscriber_id":"kit_subscriber_journey_789"'), 'Kit journey recovers subscriber ID when Whop exposes it');
+check(str_contains($kitJourneyPayload, '"whop_tracking_link_id":"link_test"'), 'Kit journey records Whop tracking link ID');
+check(str_contains($kitJourneyPayload, '"whop_attribution_mode":"journey_before_payment"'), 'Kit journey records pre-purchase attribution mode');
+check(str_contains($kitJourneyPayload, '"route":"direct_whop"'), 'Kit journey is classified as direct Whop');
+
 $bridgePostsAfterDirect = array_values(array_filter(
     $GLOBALS['remote_posts'] ?? array(),
     function ($item) { return str_contains((string) ($item[0] ?? ''), '/internal/customer-identity'); }
