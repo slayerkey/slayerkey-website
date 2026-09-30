@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'SLAYERKEY_TRACKING_ASSET', 'assets/js/tracking.js' );
 
-define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.32' );
+define( 'SLAYERKEY_WEBSITE_VERSION', '0.1.33' );
 
 // Public /system now uses the approved GitHub managed live refresh page.
 // /system/welcome (the Stripe post-purchase page) and the native /terms route are always on;
@@ -291,7 +291,7 @@ function slayerkey_website_direct_dojo_checkout_metadata( $query, $distinct_id )
         'route'               => 'direct_whop',
     );
 
-    foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content' ) as $field ) {
+    foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'ck_subscriber_id' ) as $field ) {
         if ( isset( $query[ $field ] ) && is_scalar( $query[ $field ] ) ) {
             $value = trim( sanitize_text_field( wp_unslash( (string) $query[ $field ] ) ) );
             if ( '' !== $value ) {
@@ -329,7 +329,7 @@ function slayerkey_website_build_direct_dojo_checkout( $query = array() ) {
 
     if ( is_wp_error( $result ) ) {
         $utm_query = array();
-        foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content' ) as $field ) {
+        foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'ck_subscriber_id' ) as $field ) {
             if ( ! empty( $metadata[ $field ] ) ) {
                 $utm_query[ $field ] = $metadata[ $field ];
             }
@@ -363,7 +363,7 @@ function slayerkey_website_build_direct_dojo_checkout( $query = array() ) {
         ),
         array_intersect_key(
             $metadata,
-            array_flip( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content' ) )
+            array_flip( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'ck_subscriber_id' ) )
         )
     );
     slayerkey_sales_posthog_capture_event( 'begin_checkout', $distinct_id, $event_properties );
