@@ -134,6 +134,50 @@ jobs:
           EASYWP_PASSWORD: ${{ secrets.EASYWP_PASSWORD }}
           EASYWP_PORT: ${{ secrets.EASYWP_PORT }}
         run: python3 tools/publish_deploy.py
+      - name: Temporary Whop People attribution probe (sanitized)
+        continue-on-error: true
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request, urllib.error
+          urls = [
+              "https://slayerkey.com/wp-json/slayerkey/v1/whop-attribution-health",
+              "https://slayerkey.com/whop-attribution-health",
+          ]
+          keys = [
+              "configured", "events_readable", "recent_payment_events_found",
+              "recent_attributed_payment_found", "person_identifier_type",
+              "person_lookup_attempted", "people_readable", "people_error",
+              "person_source_found", "journey_readable", "journey_error",
+              "journey_exact_payment_matched", "journey_events_before_purchase",
+              "journey_source_found", "tracking_link_signal_found",
+          ]
+          for url in urls:
+              try:
+                  req = urllib.request.Request(
+                      url + "?diag_sha=" + os.environ["DEPLOY_SHA"][:12],
+                      headers={"Accept": "application/json", "User-Agent": "Slayerkey-People-Diagnostic/1.0"}
+                  )
+                  try:
+                      res = urllib.request.urlopen(req, timeout=20)
+                  except urllib.error.HTTPError as e:
+                      res = e
+                  body = res.read(256000)
+                  data = json.loads(body.decode("utf-8"))
+                  if not isinstance(data, dict) or "events_readable" not in data:
+                      raise ValueError("response_missing_expected_fields")
+                  sanitized = {k: data.get(k) for k in keys if k in data}
+                  sanitized["http_status"] = res.status
+                  sanitized["endpoint"] = "wordpress_rest" if "/wp-json/" in url else "public_path"
+                  print("WHOP_DIAG_STATUS " + json.dumps(sanitized, sort_keys=True))
+                  break
+              except Exception as e:
+                  print("WHOP_DIAG_PROBE_ERROR " + json.dumps({
+                      "endpoint": "wordpress_rest" if "/wp-json/" in url else "public_path",
+                      "type": type(e).__name__,
+                  }))
+          PY
       - name: Record successful deployment
         if: success()
         uses: actions/github-script@v7
