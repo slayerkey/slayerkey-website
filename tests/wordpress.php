@@ -101,7 +101,31 @@ function wp_remote_get($url, $args) {
         parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
         $data = [];
 
-        if (($query['identifier'] ?? '') === 'user_recent') {
+        if (($query['identifier'] ?? '') === 'private-event@example.com') {
+            $data[] = [
+                'event_id' => 'evt_email_landing',
+                'event_name' => 'page.viewed',
+                'context' => [
+                    'utm_source' => 'youtube',
+                    'utm_medium' => 'description',
+                    'utm_campaign' => 'yt_30day',
+                    'utm_content' => 'cta_3min',
+                    'tracking_link_id' => 'link_test',
+                ],
+                'related' => [
+                    'user' => ['email' => 'private-event@example.com'],
+                ],
+            ];
+            $data[] = [
+                'event_id' => 'evt_email_payment',
+                'event_name' => 'payment.completed',
+                'context' => [],
+                'related' => [
+                    'payment' => ['id' => 'pay_recent'],
+                    'user' => ['email' => 'private-event@example.com'],
+                ],
+            ];
+        } elseif (($query['identifier'] ?? '') === 'user_recent') {
             $data[] = [
                 'event_id' => 'evt_recent_landing',
                 'event_name' => 'page.viewed',
@@ -139,6 +163,25 @@ function wp_remote_get($url, $args) {
                 'related' => [
                     'payment' => ['id' => 'pay_direct_123'],
                     'user' => ['id' => 'user_direct_123'],
+                ],
+            ];
+        } elseif (empty($query['identifier']) && !empty($GLOBALS['whop_diag_email_mode'])) {
+            $data[] = [
+                'event_id' => 'evt_email_payment',
+                'event_name' => 'payment.completed',
+                'context' => [
+                    'utm_source' => 'youtube',
+                    'utm_medium' => 'description',
+                    'utm_campaign' => 'yt_30day',
+                    'utm_content' => 'cta_3min',
+                ],
+                'user' => [
+                    'email' => 'private-event@example.com',
+                    'first_name' => 'Private',
+                    'last_name' => 'Event',
+                ],
+                'related' => [
+                    'payment' => ['id' => 'pay_recent'],
                 ],
             ];
         } elseif (empty($query['identifier'])) {
@@ -430,6 +473,7 @@ $directWebhookResult2 = slayerkey_sales_handle_whop_webhook($directWebhookBody2,
 check($directWebhookResult2['status'] === 200, 'Second direct Whop payment webhook accepted');
 check(str_contains($GLOBALS['last_remote_post'][1]['body'], '"distinct_id":"' . $expectedDirectId . '"'), 'Same Whop user keeps same pseudonymous identity across payments');
 
+$GLOBALS['whop_diag_email_mode'] = true;
 $GLOBALS['transients'] = [];
 $diag = slayerkey_website_whop_attribution_health_response();
 check($diag->status === 200, 'Whop attribution health responds successfully');
@@ -439,7 +483,9 @@ check(($diag->data['recent_payment_events_found'] ?? false) === true, 'Recent Wh
 check(($diag->data['recent_attributed_payment_found'] ?? false) === true, 'Recent attributed Whop payment event is visible');
 check(($diag->data['recent_youtube_payment_found'] ?? false) === true, 'Recent YouTube-attributed Whop payment event is visible');
 check(($diag->data['person_lookup_attempted'] ?? false) === true, 'Whop attribution health attempts a People lookup for a recent buyer');
-check(in_array('user.id', $diag->data['payment_identity_key_paths'] ?? [], true), 'Whop diagnostic reports only the top-level user key path, not its value');
+check(in_array('user.email', $diag->data['payment_identity_key_paths'] ?? [], true), 'Whop diagnostic sees an email identity key without exposing its value');
+check(!in_array('user.id', $diag->data['payment_identity_key_paths'] ?? [], true), 'Whop diagnostic handles payment events without a user ID');
+check(($diag->data['person_identifier_type'] ?? '') === 'email', 'Whop diagnostic falls back to email privately');
 check(($diag->data['people_readable'] ?? false) === true, 'Whop People API is readable');
 check(($diag->data['person_source_found'] ?? false) === true, 'Whop Person exposes sanitized source attribution');
 check(($diag->data['journey_readable'] ?? false) === true, 'Whop buyer journey is readable');
@@ -468,6 +514,7 @@ $diagForbidden = slayerkey_website_whop_attribution_health_response();
 check($diagForbidden->status === 200, 'Whop attribution health fails closed to a safe response');
 check(($diagForbidden->data['events_readable'] ?? true) === false, 'Whop attribution health reports unreadable events when permission is denied');
 unset($GLOBALS['whop_events_http_status']);
+unset($GLOBALS['whop_diag_email_mode']);
 
 $invalidWebhookResult = slayerkey_sales_handle_whop_webhook($webhookBody, 'msg_test_sale_2', $webhookTimestamp, 'v1,invalid');
 check($invalidWebhookResult['status'] === 400, 'Invalid Whop signature rejected');
